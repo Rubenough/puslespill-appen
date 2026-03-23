@@ -8,7 +8,7 @@ WebBrowser.maybeCompleteAuthSession();
 export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
 
-  const redirectUri = "exp://172.26.124.122:8081";
+  const redirectUri = "exp://192.168.0.102:8081";
 
   async function signInWithGoogle() {
     setLoading(true);
