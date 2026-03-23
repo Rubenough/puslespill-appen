@@ -1,23 +1,13 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text } from "react-native"; // Text brukes til app-navn
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfil } from "../context/ProfilContext";
-
-function getInitials(name: string | null): string {
-  if (!name) return "?";
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
-}
+import UserAvatar from "./UserAvatar";
 
 export default function Header() {
   const insets = useSafeAreaInsets();
   const profile = useProfil();
-  const initials = getInitials(profile?.full_name ?? null);
 
   return (
     <View
@@ -30,9 +20,7 @@ export default function Header() {
         </Text>
         <View className="flex-row items-center gap-4">
           <Ionicons name="notifications-outline" size={24} color="#78716C" />
-          <View className="w-8 h-8 rounded-full bg-[#CECBF6] items-center justify-center">
-            <Text className="text-xs font-medium text-[#3C3489]">{initials}</Text>
-          </View>
+          <UserAvatar name={profile?.full_name ?? null} avatarUrl={profile?.avatar_url} size={32} />
         </View>
       </View>
     </View>

@@ -4,40 +4,67 @@ import Header from "../components/Header";
 import ActiveSessionCard from "../components/ActiveSessionCard";
 import FeedCard from "../components/FeedCard";
 
-export default function FeedScreen() {
-  const activeSessions = []; // senere kommer dette fra Supabase
+// Midlertidige mock-data — erstattes med Supabase-data i Fase 3
+const MOCK_SESSIONS = [
+  {
+    isOwn: true as const,
+    puzzleTitle: "Kinkaku-ji — 1000 brikker",
+    dayNumber: 3,
+    timeLabel: "i går",
+  },
+  {
+    isOwn: false as const,
+    userName: "Ole",
+    avatarUrl: null,
+    puzzleTitle: "Paris om natten — 500 brikker",
+    dayNumber: 1,
+    timeLabel: "i dag",
+  },
+];
 
+const MOCK_FEED = [
+  {
+    type: "loan" as const,
+    userName: "Turid Nielsen",
+    avatarUrl: null,
+    timeLabel: "i går",
+    loanedTo: "Petter",
+    puzzleTitle: "Paris om natten — 500 brikker",
+    puzzleBrand: "Ravensburger",
+  },
+  {
+    type: "completed" as const,
+    userName: "Petter Moe",
+    avatarUrl: null,
+    timeLabel: "3 dager siden",
+  },
+];
+
+export default function FeedScreen() {
   return (
     <View className="flex-1 bg-surface-secondary dark:bg-surface-dark-secondary">
       <Header />
-      <ScrollView>
+      <ScrollView showsVerticalScrollIndicator={false}>
         {/* Aktive økter */}
-        <Text className="text-content dark:text-content-dark">
-          Aktive økter
+        <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pt-5 pb-3">
+          AKTIVE ØKTER
         </Text>
-
-        {/* Preview av sessionCard, fjern senere */}
-        {activeSessions.length === 0 ? (
-          <ActiveSessionCard isOwn={true} />
-        ) : (
-          activeSessions.map((session) => (
-            <ActiveSessionCard key={session.id} />
-          ))
-        )}
-
-        {/* Sjekk om det finnes aktive økter */}
-        {activeSessions.length === 0 ? (
-          <Text className="text-content-secondary dark:text-content-secondary-dark text-sm px-4 py-2">
-            Ingen aktive økter
-          </Text>
-        ) : (
-          activeSessions.map((session) => (
-            <ActiveSessionCard key={session.id} />
-          ))
-        )}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+        >
+          {MOCK_SESSIONS.map((session, i) => (
+            <ActiveSessionCard key={i} {...session} />
+          ))}
+        </ScrollView>
 
         {/* Feed */}
-        <FeedCard />
+        <View className="pt-2">
+          {MOCK_FEED.map((item, i) => (
+            <FeedCard key={i} {...item} />
+          ))}
+        </View>
       </ScrollView>
     </View>
   );
