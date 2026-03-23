@@ -60,6 +60,9 @@ export default function FeedScreen() {
         </ScrollView>
 
         {/* Feed */}
+        <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pt-5 pb-3">
+          FEED
+        </Text>
         <View className="pt-2">
           {MOCK_FEED.map((item, i) => (
             <FeedCard key={i} {...item} />
