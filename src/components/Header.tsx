@@ -2,9 +2,22 @@ import React from "react";
 import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useProfil } from "../context/ProfilContext";
+
+function getInitials(name: string | null): string {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+}
 
 export default function Header() {
   const insets = useSafeAreaInsets();
+  const profile = useProfil();
+  const initials = getInitials(profile?.full_name ?? null);
 
   return (
     <View
@@ -18,7 +31,7 @@ export default function Header() {
         <View className="flex-row items-center gap-4">
           <Ionicons name="notifications-outline" size={24} color="#78716C" />
           <View className="w-8 h-8 rounded-full bg-[#CECBF6] items-center justify-center">
-            <Text className="text-xs font-medium text-[#3C3489]">KH</Text>
+            <Text className="text-xs font-medium text-[#3C3489]">{initials}</Text>
           </View>
         </View>
       </View>

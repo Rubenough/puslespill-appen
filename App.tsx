@@ -5,6 +5,7 @@ import { Session } from "@supabase/supabase-js";
 import AppNavigator from "./src/navigation/AppNavigator";
 import AuthScreen from "./src/screens/AuthScreen";
 import { supabase } from "./src/lib/supabase";
+import { ProfilProvider } from "./src/context/ProfilContext";
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -27,7 +28,13 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      {session ? <AppNavigator /> : <AuthScreen />}
+      {session ? (
+        <ProfilProvider>
+          <AppNavigator />
+        </ProfilProvider>
+      ) : (
+        <AuthScreen />
+      )}
     </NavigationContainer>
   );
 }
