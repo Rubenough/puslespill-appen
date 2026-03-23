@@ -193,10 +193,11 @@ Appen designes fra start med en generisk _item_-modell slik at nye kategorier en
 
 **UI-komponenter**
 
-- [x] `Header` — toppbar med app-navn, bjelle-ikon og avatar
-- [x] `ActiveSessionCard` — kort for pågående økt med "Din økt" / andres økt-varianter
-- [x] `FeedCard` — skjelett for feed-innlegg
-- [x] `FeedScreen` — seksjoner for aktive økter og feed, med tom-liste-håndtering
+- [x] `Header` — toppbar med app-navn, bjelle-ikon og avatar (bruker `UserAvatar`)
+- [x] `UserAvatar` — gjenbrukbar avatar med bilde eller initialer, deterministisk farge per person
+- [x] `ActiveSessionCard` — "Din økt" med grønn border, vennekort med avatar og fremdrift
+- [x] `FeedCard` — to varianter: utlån og fullført med "Ferdig"-badge
+- [x] `FeedScreen` — horisontal økt-scroll + vertikal feed, mock-data klar til Supabase-kobling
 
 **Supabase og auth**
 
@@ -212,7 +213,14 @@ Appen designes fra start med en generisk _item_-modell slik at nye kategorier en
 
 - [x] Supabase-trigger oppretter profil automatisk ved første innlogging
 - [x] `ProfilContext` henter innlogget brukers profil og gjør den tilgjengelig i appen
-- [x] `Header` viser ekte initialer fra profil
+- [x] `Header` viser ekte initialer fra profil via `UserAvatar`
+
+**Navigasjon og feed-redesign**
+
+- [x] Tab-bar oppdatert: Feed | Samlinger | + | Utlån | Profil
+- [x] +-knappen åpner bottom sheet modal med tre valg (UI ferdig, handlinger kobles til i Fase 3)
+- [x] `ProfileScreen` lagt til (placeholder)
+- [x] `FeedScreen`, `FeedCard` og `ActiveSessionCard` oppdatert til ny wireframe
 
 ### 🔜 Plan videre
 
@@ -226,10 +234,9 @@ Appen designes fra start med en generisk _item_-modell slik at nye kategorier en
 
 **Fase 3 — Aktive økter og feed**
 
-- [ ] +-modal med tre valg: Start ny økt / Lån ut / Legg til spill
+- [ ] Koble handlinger i +-modal (Start ny økt / Lån ut / Legg til spill)
 - [ ] Ny økt-flyt — velg spill, legg til deltakere, ta bilde, skriv notat
-- [ ] Koble `ActiveSessionCard` til ekte data fra Supabase
-- [ ] Bygg ut `FeedCard` — vis utlån og fullførte økter fra venner
+- [ ] Koble `ActiveSessionCard` og `FeedCard` til ekte data fra Supabase
 - [ ] Kommenter/reager på feed-innlegg
 
 **Fase 4 — Utlån**
@@ -268,10 +275,13 @@ puslespill-appen/
 │   │   └── ProfileScreen.tsx        # Profil og innstillinger (placeholder)
 │   ├── components/
 │   │   ├── Header.tsx               # Toppbar med app-navn, bjelle og avatar
+│   │   ├── UserAvatar.tsx           # Avatar med bilde eller initialer
 │   │   ├── ActiveSessionCard.tsx    # Kort for pågående økt
-│   │   └── FeedCard.tsx             # Kort i sosial feed
+│   │   └── FeedCard.tsx             # Kort i sosial feed (utlån / fullført)
 │   ├── context/
 │   │   └── ProfilContext.tsx        # Profil-tilstand for innlogget bruker
+│   ├── utils/
+│   │   └── initials.ts              # getInitials og getAvatarColor
 │   └── lib/
 │       └── supabase.ts              # Supabase-klient med AsyncStorage
 ├── assets/                          # Ikoner og splash screen
