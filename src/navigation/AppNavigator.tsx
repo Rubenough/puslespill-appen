@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 type IoniconsName = ComponentProps<typeof Ionicons>["name"];
 import FeedScreen from "../screens/FeedScreen";
 import CollectionsScreen from "../screens/CollectionsScreen";
-import LoansScreen from "../screens/LoansScreen";
+import FriendsScreen from "../screens/FriendsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 
 const colors = {
@@ -27,19 +27,19 @@ const colors = {
 
 const MODAL_ITEMS: { icon: IoniconsName; title: string; subtitle: string }[] = [
   {
+    icon: "add-circle-outline",
+    title: "Legg til i samlingen",
+    subtitle: "Puslespill, bok, brettspill, film ...",
+  },
+  {
     icon: "time-outline",
     title: "Start ny økt",
-    subtitle: "Logg en puslespilløkt",
+    subtitle: "Logg en aktivitet",
   },
   {
     icon: "arrow-forward-outline",
-    title: "Lån ut et spill",
-    subtitle: "Registrer utlån til en venn",
-  },
-  {
-    icon: "add-circle-outline",
-    title: "Legg til spill",
-    subtitle: "Legg til i samlingen din",
+    title: "Registrer utlån",
+    subtitle: "Lån ut til en venn",
   },
 ];
 
@@ -123,11 +123,11 @@ export default function AppNavigator() {
           }}
         />
         <Tab.Screen
-          name="Utlån"
-          component={LoansScreen}
+          name="Venner"
+          component={FriendsScreen}
           options={{
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="arrow-forward-outline" size={size} color={color} />
+              <Ionicons name="people-outline" size={size} color={color} />
             ),
           }}
         />
