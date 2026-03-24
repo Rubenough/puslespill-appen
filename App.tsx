@@ -1,28 +1,23 @@
 import "./global.css";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import { Session } from "@supabase/supabase-js";
+import * as SplashScreen from "expo-splash-screen";
+import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import AppNavigator from "./src/navigation/AppNavigator";
 import AuthScreen from "./src/screens/AuthScreen";
-import { supabase } from "./src/lib/supabase";
 import { ProfilProvider } from "./src/context/ProfilContext";
+import ErrorBoundary from "./src/components/ErrorBoundary";
 
-export default function App() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+SplashScreen.preventAutoHideAsync();
+
+function AppContent() {
+  const { session, loading } = useAuth();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (!loading) {
+      SplashScreen.hideAsync();
+    }
+  }, [loading]);
 
   if (loading) return null;
 
@@ -36,5 +31,15 @@ export default function App() {
         <AuthScreen />
       )}
     </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

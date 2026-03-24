@@ -1,14 +1,16 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Text } from "react-native";
 import * as WebBrowser from "expo-web-browser";
+import { makeRedirectUri } from "expo-auth-session";
 import { supabase } from "../lib/supabase";
+import GoogleSignInButton from "../components/GoogleSignInButton";
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
 
-  const redirectUri = "exp://192.168.0.102:8081";
+  const redirectUri = makeRedirectUri();
 
   async function signInWithGoogle() {
     setLoading(true);
@@ -28,8 +30,7 @@ export default function AuthScreen() {
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
 
     if (result.type === "success") {
-      const hash = result.url.split("#")[1];
-      const params = new URLSearchParams(hash);
+      const params = new URLSearchParams(result.url.split("#")[1]);
       const access_token = params.get("access_token");
       const refresh_token = params.get("refresh_token");
       if (access_token && refresh_token) {
@@ -49,19 +50,7 @@ export default function AuthScreen() {
         For deg som pusler med venner
       </Text>
 
-      <TouchableOpacity
-        onPress={signInWithGoogle}
-        disabled={loading}
-        className="w-full bg-accent dark:bg-accent-dark rounded-xl py-4 items-center"
-      >
-        {loading ? (
-          <ActivityIndicator color="white" />
-        ) : (
-          <Text className="text-white font-medium text-base">
-            Logg inn med Google
-          </Text>
-        )}
-      </TouchableOpacity>
+      <GoogleSignInButton onPress={signInWithGoogle} loading={loading} />
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, ComponentProps } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
 } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
+
+type IoniconsName = ComponentProps<typeof Ionicons>["name"];
 import FeedScreen from "../screens/FeedScreen";
 import CollectionsScreen from "../screens/CollectionsScreen";
 import LoansScreen from "../screens/LoansScreen";
@@ -23,7 +25,7 @@ const colors = {
   itemBg: { light: "#F5F5F4", dark: "#3C3938" },
 };
 
-const MODAL_ITEMS = [
+const MODAL_ITEMS: { icon: IoniconsName; title: string; subtitle: string }[] = [
   {
     icon: "time-outline",
     title: "Start ny økt",
@@ -209,7 +211,7 @@ export default function AppNavigator() {
                   marginRight: 14,
                 }}
               >
-                <Ionicons name={item.icon as any} size={22} color={c.accent} />
+                <Ionicons name={item.icon} size={22} color={c.accent} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: c.text, fontWeight: "600", fontSize: 16 }}>

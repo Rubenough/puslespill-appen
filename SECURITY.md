@@ -1,51 +1,40 @@
 # Security & Code Quality — Åpne funn
 
-> Generert mars 2026 via codebase-analyse.
+> Oppdatert mars 2026.
 > Fiks i prioritert rekkefølge. Slett eller kryss av etter hvert.
 
 ---
 
-## 🔴 Kritisk
+## ✅ Løst
 
-### 1. Hardkodet IP-adresse i redirect URI
-**Fil:** `src/screens/AuthScreen.tsx`, linje 11
+### ~~1. Hardkodet IP-adresse i redirect URI~~
+Erstattet med `makeRedirectUri()` fra `expo-auth-session`. Løst.
 
-```typescript
-const redirectUri = "exp://192.168.0.102:8081";
-```
+### ~~2. Ukryptert tokenlagring~~
+`AsyncStorage` erstattet med `ExpoSecureStoreAdapter` + `expo-secure-store`. Tokens lagres nå i Keychain (iOS) / Keystore (Android). Session-tokens > 2048 bytes deles automatisk i biter. Løst.
 
-Lokal IP hardkodet — bryter auth på alle andre maskiner, nettverk og build-miljøer.
+### ~~6. `null`-rendering under innlasting~~
+`SplashScreen.preventAutoHideAsync()` brukes i `App.tsx`. Splash vises til auth er sjekket. Løst.
 
-**Fix:** Bruk `Constants.expoConfig?.extra?.redirectUri` eller en env-variabel.
-
----
-
-### 2. Ukryptert tokenlagring
-**Fil:** `src/lib/supabase.ts`, linje 9
-
-```typescript
-storage: AsyncStorage,  // ukryptert på disk
-```
-
-Auth-tokens (inkl. refresh tokens) lagres som klartekst på enheten. På en kompromittert enhet er de lesbare.
-
-**Fix:** Bytt ut `AsyncStorage` med `expo-secure-store` (bruker Keychain på iOS, Keystore på Android).
+### ~~9. Ingen logout-funksjon~~
+`ProfileScreen` har nå en «Logg ut»-knapp via `supabase.auth.signOut()`. Løst.
 
 ---
 
 ## 🟡 Medium
 
-### 3. Manuell URL-parsing i stedet for Supabase sin innebygde håndtering
-**Fil:** `src/screens/AuthScreen.tsx`, linje 30–37
+### 3. Manuell URL-parsing i stedet for PKCE
+**Fil:** `src/screens/AuthScreen.tsx`
 
-`detectSessionInUrl` er satt til `false` i `supabase.ts`, men tokens parses manuelt fra URL etterpå. Unødvendig og skjørt.
+Tokens parses manuelt fra URL-fragmentet (`#access_token=...`). Dette er implicit OAuth flow.
+PKCE-flow (`exchangeCodeForSession`) er sikrere, men krever at Supabase-prosjektet er konfigurert med PKCE og at redirect-URL er riktig registrert.
 
-**Fix:** Sett `detectSessionInUrl: true` og fjern manuell parsing.
+**Nåværende status:** Fungerer med implicit flow. Ikke bytt uten å konfigurere Supabase-dashboardet først.
 
 ---
 
 ### 4. Stille feil i OAuth-flyten
-**Fil:** `src/screens/AuthScreen.tsx`, linje 23–41
+**Fil:** `src/screens/AuthScreen.tsx`
 
 Auth feiler uten tilbakemelding til brukeren. `WebBrowser`-resultat med `type === "cancel"` eller `"error"` er ikke håndtert. Ingen try-catch.
 
@@ -54,39 +43,24 @@ Auth feiler uten tilbakemelding til brukeren. `WebBrowser`-resultat med `type ==
 ---
 
 ### 5. Profilhenting har ingen feiltilstand
-**Fil:** `src/context/ProfilContext.tsx`, linje 15–31
+**Fil:** `src/context/ProfilContext.tsx`
 
 ```typescript
 fetchProfile();  // ingen catch, ingen error state
 ```
 
-Nettverksfeil eller Supabase-feil er usynlige — `profil` forblir `null` uten noen forklaring.
+Nettverksfeil eller Supabase-feil er usynlige — `profil` forblir `null` uten forklaring.
 
 **Fix:** Legg til error state i konteksten + retry-logikk.
 
 ---
 
-### 6. `null`-rendering under innlasting
-**Fil:** `App.tsx`, linje ~27
-
-```typescript
-if (loading) return null;
-```
-
-Tom hvit skjerm mens auth sjekkes.
-
-**Fix:** Vis en splash/laster-indikator i stedet.
-
----
-
 ### 7. Uvalidert `avatarUrl` lastes direkte inn i `<Image>`
-**Fil:** `src/components/UserAvatar.tsx`, linje 15–22
+**Fil:** `src/components/UserAvatar.tsx`
 
 ```typescript
 source={{ uri: avatarUrl }}  // fra DB, ingen validering
 ```
-
-URL hentes fra databasen uten domenekontroll.
 
 **Fix:** Hvitlist Supabase storage-URLer (`*.supabaseusercontent.com`).
 
@@ -99,45 +73,27 @@ Gjelder alle skjermer. Ingen loading-states, ingen retry, ingen offline-deteksjo
 
 ## 🟢 Mindre / Rydding
 
-### 9. Ingen logout-funksjon
-`ProfileScreen` har ingen utloggingsknapp. Brukere kan ikke logge ut manuelt.
+### ~~10. `as any`-cast i AppNavigator~~
+`IoniconsName` derivert fra `ComponentProps<typeof Ionicons>["name"]` og brukt som type på `MODAL_ITEMS`. Løst.
 
 ---
 
-### 10. `as any`-cast i AppNavigator
-**Fil:** `src/navigation/AppNavigator.tsx`, linje 212
-
-```typescript
-<Ionicons name={item.icon as any} ...>
-```
-
-**Fix:** Typen bør være `keyof typeof Ionicons.glyphMap`.
-
----
-
-### 11. Ingen error boundaries
-Enhver komponentkrasj krasjer hele appen.
-
-**Fix:** Legg til én top-level error boundary i `App.tsx`.
+### ~~11. Ingen error boundaries~~
+`ErrorBoundary`-komponent opprettet i `src/components/ErrorBoundary.tsx` og lagt øverst i `App.tsx`. Viser feilmelding + «Prøv igjen»-knapp ved render-krasj. Løst.
 
 ---
 
 ### 12. Mock-data i produksjonskode
-**Fil:** `src/screens/FeedScreen.tsx`, linje 7–42
+**Fil:** `src/screens/FeedScreen.tsx`
 
-`MOCK_SESSIONS` og `MOCK_FEED` er hardkodet. Trenger en klar strategi for å bytte til ekte data i rett tid.
+`MOCK_SESSIONS` og `MOCK_FEED` er hardkodet. Trenger en klar strategi for å bytte til ekte data.
 
 ---
 
-## Prioritert tiltaksliste
+## Gjenstående tiltaksliste
 
-- [ ] 🔴 Fix hardkodet IP i redirect URI (`AuthScreen.tsx:11`)
-- [ ] 🔴 Bytt `AsyncStorage` med `expo-secure-store` (`supabase.ts:9`)
-- [ ] 🟡 Sett `detectSessionInUrl: true`, fjern manuell token-parsing (`AuthScreen.tsx:30–37`)
-- [ ] 🟡 Legg til try-catch + brukervennlige feilmeldinger i auth-flyt (`AuthScreen.tsx:23–41`)
-- [ ] 🟡 Legg til error state og retry i `ProfilContext` (`ProfilContext.tsx:15–31`)
-- [ ] 🟡 Erstatt `return null` med splash-skjerm (`App.tsx`)
-- [ ] 🟡 Valider `avatarUrl` mot hvitliste (`UserAvatar.tsx:15–22`)
-- [ ] 🟢 Implementer logout i `ProfileScreen`
-- [ ] 🟢 Legg til error boundary i `App.tsx`
-- [ ] 🟢 Fjern `as any`-cast i `AppNavigator.tsx:212`
+- [ ] 🟡 Legg til try-catch + brukervennlige feilmeldinger i auth-flyt (`AuthScreen.tsx`)
+- [ ] 🟡 Legg til error state og retry i `ProfilContext`
+- [ ] 🟡 Valider `avatarUrl` mot hvitliste (`UserAvatar.tsx`)
+- [ ] 🟡 Vurder PKCE-flow når Supabase-dashboardet er konfigurert
+- [ ] 🟢 Erstatt mock-data med ekte Supabase-kall (`FeedScreen.tsx`)
