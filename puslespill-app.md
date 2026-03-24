@@ -1,23 +1,25 @@
-# 🧩 Puslespill-appen — Prosjektdokumentasjon
+# Puslespill-appen — Prosjektdokumentasjon
 
-> Versjon 0.4 — Mars 2026
+> Versjon 0.5 — Mars 2026
 
 ---
 
 ## Konsept
 
-En sosial app for en vennegjeng/nabogjeng som pusler mye sammen. Appen fungerer som et mini-biblioteksystem kombinert med en sosial fremgangslogg — alle kan se hva andre eier, låne og bytte seg imellom, og følge hverandres puslespilløkter.
+En sosial app for en vennegjeng/nabogjeng som samler på fysiske ting og deler dem med hverandre. Appen fungerer som et mini-biblioteksystem kombinert med en sosial aktivitetslogg — alle kan se hva andre eier, låne og bytte seg imellom, og følge hverandres aktiviteter.
 
-**Langsiktig visjon:** Appen bygges med utvidbarhet i tankene. Puslespill er kategori én, men arkitekturen skal støtte alle typer fysiske ting du kan låne ut til venner — brettspill, bøker, DVDer, verktøy, utstyr osv. Finn.no-integrasjon for salg kan vurderes på et senere tidspunkt, men appen er ikke en salgsplattform.
+Appen lanseres med fire samlingstyper: **puslespill, bøker, brettspill og filmer**. Arkitekturen er generisk fra dag én, slik at nye kategorier kan legges til uten å bygge om kjernelogikken.
+
+**Langsiktig visjon:** Finn.no-integrasjon for salg kan vurderes på et senere tidspunkt, men appen er ikke en salgsplattform.
 
 ---
 
 ## Målgruppe
 
 - En lukket vennegjeng / nabogjeng
-- Deler, bytter og låner puslespill ofte
-- Pusler sosialt — snakker og gjør andre ting samtidig
-- Ikke hardcore statistikk-fokuserte brukere
+- Deler, bytter og låner fysiske ting
+- Sosiale brukere — ikke hardcore statistikk-fokuserte
+- Interessert i hva venner leser, ser, spiller og pusler
 
 ---
 
@@ -25,118 +27,120 @@ En sosial app for en vennegjeng/nabogjeng som pusler mye sammen. Appen fungerer 
 
 ### Bottom tab-bar
 
-| Fane      | Innhold                                          |
-| --------- | ------------------------------------------------ |
-| Feed      | Sosial feed + aktive økter                       |
-| Samlinger | 3 sub-tabs: Min samling / Venner / Ønskeliste    |
-| + (modal) | Tre valg: Start ny økt / Lån ut / Legg til spill |
-| Utlån     | Utlånt av meg / Lånt av meg / Historikk          |
-| Profil    | Profil og innstillinger                          |
+| Fane      | Innhold                                                        |
+| --------- | -------------------------------------------------------------- |
+| Feed      | Aktivitetsstrøm fra venner + aktive økter du er med i          |
+| Samlinger | Dine samlingstyper + utlånt nå                                 |
+| + (modal) | Legg til i samlingen / Start ny økt / Registrer utlån          |
+| Venner    | Liste over venner du følger, søk etter nye                     |
+| Profil    | Profil, statistikk og innstillinger                            |
 
-### Samlinger — sub-tabs
+Utlånsoversikt lever som en seksjon ("UTLÅNT NÅ") inne i Samlinger-skjermen — ikke som egen tab.
 
-- **Min samling** — brukerens egne puslespill, status per spill
-- **Venner** — rutenett per person med forhåndsvisning av samlingen
-- **Ønskeliste** — mine ønsker + "Be om å låne" hvis noen i gjengen allerede eier spillet
+### Samlinger
 
----
-
-## Skjermstatus
-
-### Eksisterende skjermer
-
-| Skjerm                  | Status                                   |
-| ----------------------- | ---------------------------------------- |
-| Feed                    | Bygget (kobles til Supabase-data senere) |
-| Samlinger — Min samling | Placeholder                              |
-| Profil/innstillinger    | Placeholder                              |
-| Innlogging (AuthScreen) | Fungerer med Google OAuth                |
-
-### Gjenstående skjermer
-
-| Skjerm                                                    | Prioritet |
-| --------------------------------------------------------- | --------- |
-| Samlinger → Venner-tab                                    | Fase 2    |
-| Samlinger → Ønskeliste-tab                                | Fase 5    |
-| Utlån-tab                                                 | Fase 4    |
-| +-modal (Ny økt / Lån ut / Legg til spill)                | Fase 3    |
-| Ny økt-flyt (velg spill, deltakere, bilde, notat)         | Fase 3    |
-| Innlogging/onboarding (invitasjonsmelding, Apple Sign-In) | Fase 6    |
-
----
-
-## Wireframes
-
-### Samlinger → Venner-tab
-
-Liste over venner i gjengen. Hver rad: avatar med initialer, navn, antall spill, 3 thumbnails + "+N"-overflow. Trykk på en person åpner samlingen deres.
-
-### Samlinger → Ønskeliste-tab
-
-To sub-tabs: **Mine ønsker** / **Vennenes ønsker**.
-
-- Hvert ønske: bilde, tittel (f.eks. "New York — 2000 brikker"), merke, rød hjerte-ikon for å fjerne.
-- Seksjon **"NOEN EIER DETTE"**: hvis noen i gjengen allerede eier spillet vises det her med "Be om å låne"-knapp (grønn). Krever join-query mellom `wishlists` og `puzzles`.
-
-### Utlån-skjerm
-
-Tre seksjoner:
-
-- **DU HAR LÅNT UT** — spill + hvem lånte + dato, oransje/grå "Påminn"-badge
-- **DU HAR LÅNT** — spill + hvem lånte ut + dato, grønn "Lever tilbake"-knapp
-- **HISTORIKK** — returnerte lån, grå "Returnert"-badge
+Én skjerm med:
+- Liste over samlingstyper (Puslespill / Bøker / Brettspill / Filmer) med antall og utlånt-indikator
+- Seksjon "UTLÅNT NÅ" — aktive utlån på tvers av alle kategorier
+- Trykk på en kategori åpner detaljvisning for den samlingstypen
 
 ### +-modal (bottom sheet)
 
 Tittel: "Hva vil du gjøre?" — tre valg:
 
-1. **Start ny økt** — Logg en puslespilløkt
-2. **Lån ut et spill** — Registrer utlån til en venn
-3. **Legg til spill** — Legg til i samlingen din
+1. **Legg til i samlingen** — Puslespill, bok, brettspill, film ...
+2. **Start ny økt** — Logg en aktivitet
+3. **Registrer utlån** — Lån ut til en venn
+
+---
+
+## Feed
+
+Aktivitetsstrøm som er type-agnostisk — samme kortformat for alle samlingstyper, med ikon som viser kategori.
+
+### Hendelsestyper i feed
+
+| Type        | Eksempel                                          |
+| ----------- | ------------------------------------------------- |
+| `added`     | Ole la til "Sapiens" i boksamlingen sin           |
+| `started`   | Petter startet en økt — Kinkaku-ji 1000 brikker   |
+| `completed` | Turid fullførte Wingspan                          |
+| `loaned`    | Lars lånte ut Catan til Kari                      |
+
+### Aktive økter
+
+Horisontal scroll øverst i Feed. Viser kun:
+- Din egen aktive økt
+- Økter andre har lagt deg til i som deltaker
+
+Vennenes egne separate økter vises i Feed som `started`-hendelse, ikke i aktive økter.
+
+---
+
+## Skjermstatus
+
+| Skjerm               | Status                                        |
+| -------------------- | --------------------------------------------- |
+| AuthScreen           | Fungerer — Google OAuth                        |
+| FeedScreen           | Mock-data — kobles til Supabase i Fase 3       |
+| CollectionsScreen    | Mock-data — kobles til Supabase i Fase 2       |
+| FriendsScreen        | Mock-data — kobles til Supabase i Fase 5       |
+| ProfileScreen        | Mock-data — kobles til Supabase i Fase 5       |
+
+---
+
+## Wireframes
+
+### Samlinger
+
+Liste over kategorier, hver rad: ikon, navn, antall stk, utlånt-indikator. Under: "UTLÅNT NÅ" med aktive utlån, antall dager ute, hvem som har det.
+
+### Venner
+
+Søkefelt øverst. Liste over venner du følger: avatar, navn, antall felles i samlingen, sist aktiv. Trykk på en person åpner profilen deres.
 
 ### Ny økt-flyt
 
 Fullskjerm med tilbake-pil. Seksjoner:
 
-- **VELG PUSLESPILL** — søkbart kort, valgt spill vises med grønn hake
-- **DELTAKERE** — chips med initialer + navn, × for å fjerne, "+ Legg til"-knapp (stiplet)
-- **FREMGANGSBILDE (VALGFRITT)** — stiplet boks, "Ta eller velg bilde"
-- **NOTAT (VALGFRITT)** — fritekstfelt med placeholder "Startet på kantene…"
+- **VELG GJENSTAND** — søkbart kort, valgt gjenstand vises med grønn hake
+- **DELTAKERE** — chips med initialer + navn, × for å fjerne, "+ Legg til"-knapp
+- **BILDE (VALGFRITT)** — stiplet boks, "Ta eller velg bilde"
+- **NOTAT (VALGFRITT)** — fritekstfelt
 - Stor grønn **"Start økt"**-knapp nederst
 
 ### Innlogging/onboarding
 
-Grønn toppsektion med app-ikon og tagline "Del samlingen din med vennegjengen". To knapper: "Fortsett med Google" og "Fortsett med Apple".
+Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Fortsett med Apple".
 
 ---
 
 ## Funksjoner
 
-### 🗂 Samlingsregister (kjerne)
+### Samlingsregister (kjerne)
 
-- Hver bruker har sin egen samling
-- Per puslespill: bilde av eske, tittel, brikkantall, merke (Ravensburger, Trefl osv.), vanskelighetsgrad, status
-- Status: _Tilgjengelig / Utlånt / Pakket bort_
-- Se vennenes samlinger i rutenett per person
+- Hver bruker har sin samling per kategori (puslespill, bøker, brettspill, filmer)
+- Per gjenstand: bilde, tittel, metadata (f.eks. brikkantall for puslespill, forfatter for bok), status
+- Status: *Tilgjengelig / Utlånt / Pakket bort*
 
-### 🔄 Utlånsregister (kjerne)
+### Utlånsregister (kjerne)
 
-- Lån ut et puslespill til en venn i appen
+- Registrer utlån via +-modal eller direkte fra et objekt i samlingen
 - Begge parter får notifikasjon
-- Oversikt: utlånt av meg / lånt av meg / historikk
+- Utlånsoversikt lever i Samlinger-skjermen
 - Enkel "lever tilbake"-knapp
 - Valgfri påminnelse etter X uker
 
-### 🌟 Ønskeliste (kjerne)
+### Aktivitetslogg (kjerne)
+
+- Opprett en økt via +-modal: velg gjenstand, legg til deltakere, ta bilde, skriv notat
+- Venner kan se loggen i feeden
+- Enkel statistikk: dato, hvem som var med
+
+### Ønskeliste (fremtidig)
 
 - Alle kan se hverandres ønskelister
-- Smart kobling: hvis noen i gjengen allerede eier et spill på ønskelisten, vises "Be om å låne"-knappen direkte (join mellom `wishlists` og `puzzles` i Supabase)
-
-### 📸 Fremgangslogg (underdel)
-
-- Opprett en økt via +-modal: velg spill, legg til deltakere, ta bilde, skriv notat
-- Venner kan se loggen i feeden og kommentere/like
-- Enkel statistikk: tid brukt, dato ferdig, hvem som var med
+- "Be om å låne"-knapp når noen i gjengen allerede eier gjenstanden
 
 ---
 
@@ -144,13 +148,13 @@ Grønn toppsektion med app-ikon og tagline "Del samlingen din med vennegjengen".
 
 | Del            | Teknologi                                  |
 | -------------- | ------------------------------------------ |
-| App            | React Native (Expo)                        |
+| App            | React Native 0.83.2 (Expo 55)              |
 | Auth           | Supabase Auth (Google + Apple)             |
 | Database       | Supabase PostgreSQL                        |
 | Bilder         | Supabase Storage                           |
 | Notifikasjoner | Expo Notifications                         |
-| State          | Zustand eller React Query                  |
-| Styling        | NativeWind (Tailwind CSS for React Native) |
+| Styling        | NativeWind 4 (Tailwind CSS)                |
+| Navigasjon     | React Navigation 7 (Bottom Tabs + Modal)   |
 
 ---
 
@@ -158,23 +162,6 @@ Grønn toppsektion med app-ikon og tagline "Del samlingen din med vennegjengen".
 
 - iOS og Android (via React Native / Expo)
 - Innlogging med Google- eller Apple-konto
-
----
-
-## Skalerbarhet — fremtidige kategorier
-
-Appen designes fra start med en generisk _item_-modell slik at nye kategorier enkelt kan legges til uten å bygge om kjernelogikken.
-
-**Planlagte fremtidige kategorier:**
-
-- Brettspill
-- Bøker
-- DVDer
-- Andre fysiske ting du eier og vil ha kontroll på (verktøy, utstyr, osv.)
-
-**Fremtidig integrasjon:**
-
-- Finn.no — brukere som vil selge noe kan lenkes videre dit. Appen er ikke en salgsplattform, men kan tilby en snarvei.
 
 ---
 
@@ -189,68 +176,69 @@ Appen designes fra start med en generisk _item_-modell slik at nye kategorier en
 - [x] Laget fullstendig fargesystem med lys/mørk modus og WCAG AA-tilgjengelighet
 - [x] Satt opp React Navigation med Bottom Tab Navigator
 - [x] App-ikoner og splash screen konfigurert for iOS og Android
-- [x] Prosjekt publisert på GitHub (offentlig)
+- [x] Prosjekt publisert på GitHub
 
 **UI-komponenter**
 
-- [x] `Header` — toppbar med app-navn, bjelle-ikon og avatar (bruker `UserAvatar`)
+- [x] `Header` — toppbar med app-navn, bjelle-ikon og avatar
 - [x] `UserAvatar` — gjenbrukbar avatar med bilde eller initialer, deterministisk farge per person
 - [x] `ActiveSessionCard` — "Din økt" med grønn border, vennekort med avatar og fremdrift
-- [x] `FeedCard` — to varianter: utlån og fullført med "Ferdig"-badge
+- [x] `FeedCard` — type-agnostisk med støtte for added / started / completed / loaned
 - [x] `FeedScreen` — horisontal økt-scroll + vertikal feed, mock-data klar til Supabase-kobling
+- [x] `CollectionsScreen` — samlingstyper med antall + utlånt nå, mock-data
+- [x] `ProfileScreen` — avatar, statistikkrad, logg ut, mock-data
+- [x] `FriendsScreen` — søkefelt + venneliste, mock-data
 
 **Supabase og auth**
 
 - [x] Supabase-prosjekt opprettet (Frankfurt)
 - [x] Databaseskjema: `profiles`, `puzzles`, `sessions`, `session_participants`, `loans`
 - [x] Row Level Security (RLS) aktivert og policies satt opp på alle tabeller
-- [x] Supabase-klient koblet til appen med AsyncStorage for sesjonspersistering
+- [x] Supabase-klient med `ExpoSecureStoreAdapter` (erstatter AsyncStorage)
 - [x] Google OAuth innlogging fungerer i Expo Go
 - [x] `AuthScreen` — innloggingsskjerm med Google-knapp
-- [x] `App.tsx` styrer auth-tilstand — viser AuthScreen eller appen basert på sesjon
-
-**Fase 1 — Profil og brukerdata**
-
+- [x] `App.tsx` styrer auth-tilstand
 - [x] Supabase-trigger oppretter profil automatisk ved første innlogging
-- [x] `ProfilContext` henter innlogget brukers profil og gjør den tilgjengelig i appen
-- [x] `Header` viser ekte initialer fra profil via `UserAvatar`
+- [x] `ProfilContext` henter innlogget brukers profil
 
-**Navigasjon og feed-redesign**
+**Navigasjon**
 
-- [x] Tab-bar oppdatert: Feed | Samlinger | + | Utlån | Profil
-- [x] +-knappen åpner bottom sheet modal med tre valg (UI ferdig, handlinger kobles til i Fase 3)
-- [x] `ProfileScreen` lagt til (placeholder)
-- [x] `FeedScreen`, `FeedCard` og `ActiveSessionCard` oppdatert til ny wireframe
+- [x] Tab-bar: Feed | Samlinger | + | Venner | Profil (symmetrisk med + i sentrum)
+- [x] Utlån fjernet som egen tab — lever som seksjon i Samlinger
+- [x] +-knapp åpner bottom sheet modal (UI ferdig, handlinger kobles til i Fase 3)
+- [x] Safe area håndtert korrekt på alle skjermer
 
 ### 🔜 Plan videre
 
-**Fase 2 — Min samling**
+**Fase 2 — Samlinger**
 
-- [ ] Bygg ut `CollectionsScreen` med sub-tabs (Min samling / Venner / Ønskeliste)
-- [ ] Min samling-tab: vis brukerens puslespill fra Supabase
-- [ ] Legg til puslespill-skjerm (via +-modal) — tittel, brikkantall, merke, vanskelighetsgrad
-- [ ] Bildeopplasting via Supabase Storage (bilde av esken)
-- [ ] Endre status på puslespill (Tilgjengelig / Utlånt / Pakket bort)
+- [ ] Detaljvisning per samlingstype (f.eks. alle puslespill)
+- [ ] Legg til gjenstand via +-modal (tittel, metadata, bilde)
+- [ ] Bildeopplasting via Supabase Storage
+- [ ] Endre status på gjenstand (Tilgjengelig / Utlånt / Pakket bort)
+- [ ] Koble CollectionsScreen til ekte Supabase-data
 
 **Fase 3 — Aktive økter og feed**
 
-- [ ] Koble handlinger i +-modal (Start ny økt / Lån ut / Legg til spill)
-- [ ] Ny økt-flyt — velg spill, legg til deltakere, ta bilde, skriv notat
-- [ ] Koble `ActiveSessionCard` og `FeedCard` til ekte data fra Supabase
-- [ ] Kommenter/reager på feed-innlegg
+- [ ] Koble handlinger i +-modal (Legg til / Start økt / Registrer utlån)
+- [ ] Ny økt-flyt — velg gjenstand, legg til deltakere, ta bilde, skriv notat
+- [ ] Koble FeedCard og ActiveSessionCard til ekte data fra Supabase
+- [ ] Feed: kun aktive økter du er deltaker i (ikke alle venners private økter)
 
 **Fase 4 — Utlån**
 
-- [ ] Bygg ut `LoansScreen` — utlånt av meg / lånt av meg / historikk
-- [ ] Lån ut et puslespill til en venn via +-modal
+- [ ] Koble utlåns-seksjon i Samlinger til ekte data
+- [ ] Registrer utlån via +-modal og fra objektvisning
 - [ ] "Lever tilbake"-knapp som oppdaterer status
 - [ ] Valgfri påminnelse etter X uker
 
-**Fase 5 — Ønskeliste og venner**
+**Fase 5 — Venner og profil**
 
-- [ ] Ønskeliste-tab i Samlinger — legg til og se egne ønsker
-- [ ] Venner-tab i Samlinger — rutenett per person med forhåndsvisning
-- [ ] "Be om å låne"-knapp når noen i gjengen eier et spill på ønskelisten (join-query: `wishlists` + `puzzles`)
+- [ ] Koble FriendsScreen til ekte data (følger, søk)
+- [ ] Vis vennens profil og samling
+- [ ] Koble ProfileScreen til ekte brukerdata
+- [ ] Ønskeliste — legg til og se egne ønsker
+- [ ] "Be om å låne"-knapp når noen i gjengen eier gjenstanden
 
 **Fase 6 — Polish**
 
@@ -266,26 +254,27 @@ Appen designes fra start med en generisk _item_-modell slik at nye kategorier en
 puslespill-appen/
 ├── src/
 │   ├── navigation/
-│   │   └── AppNavigator.tsx         # Bottom tab-navigasjon
+│   │   └── AppNavigator.tsx          # Bottom tab-navigasjon + +-modal
 │   ├── screens/
-│   │   ├── AuthScreen.tsx           # Innlogging med Google
-│   │   ├── FeedScreen.tsx           # Sosial feed + aktive økter
-│   │   ├── CollectionsScreen.tsx    # Samlinger med sub-tabs (placeholder)
-│   │   ├── LoansScreen.tsx          # Utlånsoversikt (placeholder)
-│   │   └── ProfileScreen.tsx        # Profil og innstillinger (placeholder)
+│   │   ├── AuthScreen.tsx            # Innlogging med Google
+│   │   ├── FeedScreen.tsx            # Aktivitetsfeed + aktive økter
+│   │   ├── CollectionsScreen.tsx     # Samlingstyper + utlånt nå
+│   │   ├── FriendsScreen.tsx         # Venneliste og søk
+│   │   └── ProfileScreen.tsx         # Profil, statistikk og logg ut
 │   ├── components/
-│   │   ├── Header.tsx               # Toppbar med app-navn, bjelle og avatar
-│   │   ├── UserAvatar.tsx           # Avatar med bilde eller initialer
-│   │   ├── ActiveSessionCard.tsx    # Kort for pågående økt
-│   │   └── FeedCard.tsx             # Kort i sosial feed (utlån / fullført)
+│   │   ├── Header.tsx                # Toppbar med app-navn, bjelle og avatar
+│   │   ├── UserAvatar.tsx            # Avatar med bilde eller initialer
+│   │   ├── ActiveSessionCard.tsx     # Kort for pågående økt
+│   │   └── FeedCard.tsx              # Aktivitetskort i feed (type-agnostisk)
 │   ├── context/
-│   │   └── ProfilContext.tsx        # Profil-tilstand for innlogget bruker
+│   │   ├── AuthContext.tsx           # Session og auth-tilstand
+│   │   └── ProfilContext.tsx         # Profil for innlogget bruker
 │   ├── utils/
-│   │   └── initials.ts              # getInitials og getAvatarColor
+│   │   └── initials.ts               # getInitials og getAvatarColor
 │   └── lib/
-│       └── supabase.ts              # Supabase-klient med AsyncStorage
-├── assets/                          # Ikoner og splash screen
-├── App.tsx                          # Rotkomponent
-├── tailwind.config.js               # Fargesystem og theme
-└── global.css                       # Tailwind-direktiver
+│       └── supabase.ts               # Supabase-klient med SecureStore
+├── assets/                           # Ikoner og splash screen
+├── App.tsx                           # Rotkomponent
+├── tailwind.config.js                # Fargesystem og theme
+└── global.css                        # Tailwind-direktiver
 ```

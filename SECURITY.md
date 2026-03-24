@@ -84,9 +84,9 @@ Gjelder alle skjermer. Ingen loading-states, ingen retry, ingen offline-deteksjo
 ---
 
 ### 12. Mock-data i produksjonskode
-**Fil:** `src/screens/FeedScreen.tsx`
+**Filer:** `FeedScreen.tsx`, `CollectionsScreen.tsx`, `ProfileScreen.tsx`, `FriendsScreen.tsx`
 
-`MOCK_SESSIONS` og `MOCK_FEED` er hardkodet. Trenger en klar strategi for å bytte til ekte data.
+Alle skjermene bruker hardkodet mock-data. Kobles til Supabase fase for fase (se puslespill-app.md).
 
 ---
 
@@ -96,4 +96,4 @@ Gjelder alle skjermer. Ingen loading-states, ingen retry, ingen offline-deteksjo
 - [ ] 🟡 Legg til error state og retry i `ProfilContext`
 - [ ] 🟡 Valider `avatarUrl` mot hvitliste (`UserAvatar.tsx`)
 - [ ] 🟡 Vurder PKCE-flow når Supabase-dashboardet er konfigurert
-- [ ] 🟢 Erstatt mock-data med ekte Supabase-kall (`FeedScreen.tsx`)
+- [ ] 🟢 Erstatt mock-data med ekte Supabase-kall (Fase 2–5)
