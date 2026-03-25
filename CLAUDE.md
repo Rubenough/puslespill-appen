@@ -34,7 +34,7 @@ src/
 │   ├── AuthContext.tsx     # Session, user, isLoggedIn — use useAuth() anywhere
 │   └── ProfilContext.tsx   # User profile from Supabase profiles table
 ├── lib/                # supabase.ts client
-└── utils/              # Helper functions
+└── utils/              # Helper functions (initials.ts, collections.ts)
 App.tsx                 # Entry point — wraps AuthProvider, routes on session
 ```
 
@@ -64,7 +64,7 @@ App.tsx                 # Entry point — wraps AuthProvider, routes on session
 
 ### Contexts
 - `useAuth()` — returns `{ session, user, isLoggedIn, loading }`
-- `useProfil()` — returns profile data from `profiles` table (only mounted when logged in)
+- `useProfil()` — returns `{ profil, loading, error, retry }` from `profiles` table (only mounted when logged in)
 
 ### Navigation
 - Auth state in `App.tsx` routes to `AuthScreen` or `AppNavigator`

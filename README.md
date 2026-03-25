@@ -22,10 +22,10 @@ Scan QR-koden med Expo Go (iOS/Android) eller kjør i simulator.
 
 ## Navigasjon
 
-Tab-bar: Feed | Samlinger | + | Utlån | Profil
+Tab-bar: Feed | Samlinger | + | Venner | Profil
 
-- **Samlinger** har sub-tabs: Min samling / Venner / Ønskeliste
-- **+** åpner en modal med valg: Start ny økt / Lån ut / Legg til spill
+- **Samlinger** viser samlingstyper (puslespill, brettspill) + "UTLÅNT NÅ"-seksjon
+- **+** åpner en modal med valg: Legg til i samlingen / Start ny økt / Registrer utlån
 
 ## Mappestruktur
 
