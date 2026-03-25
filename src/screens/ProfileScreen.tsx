@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { supabase } from "../lib/supabase";
 import UserAvatar from "../components/UserAvatar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useProfil } from "../context/ProfilContext";
 
 const MOCK_PROFILE = {
   name: "Ruben Vareide",
@@ -17,6 +18,7 @@ const MOCK_STATS = [
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { profil } = useProfil();
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -29,9 +31,9 @@ export default function ProfileScreen() {
     >
       {/* Avatar og navn */}
       <View className="items-center mb-6">
-        <UserAvatar name={MOCK_PROFILE.name} avatarUrl={null} size={72} />
+        <UserAvatar name={profil?.full_name ?? MOCK_PROFILE.name} avatarUrl={profil?.avatar_url} size={72} />
         <Text className="text-content dark:text-content-dark text-xl font-semibold mt-3">
-          {MOCK_PROFILE.name}
+          {profil?.full_name ?? MOCK_PROFILE.name}
         </Text>
         <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mt-0.5">
           Medlem siden {MOCK_PROFILE.memberSince}
