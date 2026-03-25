@@ -7,7 +7,7 @@ import UserAvatar from "./UserAvatar";
 
 export default function Header() {
   const insets = useSafeAreaInsets();
-  const profile = useProfil();
+  const { profil: profile } = useProfil();
 
   return (
     <View

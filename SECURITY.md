@@ -33,25 +33,13 @@ PKCE-flow (`exchangeCodeForSession`) er sikrere, men krever at Supabase-prosjekt
 
 ---
 
-### 4. Stille feil i OAuth-flyten
-**Fil:** `src/screens/AuthScreen.tsx`
-
-Auth feiler uten tilbakemelding til brukeren. `WebBrowser`-resultat med `type === "cancel"` eller `"error"` er ikke håndtert. Ingen try-catch.
-
-**Fix:** Legg til try-catch + feilmeldinger som vises til brukeren.
+### ~~4. Stille feil i OAuth-flyten~~
+Alle failure modes håndtert med `Alert.alert()` og try/catch/finally. `cancel` er stille, øvrige feil viser norsk feilmelding. Løst.
 
 ---
 
-### 5. Profilhenting har ingen feiltilstand
-**Fil:** `src/context/ProfilContext.tsx`
-
-```typescript
-fetchProfile();  // ingen catch, ingen error state
-```
-
-Nettverksfeil eller Supabase-feil er usynlige — `profil` forblir `null` uten forklaring.
-
-**Fix:** Legg til error state i konteksten + retry-logikk.
+### ~~5. Profilhenting har ingen feiltilstand~~
+`ProfilContext` eksponerer nå `{ profil, loading, error, retry }`. Feil logges og lagres i error state. `retry`-funksjon tilgjengelig for konsumerende komponenter. Løst.
 
 ---
 
@@ -92,8 +80,8 @@ Alle skjermene bruker hardkodet mock-data. Kobles til Supabase fase for fase (se
 
 ## Gjenstående tiltaksliste
 
-- [ ] 🟡 Legg til try-catch + brukervennlige feilmeldinger i auth-flyt (`AuthScreen.tsx`)
-- [ ] 🟡 Legg til error state og retry i `ProfilContext`
+- [x] 🟡 Legg til try-catch + brukervennlige feilmeldinger i auth-flyt (`AuthScreen.tsx`)
+- [x] 🟡 Legg til error state og retry i `ProfilContext`
 - [ ] 🟡 Valider `avatarUrl` mot hvitliste (`UserAvatar.tsx`)
 - [ ] 🟡 Vurder PKCE-flow når Supabase-dashboardet er konfigurert
 - [ ] 🟢 Erstatt mock-data med ekte Supabase-kall (Fase 2–5)

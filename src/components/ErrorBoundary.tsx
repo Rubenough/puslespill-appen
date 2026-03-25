@@ -15,7 +15,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error("[ErrorBoundary]", error, info.componentStack);
+    console.error("[ErrorBoundary]", error.message, info.componentStack);
   }
 
   reset = () => this.setState({ hasError: false, error: null });
@@ -28,7 +28,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
             Noe gikk galt
           </Text>
           <Text className="text-sm text-content-secondary dark:text-content-secondary-dark mb-8 text-center">
-            {this.state.error?.message ?? "Ukjent feil"}
+            Noe uventet skjedde. Prøv å starte på nytt.
           </Text>
           <TouchableOpacity
             onPress={this.reset}

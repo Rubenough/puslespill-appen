@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text } from "react-native";
+import { Alert, View, Text } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
 import { supabase } from "../lib/supabase";
@@ -14,31 +14,58 @@ export default function AuthScreen() {
 
   async function signInWithGoogle() {
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: redirectUri,
-        skipBrowserRedirect: true,
-      },
-    });
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: redirectUri,
+          skipBrowserRedirect: true,
+        },
+      });
 
-    if (error || !data.url) {
-      setLoading(false);
-      return;
-    }
+      if (signInError || !data.url) {
+        Alert.alert(
+          "Innlogging feilet",
+          signInError?.message ?? "Kunne ikke starte Google-innlogging. Sjekk nettverkstilkoblingen."
+        );
+        return;
+      }
 
-    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
 
-    if (result.type === "success") {
+      if (result.type === "cancel") {
+        // Brukeren lukket nettleseren selv — ikke vis feil
+        return;
+      }
+
+      if (result.type !== "success" || !result.url) {
+        Alert.alert("Innlogging feilet", "Ingen gyldig respons fra nettleseren. Prøv igjen.");
+        return;
+      }
+
       const params = new URLSearchParams(result.url.split("#")[1]);
       const access_token = params.get("access_token");
       const refresh_token = params.get("refresh_token");
-      if (access_token && refresh_token) {
-        await supabase.auth.setSession({ access_token, refresh_token });
-      }
-    }
 
-    setLoading(false);
+      if (!access_token || !refresh_token) {
+        Alert.alert("Innlogging feilet", "Ugyldig innloggingsrespons. Prøv igjen.");
+        return;
+      }
+
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      });
+
+      if (sessionError) {
+        Alert.alert("Innlogging feilet", "Kunne ikke opprette sesjon. Prøv igjen.");
+      }
+    } catch (err) {
+      console.error("OAuth-feil:", err);
+      Alert.alert("Uventet feil", "Noe gikk galt. Prøv igjen.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
