@@ -1,20 +1,16 @@
-import React, { ComponentProps } from "react";
+import React from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-type IoniconsName = ComponentProps<typeof Ionicons>["name"];
+import { type ItemType, ITEM_ICONS, ITEM_LABELS } from "../utils/collections";
 
 const COLLECTIONS: {
-  icon: IoniconsName;
-  label: string;
+  type: ItemType;
   count: number;
   loaned: number;
 }[] = [
-  { icon: "apps-outline", label: "Puslespill", count: 12, loaned: 2 },
-  { icon: "book-outline", label: "Bøker", count: 34, loaned: 1 },
-  { icon: "game-controller-outline", label: "Brettspill", count: 8, loaned: 0 },
-  { icon: "film-outline", label: "Filmer", count: 45, loaned: 0 },
+  { type: "puslespill", count: 12, loaned: 2 },
+  { type: "brettspill", count: 8, loaned: 0 },
 ];
 
 const ACTIVE_LOANS = [
@@ -25,8 +21,8 @@ const ACTIVE_LOANS = [
     daysAgo: 14,
   },
   {
-    itemTitle: "Sapiens",
-    itemType: "Bok",
+    itemTitle: "Wingspan",
+    itemType: "Brettspill",
     loanedTo: "Lars",
     daysAgo: 3,
   },
@@ -53,7 +49,7 @@ export default function CollectionsScreen() {
       <View className="mx-4 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden mb-8">
         {COLLECTIONS.map((col, i) => (
           <TouchableOpacity
-            key={col.label}
+            key={col.type}
             className={`flex-row items-center px-4 py-4 ${
               i < COLLECTIONS.length - 1
                 ? "border-b border-border dark:border-border-dark"
@@ -61,11 +57,11 @@ export default function CollectionsScreen() {
             }`}
           >
             <View className="w-10 h-10 rounded-xl bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-4">
-              <Ionicons name={col.icon} size={20} color="#1D9E75" />
+              <Ionicons name={ITEM_ICONS[col.type]} size={20} color="#1D9E75" />
             </View>
             <View className="flex-1">
               <Text className="text-content dark:text-content-dark font-medium">
-                {col.label}
+                {ITEM_LABELS[col.type]}
               </Text>
               <Text className="text-content-secondary dark:text-content-secondary-dark text-xs">
                 {col.count} stk

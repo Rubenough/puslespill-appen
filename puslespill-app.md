@@ -8,9 +8,9 @@
 
 En sosial app for en vennegjeng/nabogjeng som samler på fysiske ting og deler dem med hverandre. Appen fungerer som et mini-biblioteksystem kombinert med en sosial aktivitetslogg — alle kan se hva andre eier, låne og bytte seg imellom, og følge hverandres aktiviteter.
 
-Appen lanseres med fire samlingstyper: **puslespill, bøker, brettspill og filmer**. Arkitekturen er generisk fra dag én, slik at nye kategorier kan legges til uten å bygge om kjernelogikken.
+Appen lanseres med to samlingstyper: **puslespill** og **brettspill**. Med mulighet til å utvide til andre som **bøker og filmer** senere. Arkitekturen er generisk fra dag én, slik at nye kategorier kan legges til uten å bygge om kjernelogikken.
 
-**Langsiktig visjon:** Finn.no-integrasjon for salg kan vurderes på et senere tidspunkt, men appen er ikke en salgsplattform.
+**Langsiktig visjon:** Finn.no-integrasjon eller tise for salg kan vurderes på et senere tidspunkt, men appen er ikke en salgsplattform.
 
 ---
 
@@ -27,20 +27,21 @@ Appen lanseres med fire samlingstyper: **puslespill, bøker, brettspill og filme
 
 ### Bottom tab-bar
 
-| Fane      | Innhold                                                        |
-| --------- | -------------------------------------------------------------- |
-| Feed      | Aktivitetsstrøm fra venner + aktive økter du er med i          |
-| Samlinger | Dine samlingstyper + utlånt nå                                 |
-| + (modal) | Legg til i samlingen / Start ny økt / Registrer utlån          |
-| Venner    | Liste over venner du følger, søk etter nye                     |
-| Profil    | Profil, statistikk og innstillinger                            |
+| Fane      | Innhold                                               |
+| --------- | ----------------------------------------------------- |
+| Feed      | Aktivitetsstrøm fra venner + aktive økter du er med i |
+| Samlinger | Dine samlingstyper + utlånt nå                        |
+| + (modal) | Legg til i samlingen / Start ny økt / Registrer utlån |
+| Venner    | Liste over venner du følger, søk etter nye            |
+| Profil    | Profil, statistikk og innstillinger                   |
 
 Utlånsoversikt lever som en seksjon ("UTLÅNT NÅ") inne i Samlinger-skjermen — ikke som egen tab.
 
 ### Samlinger
 
 Én skjerm med:
-- Liste over samlingstyper (Puslespill / Bøker / Brettspill / Filmer) med antall og utlånt-indikator
+
+- Liste over samlingstyper (Puslespill) med antall og utlånt-indikator
 - Seksjon "UTLÅNT NÅ" — aktive utlån på tvers av alle kategorier
 - Trykk på en kategori åpner detaljvisning for den samlingstypen
 
@@ -48,7 +49,7 @@ Utlånsoversikt lever som en seksjon ("UTLÅNT NÅ") inne i Samlinger-skjermen �
 
 Tittel: "Hva vil du gjøre?" — tre valg:
 
-1. **Legg til i samlingen** — Puslespill, bok, brettspill, film ...
+1. **Legg til i samlingen** — Puslespill, brettspill
 2. **Start ny økt** — Logg en aktivitet
 3. **Registrer utlån** — Lån ut til en venn
 
@@ -60,16 +61,17 @@ Aktivitetsstrøm som er type-agnostisk — samme kortformat for alle samlingstyp
 
 ### Hendelsestyper i feed
 
-| Type        | Eksempel                                          |
-| ----------- | ------------------------------------------------- |
-| `added`     | Ole la til "Sapiens" i boksamlingen sin           |
-| `started`   | Petter startet en økt — Kinkaku-ji 1000 brikker   |
-| `completed` | Turid fullførte Wingspan                          |
-| `loaned`    | Lars lånte ut Catan til Kari                      |
+| Type        | Eksempel                                        |
+| ----------- | ----------------------------------------------- |
+| `added`     | Ole la til "Sapiens" i boksamlingen sin         |
+| `started`   | Petter startet en økt — Kinkaku-ji 1000 brikker |
+| `completed` | Turid fullførte Wingspan                        |
+| `loaned`    | Lars lånte ut Catan til Kari                    |
 
 ### Aktive økter
 
 Horisontal scroll øverst i Feed. Viser kun:
+
 - Din egen aktive økt
 - Økter andre har lagt deg til i som deltaker
 
@@ -79,13 +81,13 @@ Vennenes egne separate økter vises i Feed som `started`-hendelse, ikke i aktive
 
 ## Skjermstatus
 
-| Skjerm               | Status                                        |
-| -------------------- | --------------------------------------------- |
-| AuthScreen           | Fungerer — Google OAuth                        |
-| FeedScreen           | Mock-data — kobles til Supabase i Fase 3       |
-| CollectionsScreen    | Mock-data — kobles til Supabase i Fase 2       |
-| FriendsScreen        | Mock-data — kobles til Supabase i Fase 5       |
-| ProfileScreen        | Mock-data — kobles til Supabase i Fase 5       |
+| Skjerm            | Status                                   |
+| ----------------- | ---------------------------------------- |
+| AuthScreen        | Fungerer — Google OAuth                  |
+| FeedScreen        | Mock-data — kobles til Supabase i Fase 3 |
+| CollectionsScreen | Mock-data — kobles til Supabase i Fase 2 |
+| FriendsScreen     | Mock-data — kobles til Supabase i Fase 5 |
+| ProfileScreen     | Mock-data — kobles til Supabase i Fase 5 |
 
 ---
 
@@ -119,9 +121,9 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 
 ### Samlingsregister (kjerne)
 
-- Hver bruker har sin samling per kategori (puslespill, bøker, brettspill, filmer)
-- Per gjenstand: bilde, tittel, metadata (f.eks. brikkantall for puslespill, forfatter for bok), status
-- Status: *Tilgjengelig / Utlånt / Pakket bort*
+- Hver bruker har sin samling per kategori (puslespill, brettspill)
+- Per gjenstand: bilde, tittel, metadata (f.eks. brikkantall for puslespill, spillerantall for brettspill), status
+- Status: _Tilgjengelig / Utlånt / Pakket bort_
 
 ### Utlånsregister (kjerne)
 
@@ -146,15 +148,15 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 
 ## Teknisk stack
 
-| Del            | Teknologi                                  |
-| -------------- | ------------------------------------------ |
-| App            | React Native 0.83.2 (Expo 55)              |
-| Auth           | Supabase Auth (Google + Apple)             |
-| Database       | Supabase PostgreSQL                        |
-| Bilder         | Supabase Storage                           |
-| Notifikasjoner | Expo Notifications                         |
-| Styling        | NativeWind 4 (Tailwind CSS)                |
-| Navigasjon     | React Navigation 7 (Bottom Tabs + Modal)   |
+| Del            | Teknologi                                |
+| -------------- | ---------------------------------------- |
+| App            | React Native 0.83.2 (Expo 55)            |
+| Auth           | Supabase Auth (Google + Apple)           |
+| Database       | Supabase PostgreSQL                      |
+| Bilder         | Supabase Storage                         |
+| Notifikasjoner | Expo Notifications                       |
+| Styling        | NativeWind 4 (Tailwind CSS)              |
+| Navigasjon     | React Navigation 7 (Bottom Tabs + Modal) |
 
 ---
 

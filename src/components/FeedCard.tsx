@@ -1,25 +1,8 @@
-import React, { ComponentProps } from "react";
+import React from "react";
 import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import UserAvatar from "./UserAvatar";
-
-type IoniconsName = ComponentProps<typeof Ionicons>["name"];
-
-type ItemType = "puslespill" | "bok" | "brettspill" | "film";
-
-const ITEM_ICONS: Record<ItemType, IoniconsName> = {
-  puslespill: "apps-outline",
-  bok: "book-outline",
-  brettspill: "game-controller-outline",
-  film: "film-outline",
-};
-
-const ITEM_LABELS: Record<ItemType, string> = {
-  puslespill: "Puslespill",
-  bok: "Bok",
-  brettspill: "Brettspill",
-  film: "Film",
-};
+import { type ItemType, ITEM_ICONS, ITEM_LABELS } from "../utils/collections";
 
 type BaseCard = {
   userName: string;
