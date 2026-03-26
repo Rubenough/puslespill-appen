@@ -5,14 +5,18 @@ import {
   TouchableOpacity,
   Modal,
   Pressable,
+  Alert,
   useColorScheme,
 } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
+import { RootStackParamList } from "./RootNavigator";
 
 type IoniconsName = ComponentProps<typeof Ionicons>["name"];
 import FeedScreen from "../screens/FeedScreen";
-import CollectionsScreen from "../screens/CollectionsScreen";
+import CollectionsStack from "./CollectionsStack";
 import FriendsScreen from "../screens/FriendsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 
@@ -25,21 +29,24 @@ const colors = {
   itemBg: { light: "#F5F5F4", dark: "#3C3938" },
 };
 
-const MODAL_ITEMS: { icon: IoniconsName; title: string; subtitle: string }[] = [
+const MODAL_ITEMS: { icon: IoniconsName; title: string; subtitle: string; action: string }[] = [
   {
     icon: "add-circle-outline",
     title: "Legg til i samlingen",
-    subtitle: "Puslespill, bok, brettspill, film ...",
+    subtitle: "Puslespill, brettspill ...",
+    action: "add",
   },
   {
     icon: "time-outline",
     title: "Start ny økt",
     subtitle: "Logg en aktivitet",
+    action: "session",
   },
   {
     icon: "arrow-forward-outline",
     title: "Registrer utlån",
     subtitle: "Lån ut til en venn",
+    action: "loan",
   },
 ];
 
@@ -50,10 +57,24 @@ function PlaceholderScreen() {
 
 const Tab = createBottomTabNavigator();
 
+type RootNavProp = NativeStackNavigationProp<RootStackParamList>;
+
 export default function AppNavigator() {
   const scheme = useColorScheme();
   const dark = scheme === "dark";
   const [modalVisible, setModalVisible] = useState(false);
+  const navigation = useNavigation<RootNavProp>();
+
+  function handleModalAction(action: string) {
+    setModalVisible(false);
+    if (action === "add") {
+      Alert.alert("Legg til i samlingen", "Velg type", [
+        { text: "Puslespill", onPress: () => navigation.navigate("AddItem", { type: "puslespill" }) },
+        { text: "Brettspill", onPress: () => navigation.navigate("AddItem", { type: "brettspill" }) },
+        { text: "Avbryt", style: "cancel" },
+      ]);
+    }
+  }
 
   const c = {
     surface: dark ? colors.surface.dark : colors.surface.light,
@@ -88,7 +109,7 @@ export default function AppNavigator() {
         />
         <Tab.Screen
           name="Samlinger"
-          component={CollectionsScreen}
+          component={CollectionsStack}
           options={{
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="menu-outline" size={size} color={color} />
@@ -191,6 +212,7 @@ export default function AppNavigator() {
           {MODAL_ITEMS.map((item) => (
             <TouchableOpacity
               key={item.title}
+              onPress={() => handleModalAction(item.action)}
               style={{
                 flexDirection: "row",
                 alignItems: "center",

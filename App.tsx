@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import * as SplashScreen from "expo-splash-screen";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
-import AppNavigator from "./src/navigation/AppNavigator";
+import RootNavigator from "./src/navigation/RootNavigator";
 import AuthScreen from "./src/screens/AuthScreen";
 import { ProfilProvider } from "./src/context/ProfilContext";
 import ErrorBoundary from "./src/components/ErrorBoundary";
@@ -25,7 +25,7 @@ function AppContent() {
     <NavigationContainer>
       {session ? (
         <ProfilProvider>
-          <AppNavigator />
+          <RootNavigator />
         </ProfilProvider>
       ) : (
         <AuthScreen />

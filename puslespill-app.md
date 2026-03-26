@@ -216,8 +216,8 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 
 **Fase 2 — Samlinger**
 
-- [ ] Detaljvisning per samlingstype (f.eks. alle puslespill)
-- [ ] Legg til gjenstand via +-modal (tittel, metadata, bilde)
+- [x] Detaljvisning per samlingstype (f.eks. alle puslespill)
+- [x] Legg til gjenstand via +-modal (tittel, metadata, bilde)
 - [ ] Bildeopplasting via Supabase Storage
 - [ ] Endre status på gjenstand (Tilgjengelig / Utlånt / Pakket bort)
 - [ ] Koble CollectionsScreen til ekte Supabase-data
