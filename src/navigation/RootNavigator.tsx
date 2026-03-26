@@ -2,11 +2,13 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AppNavigator from "./AppNavigator";
 import AddItemScreen from "../screens/AddItemScreen";
-import { type ItemType } from "../utils/collections";
+import EditItemScreen from "../screens/EditItemScreen";
+import { type ItemType, type Item } from "../utils/collections";
 
 export type RootStackParamList = {
   Tabs: undefined;
   AddItem: { type: ItemType };
+  EditItem: { item: Item; type: ItemType };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -18,6 +20,11 @@ export default function RootNavigator() {
       <Stack.Screen
         name="AddItem"
         component={AddItemScreen}
+        options={{ presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="EditItem"
+        component={EditItemScreen}
         options={{ presentation: "modal" }}
       />
     </Stack.Navigator>

@@ -14,3 +14,13 @@ export const ITEM_LABELS: Record<ItemType, string> = {
   puslespill: "Puslespill",
   brettspill: "Brettspill",
 };
+
+export type Item = {
+  id: string;
+  title: string;
+  brand: string | null;
+  piece_count: number | null;
+  player_count: number | null;
+  difficulty: string | null;
+  status: string | null;
+};
