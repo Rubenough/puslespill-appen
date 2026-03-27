@@ -31,7 +31,7 @@ Appen lanseres med to samlingstyper: **puslespill** og **brettspill**. Med mulig
 | --------- | ----------------------------------------------------- |
 | Feed      | Aktivitetsstrøm fra venner + aktive økter du er med i |
 | Samlinger | Dine samlingstyper + utlånt nå                        |
-| + (modal) | Legg til i samlingen / Start ny økt / Registrer utlån |
+| + (modal) | Legg til i samlingen / Start ny økt |
 | Venner    | Liste over venner du følger, søk etter nye            |
 | Profil    | Profil, statistikk og innstillinger                   |
 
@@ -47,11 +47,12 @@ Utlånsoversikt lever som en seksjon ("UTLÅNT NÅ") inne i Samlinger-skjermen �
 
 ### +-modal (bottom sheet)
 
-Tittel: "Hva vil du gjøre?" — tre valg:
+Tittel: "Hva vil du gjøre?" — to valg:
 
 1. **Legg til i samlingen** — Puslespill, brettspill
 2. **Start ny økt** — Logg en aktivitet
-3. **Registrer utlån** — Lån ut til en venn
+
+"Registrer utlån" er fjernet fra +-modalen — utlån registreres direkte fra gjenstanden i CollectionDetailScreen, der konteksten er naturlig.
 
 ### Handlingsark på gjenstand
 
@@ -99,18 +100,19 @@ Vennenes egne separate økter vises i Feed som `started`-hendelse, ikke i aktive
 
 ## Skjermstatus
 
-| Skjerm                  | Status                                                        |
-| ----------------------- | ------------------------------------------------------------- |
-| AuthScreen              | Ferdig — Google OAuth med feilhåndtering                      |
-| FeedScreen              | Mock-data — kobles til Supabase i Fase 3                      |
-| CollectionsScreen       | Ferdig — ekte data fra Supabase, inkl. "UTLÅNT NÅ"-seksjon   |
-| CollectionDetailScreen  | Ferdig — ekte data, handlingsark med alle lånefunksjoner      |
-| AddItemScreen           | Ferdig — insert til Supabase                                  |
-| EditItemScreen          | Ferdig — forhåndsutfylt update til Supabase                   |
-| FriendsScreen           | Mock-data — kobles til Supabase i Fase 5                      |
-| ProfileScreen           | Hybrid — avatar/navn ekte, statistikk mock                    |
-| LoansScreen             | Slettet — utlån lever i CollectionsScreen + ProfileScreen     |
-| NewSessionScreen        | Ferdig — modal med gjenstand, deltakere, fullført-toggle, bilde og notat |
+| Skjerm                  | Status                                                                             |
+| ----------------------- | ---------------------------------------------------------------------------------- |
+| AuthScreen              | Ferdig — Google OAuth med feilhåndtering                                           |
+| FeedScreen              | Hybrid — aktive egne økter ekte (Supabase), feed mock                              |
+| CollectionsScreen       | Ferdig — ekte data, "UTLÅNT NÅ" tappbar med registrer-retur-flyt                  |
+| CollectionDetailScreen  | Ferdig — ekte data, handlingsark med alle lånefunksjoner                           |
+| AddItemScreen           | Ferdig — insert til Supabase                                                       |
+| EditItemScreen          | Ferdig — forhåndsutfylt update til Supabase                                        |
+| FriendsScreen           | Mock-data — kobles til Supabase i Fase 5                                           |
+| ProfileScreen           | Hybrid — avatar/navn ekte, statistikk mock                                         |
+| NewSessionScreen        | Ferdig — modal med gjenstand, deltakere, fullført-toggle, bilde og notat           |
+| SessionDetailScreen     | Ferdig — hero-bilde, progresjonstidslinje, fullskjerm-modal, merk som fullført     |
+| EditSessionScreen       | Ferdig — rediger deltakere og notat (modal)                                        |
 
 ---
 
@@ -235,7 +237,7 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 - [x] Tab-bar: Feed | Samlinger | + | Venner | Profil (symmetrisk med + i sentrum)
 - [x] `RootNavigator` — Stack som wrapper tabs + AddItem, EditItem og NewSession som modaler
 - [x] `CollectionsStack` — Stack for CollectionsList → CollectionDetail
-- [x] +-knapp åpner bottom sheet modal med tre valg
+- [x] +-knapp åpner bottom sheet modal med to valg (utlån fjernet — lever på item-nivå)
 - [x] Safe area håndtert korrekt på alle skjermer
 
 **Samlinger (Fase 2)**
@@ -252,6 +254,11 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 - [x] `NewSessionScreen` — gjenstand, fritekst-deltakere, fullført-toggle, bilde (Supabase Storage), notat
 - [x] Lagres til `sessions` + `session_participants`
 - [x] `expo-image-picker` integrert med `session-images` bucket
+- [x] `FeedScreen` — aktive egne økter fra Supabase (`sessions` + `session_images`)
+- [x] `ActiveSessionCard` — tappbar, navigerer til `SessionDetailScreen`
+- [x] `SessionDetailScreen` — hero-bilde (siste fra `session_images`), progresjonstidslinje, deltakere, notat, fullskjerm-modal, "Merk som fullført"
+- [x] `EditSessionScreen` — rediger deltakere og notat (modal fra SessionDetail)
+- [x] `session_images`-tabell for progresjon med tidslinje per økt
 
 **Utlån (Fase 4 — delvis)**
 
@@ -259,7 +266,7 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 - [x] Synlighets-toggle (offentlig/privat) — viser aktivitet i feed uten å avsløre låntaker
 - [x] "Registrer retur" setter `returned_at` og oppdaterer status atomisk (via DB-trigger)
 - [x] Lån er private som standard — RLS sikrer at kun eier ser sine lån
-- [x] "UTLÅNT NÅ" i CollectionsScreen viser gjenstandsnavn, låntaker og dager siden utlån
+- [x] "UTLÅNT NÅ" i CollectionsScreen viser gjenstandsnavn, låntaker og dager siden utlån — tappbar med registrer-retur-flyt
 
 ---
 
@@ -270,10 +277,13 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 - [x] `NewSessionScreen` — modal med gjenstand, deltakere, fullført-toggle, bilde og notat
 - [x] "Start økt" i handlingsarket åpner `NewSessionScreen` med gjenstand forhåndsvalgt
 - [x] "Start ny økt" i +-menyen åpner `NewSessionScreen`
-- [ ] "Registrer utlån" fra +-menyen kobles til utlånsflyt (gjenstand-velger + skjema)
-- [ ] Koble FeedCard og ActiveSessionCard til ekte data fra Supabase
-- [ ] Feed: kun aktive økter du er deltaker i (ikke alle venners private økter)
+- [x] "Registrer utlån" fjernet fra +-menyen — lever på item-nivå
+- [x] Aktive egne økter i FeedScreen koblet til Supabase
+- [x] `SessionDetailScreen` — progresjonstidslinje, bilde-opplasting, merk som fullført
+- [x] `EditSessionScreen` — rediger deltakere og notat
+- [ ] Feed: aktive økter fra venner der du er invitert som deltaker
 - [ ] `loaned`-hendelse i feed basert på `is_public = true` lån (uten å vise låntaker)
+- [ ] FeedCard koblet til ekte data (erstatting for `MOCK_FEED`)
 - [ ] Utlånshistorikk som seksjon i ProfileScreen ("Mine utlån" — aktive + returnerte)
 
 **Fase 4 — Utlån (resterende)**
@@ -304,19 +314,21 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 puslespill-appen/
 ├── src/
 │   ├── navigation/
-│   │   ├── RootNavigator.tsx         # Stack: Tabs + AddItem + EditItem (modaler)
-│   │   ├── AppNavigator.tsx          # Bottom tab-navigasjon + +-modal
+│   │   ├── RootNavigator.tsx         # Stack: Tabs + AddItem + EditItem + NewSession + SessionDetail + EditSession
+│   │   ├── AppNavigator.tsx          # Bottom tab-navigasjon + +-modal (2 valg)
 │   │   └── CollectionsStack.tsx      # Stack: CollectionsList → CollectionDetail
 │   ├── screens/
 │   │   ├── AuthScreen.tsx            # Innlogging med Google
-│   │   ├── FeedScreen.tsx            # Aktivitetsfeed + aktive økter (mock)
-│   │   ├── CollectionsScreen.tsx     # Samlingstyper + utlånt nå (ekte data)
+│   │   ├── FeedScreen.tsx            # Aktive egne økter (ekte) + feed (mock)
+│   │   ├── CollectionsScreen.tsx     # Samlingstyper + utlånt nå med retur-flyt (ekte data)
 │   │   ├── CollectionDetailScreen.tsx # Gjenstander + handlingsark (ekte data)
 │   │   ├── AddItemScreen.tsx         # Legg til gjenstand
 │   │   ├── EditItemScreen.tsx        # Rediger gjenstand
 │   │   ├── FriendsScreen.tsx         # Venneliste og søk (mock)
 │   │   ├── ProfileScreen.tsx         # Profil, statistikk og logg ut
-│   │   └── NewSessionScreen.tsx      # Ny økt-modal (ekte data, Supabase Storage)
+│   │   ├── NewSessionScreen.tsx      # Ny økt-modal (ekte data, Supabase Storage)
+│   │   ├── SessionDetailScreen.tsx   # Økt-detaljer, progresjonstidslinje, merk som fullført
+│   │   └── EditSessionScreen.tsx     # Rediger deltakere og notat (modal)
 │   ├── components/
 │   │   ├── Header.tsx                # Toppbar med app-navn og bjelle
 │   │   ├── UserAvatar.tsx            # Avatar med bilde eller initialer

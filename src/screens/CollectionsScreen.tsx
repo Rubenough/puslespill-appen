@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Alert, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -33,6 +33,7 @@ export default function CollectionsScreen() {
   const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [returningId, setReturningId] = useState<string | null>(null);
 
   const fetchData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -82,6 +83,32 @@ export default function CollectionsScreen() {
   }, [user]);
 
   useFocusEffect(useCallback(() => { fetchData(); }, [fetchData]));
+
+  function handleReturn(loan: ActiveLoan) {
+    Alert.alert(
+      "Registrer retur",
+      `Bekreft at ${loan.borrower_name} har levert tilbake "${loan.items?.title ?? "gjenstanden"}"`,
+      [
+        { text: "Avbryt", style: "cancel" },
+        {
+          text: "Lever tilbake",
+          onPress: async () => {
+            setReturningId(loan.id);
+            const { error } = await supabase
+              .from("loans")
+              .update({ returned_at: new Date().toISOString() })
+              .eq("id", loan.id);
+            setReturningId(null);
+            if (error) {
+              Alert.alert("Noe gikk galt", error.message);
+              return;
+            }
+            fetchData();
+          },
+        },
+      ],
+    );
+  }
 
   return (
     <ScrollView
@@ -180,9 +207,16 @@ export default function CollectionsScreen() {
               const dateLabel =
                 daysAgo === 0 ? "i dag" : daysAgo === 1 ? "i går" : `${daysAgo} dager siden`;
 
+              const isReturning = returningId === loan.id;
               return (
-                <View
+                <TouchableOpacity
                   key={loan.id}
+                  onPress={() => handleReturn(loan)}
+                  disabled={isReturning}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${loan.items?.title ?? "Ukjent gjenstand"}, utlånt til ${loan.borrower_name}, ${dateLabel}`}
+                  accessibilityHint="Trykk for å registrere retur"
+                  accessibilityState={{ disabled: isReturning }}
                   className={`flex-row items-center px-4 py-4 ${
                     i < activeLoans.length - 1
                       ? "border-b border-border dark:border-border-dark"
@@ -194,6 +228,7 @@ export default function CollectionsScreen() {
                       name={itemType ? ITEM_ICONS[itemType] : "cube-outline"}
                       size={20}
                       color="#1D9E75"
+                      accessible={false}
                     />
                   </View>
                   <View className="flex-1">
@@ -204,7 +239,12 @@ export default function CollectionsScreen() {
                       {loan.borrower_name} · {dateLabel}
                     </Text>
                   </View>
-                </View>
+                  {isReturning ? (
+                    <ActivityIndicator size="small" color="#1D9E75" />
+                  ) : (
+                    <Ionicons name="return-down-back-outline" size={20} color="#78716C" accessible={false} />
+                  )}
+                </TouchableOpacity>
               );
             })}
           </View>

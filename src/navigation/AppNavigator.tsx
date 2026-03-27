@@ -42,12 +42,6 @@ const MODAL_ITEMS: { icon: IoniconsName; title: string; subtitle: string; action
     subtitle: "Logg en aktivitet",
     action: "session",
   },
-  {
-    icon: "arrow-forward-outline",
-    title: "Registrer utlån",
-    subtitle: "Lån ut til en venn",
-    action: "loan",
-  },
 ];
 
 // Dummy-skjerm for +-tab — vises aldri
@@ -75,8 +69,6 @@ export default function AppNavigator() {
       ]);
     } else if (action === "session") {
       navigation.navigate("NewSession", {});
-    } else if (action === "loan") {
-      Alert.alert("Kommer snart", "Registrer utlån herfra er ikke klart ennå. Bruk handlingsarket på en gjenstand i samlingen.");
     }
   }
 

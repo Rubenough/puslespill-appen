@@ -34,16 +34,18 @@ src/
 │   ├── ActiveSessionCard.tsx   # Card for active puzzle sessions
 │   └── FeedCard.tsx            # Card for activity feed items
 ├── screens/
-│   ├── AuthScreen.tsx          # Google OAuth login
-│   ├── FeedScreen.tsx          # Active sessions + activity feed (mock data)
-│   ├── CollectionsScreen.tsx   # Lists collection types with counts (real Supabase)
-│   ├── CollectionDetailScreen.tsx  # Items in a collection (real Supabase)
-│   ├── AddItemScreen.tsx       # Add puzzle/board game form (real Supabase insert)
-│   ├── ProfileScreen.tsx       # User profile + sign-out (real Supabase profile)
-│   ├── FriendsScreen.tsx       # Friends list (mock data)
-│   └── NewSessionScreen.tsx    # Placeholder (empty)
+│   ├── AuthScreen.tsx              # Google OAuth login
+│   ├── FeedScreen.tsx              # Active sessions (real Supabase) + activity feed (mock)
+│   ├── CollectionsScreen.tsx       # Collection types + UTLÅNT NÅ with return action (real Supabase)
+│   ├── CollectionDetailScreen.tsx  # Items in a collection, loan/return actions (real Supabase)
+│   ├── AddItemScreen.tsx           # Add puzzle/board game form (real Supabase insert)
+│   ├── ProfileScreen.tsx           # User profile + sign-out (real Supabase profile)
+│   ├── FriendsScreen.tsx           # Friends list (mock data)
+│   ├── NewSessionScreen.tsx        # Start session: item → participants → image → notes
+│   ├── SessionDetailScreen.tsx     # View session: hero image, progress timeline, complete action
+│   └── EditSessionScreen.tsx       # Edit session participants + notes (modal)
 ├── navigation/
-│   ├── RootNavigator.tsx       # Stack: Tabs + AddItem modal
+│   ├── RootNavigator.tsx       # Stack: Tabs + AddItem + EditItem + NewSession + SessionDetail + EditSession
 │   ├── AppNavigator.tsx        # Bottom tab navigator (5 tabs)
 │   └── CollectionsStack.tsx    # Stack: CollectionsList → CollectionDetail
 ├── context/
@@ -97,11 +99,15 @@ RootNavigator (Stack)
 │   ├── Venner → FriendsScreen
 │   └── Profil → ProfileScreen
 ├── AddItem (Modal) → AddItemScreen
-└── EditItem (Modal) → EditItemScreen
+├── EditItem (Modal) → EditItemScreen
+├── NewSession (Modal) → NewSessionScreen
+├── SessionDetail (Push) → SessionDetailScreen
+└── EditSession (Modal) → EditSessionScreen
 ```
 - Auth state in `App.tsx` routes to `AuthScreen` or `RootNavigator`
 - React Navigation is used (not Expo Router) — `Stack.Protected` does not apply
-- The center (+) tab button opens an action modal with options: add item, start session, register loan
+- The center (+) tab button opens an action modal with two options: add item, start session
+- "Registrer utlån" is NOT in the + modal — loan registration lives on item level in CollectionDetailScreen
 - "Legg til i samlingen" → type selection alert → navigates to `AddItemScreen` with type param
 
 ### Database
@@ -122,14 +128,15 @@ Loans are **private by default** (`is_public = false`). Borrower identity must n
 ### Data status per screen
 | Screen | Data source |
 |--------|-------------|
-| CollectionsScreen | Real — Supabase `items` table |
-| CollectionDetailScreen | Real — Supabase `items` table, pull-to-refresh + focus-refresh |
-| AddItemScreen | Real — inserts to Supabase `items` |
+| FeedScreen | Hybrid — active sessions real (`sessions` + `session_images`), feed mock (`MOCK_FEED`) |
+| CollectionsScreen | Real — `items` + `loans`, UTLÅNT NÅ with return action |
+| CollectionDetailScreen | Real — `items` + `loans`, pull-to-refresh + focus-refresh, loan/return actions |
+| AddItemScreen | Real — inserts to `items` |
 | ProfileScreen | Hybrid — profile from Supabase, stats are mock |
-| FeedScreen | Mock — `MOCK_SESSIONS`, `MOCK_FEED` |
 | FriendsScreen | Mock — `MOCK_FRIENDS` |
-| LoansScreen | Slettet — utlån lever i CollectionsScreen + ProfileScreen (Fase 3) |
-| NewSessionScreen | Empty placeholder |
+| NewSessionScreen | Real — inserts to `sessions` + `session_participants`, uploads to `session-images` bucket |
+| SessionDetailScreen | Real — reads `sessions` + `session_images`, progress timeline, complete + upload actions |
+| EditSessionScreen | Real — updates `sessions.guest_names` + `sessions.notes` |
 
 ### Supabase credentials
 In `.env`: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`
