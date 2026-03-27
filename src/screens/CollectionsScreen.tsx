@@ -82,7 +82,10 @@ export default function CollectionsScreen() {
         Mine samlinger
       </Text>
 
-      <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3">
+      <Text
+        accessibilityRole="header"
+        className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3"
+      >
         SAMLINGER
       </Text>
       <View className="mx-4 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden mb-8">
@@ -90,6 +93,15 @@ export default function CollectionsScreen() {
           <TouchableOpacity
             key={col.type}
             onPress={() => navigation.navigate("CollectionDetail", { type: col.type })}
+            accessibilityRole="button"
+            accessibilityLabel={[
+              ITEM_LABELS[col.type],
+              `${col.count} stk`,
+              col.loaned > 0 ? `${col.loaned} utlånt` : null,
+            ]
+              .filter(Boolean)
+              .join(", ")}
+            accessibilityHint="Trykk for å se samlingen"
             className={`flex-row items-center px-4 py-4 ${
               i < collections.length - 1
                 ? "border-b border-border dark:border-border-dark"
@@ -108,12 +120,15 @@ export default function CollectionsScreen() {
                 {col.loaned > 0 ? ` · ${col.loaned} utlånt` : ""}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#78716C" />
+            <Ionicons name="chevron-forward" size={18} color="#78716C" accessible={false} />
           </TouchableOpacity>
         ))}
       </View>
 
-      <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3">
+      <Text
+        accessibilityRole="header"
+        className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3"
+      >
         UTLÅNT NÅ
       </Text>
       <View className="mx-4 mb-8">

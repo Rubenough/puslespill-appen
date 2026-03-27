@@ -32,6 +32,8 @@ export default class ErrorBoundary extends React.Component<Props, State> {
           </Text>
           <TouchableOpacity
             onPress={this.reset}
+            accessibilityRole="button"
+            accessibilityLabel="Prøv igjen"
             className="bg-accent dark:bg-accent-dark rounded-xl px-6 py-3"
           >
             <Text className="text-white font-medium">Prøv igjen</Text>

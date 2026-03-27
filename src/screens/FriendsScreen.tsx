@@ -52,19 +52,37 @@ export default function FriendsScreen() {
       </Text>
 
       {/* Søk — placeholder */}
-      <TouchableOpacity className="mx-4 mb-6 flex-row items-center gap-3 bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-xl px-4 py-3">
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel="Finn venner"
+        accessibilityHint="Søk etter venner"
+        className="mx-4 mb-6 flex-row items-center gap-3 bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-xl px-4 py-3"
+      >
         <Text className="text-content-secondary dark:text-content-secondary-dark flex-1">
           Finn venner ...
         </Text>
       </TouchableOpacity>
 
-      <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3">
+      <Text
+        accessibilityRole="header"
+        className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3"
+      >
         FØLGER
       </Text>
       <View className="mx-4 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden">
         {MOCK_FRIENDS.map((friend, i) => (
           <TouchableOpacity
             key={friend.name}
+            accessibilityRole="button"
+            accessibilityLabel={[
+              friend.name,
+              friend.mutualItems > 0
+                ? `${friend.mutualItems} felles i samlingen`
+                : null,
+              `Aktiv ${friend.lastActive}`,
+            ]
+              .filter(Boolean)
+              .join(", ")}
             className={`flex-row items-center px-4 py-3 ${
               i < MOCK_FRIENDS.length - 1
                 ? "border-b border-border dark:border-border-dark"

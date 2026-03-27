@@ -15,7 +15,12 @@ export default function Header() {
         <Text className="text-content dark:text-content-dark font-bold text-2xl">
           Puslespill
         </Text>
-        <Ionicons name="notifications-outline" size={24} color="#78716C" />
+        <Ionicons
+          name="notifications-outline"
+          size={24}
+          color="#78716C"
+          accessible={false}
+        />
       </View>
     </View>
   );

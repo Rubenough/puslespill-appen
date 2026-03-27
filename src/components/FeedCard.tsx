@@ -47,7 +47,11 @@ export default function FeedCard(props: Props) {
   const badge = getBadgeLabel(props.type);
 
   return (
-    <View className="bg-surface dark:bg-surface-dark rounded-2xl mx-4 mb-3 overflow-hidden border border-border dark:border-border-dark">
+    <View
+      accessible
+      accessibilityLabel={`${userName} ${getActionText(props)}: ${itemTitle}`}
+      className="bg-surface dark:bg-surface-dark rounded-2xl mx-4 mb-3 overflow-hidden border border-border dark:border-border-dark"
+    >
       {/* Topprad */}
       <View className="flex-row items-center justify-between px-4 pt-4 pb-3">
         <View className="flex-row items-center gap-3 flex-1">

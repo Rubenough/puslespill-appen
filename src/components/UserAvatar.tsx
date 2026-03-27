@@ -17,12 +17,14 @@ export default function UserAvatar({ name, avatarUrl, size = 32 }: Props) {
       <Image
         source={{ uri: avatarUrl }}
         style={{ width: size, height: size, borderRadius: size / 2 }}
+        accessible={false}
       />
     );
   }
 
   return (
     <View
+      accessible={false}
       style={{
         width: size,
         height: size,

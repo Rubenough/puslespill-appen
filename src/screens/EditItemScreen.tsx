@@ -68,8 +68,13 @@ export default function EditItemScreen() {
         className="flex-row items-center px-4 pb-4 bg-surface dark:bg-surface-dark border-b border-border dark:border-border-dark"
         style={{ paddingTop: insets.top + 16 }}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3">
-          <Ionicons name="close" size={24} color="#78716C" />
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          className="mr-3"
+          accessibilityRole="button"
+          accessibilityLabel="Lukk"
+        >
+          <Ionicons name="close" size={24} color="#78716C" accessible={false} />
         </TouchableOpacity>
         <Text className="text-content dark:text-content-dark text-lg font-semibold">
           Rediger {ITEM_LABELS[type].toLowerCase()}
@@ -93,6 +98,7 @@ export default function EditItemScreen() {
             value={title}
             onChangeText={setTitle}
             autoFocus
+            accessibilityLabel="Tittel"
           />
         </View>
 
@@ -107,6 +113,7 @@ export default function EditItemScreen() {
             placeholderTextColor="#A8A29E"
             value={brand}
             onChangeText={setBrand}
+            accessibilityLabel="Merke (valgfritt)"
           />
         </View>
 
@@ -124,6 +131,7 @@ export default function EditItemScreen() {
                 value={pieceCount}
                 onChangeText={setPieceCount}
                 keyboardType="number-pad"
+                accessibilityLabel="Antall brikker (valgfritt)"
               />
             </View>
 
@@ -135,6 +143,9 @@ export default function EditItemScreen() {
                 <TouchableOpacity
                   key={opt}
                   onPress={() => setDifficulty(difficulty === opt ? "" : opt)}
+                  accessibilityRole="button"
+                  accessibilityLabel={opt}
+                  accessibilityState={{ selected: difficulty === opt }}
                   className={`flex-1 py-3 rounded-2xl border items-center ${
                     difficulty === opt
                       ? "bg-accent dark:bg-accent-dark border-accent dark:border-accent-dark"
@@ -166,6 +177,7 @@ export default function EditItemScreen() {
                 placeholderTextColor="#A8A29E"
                 value={playerCount}
                 onChangeText={setPlayerCount}
+                accessibilityLabel="Antall spillere (valgfritt)"
               />
             </View>
           </>
@@ -180,6 +192,9 @@ export default function EditItemScreen() {
         <TouchableOpacity
           onPress={handleSave}
           disabled={saving}
+          accessibilityRole="button"
+          accessibilityLabel={`Lagre endringer for ${ITEM_LABELS[type].toLowerCase()}`}
+          accessibilityState={{ disabled: saving }}
           className="bg-accent dark:bg-accent-dark rounded-2xl py-4 items-center justify-center"
         >
           {saving ? (

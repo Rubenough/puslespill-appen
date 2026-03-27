@@ -75,7 +75,10 @@ export default function FeedScreen() {
       <Header />
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Aktive økter */}
-        <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pt-5 pb-3">
+        <Text
+          accessibilityRole="header"
+          className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pt-5 pb-3"
+        >
           AKTIVE ØKTER
         </Text>
         <ScrollView
@@ -89,7 +92,10 @@ export default function FeedScreen() {
         </ScrollView>
 
         {/* Feed */}
-        <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pt-5 pb-3">
+        <Text
+          accessibilityRole="header"
+          className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pt-5 pb-3"
+        >
           FEED
         </Text>
         <View className="pt-2">

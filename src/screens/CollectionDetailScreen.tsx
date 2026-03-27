@@ -214,8 +214,10 @@ export default function CollectionDetailScreen() {
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             className="mr-3"
+            accessibilityRole="button"
+            accessibilityLabel="Tilbake til samlinger"
           >
-            <Ionicons name="chevron-back" size={24} color="#78716C" />
+            <Ionicons name="chevron-back" size={24} color="#78716C" accessible={false} />
           </TouchableOpacity>
           <Text className="text-content dark:text-content-dark text-2xl font-medium flex-1">
             {ITEM_LABELS[type]}
@@ -248,6 +250,15 @@ export default function CollectionDetailScreen() {
                   key={item.id}
                   onPress={() => setSelectedItem(item)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={[
+                    item.title,
+                    subtitle,
+                    item.status === "Utlånt" ? "Utlånt" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
+                  accessibilityHint="Trykk for handlinger"
                   className={`flex-row items-center px-4 py-4 ${
                     i < items.length - 1
                       ? "border-b border-border dark:border-border-dark"
@@ -278,7 +289,7 @@ export default function CollectionDetailScreen() {
                       </Text>
                     </View>
                   )}
-                  <Ionicons name="chevron-forward" size={16} color="#A8A29E" />
+                  <Ionicons name="chevron-forward" size={16} color="#A8A29E" accessible={false} />
                 </TouchableOpacity>
               );
             })}
@@ -296,6 +307,8 @@ export default function CollectionDetailScreen() {
         <Pressable
           className="flex-1 bg-black/40"
           onPress={() => setSelectedItem(null)}
+          accessibilityRole="button"
+          accessibilityLabel="Lukk handlinger"
         />
         <View
           className="bg-surface dark:bg-surface-dark rounded-t-3xl px-4 pt-2"
@@ -330,6 +343,9 @@ export default function CollectionDetailScreen() {
                 Alert.alert("Kommer snart", "Økt-funksjon kommer i fase 3.")
               }
               disabled={selectedItem?.status === "Utlånt"}
+              accessibilityRole="button"
+              accessibilityLabel="Start økt"
+              accessibilityState={{ disabled: selectedItem?.status === "Utlånt" }}
               className={`flex-row items-center px-4 py-4 border-b border-border dark:border-border-dark ${
                 selectedItem?.status === "Utlånt" ? "opacity-40" : ""
               }`}
@@ -349,6 +365,8 @@ export default function CollectionDetailScreen() {
             {selectedItem?.status !== "Utlånt" ? (
               <TouchableOpacity
                 onPress={openLoanModal}
+                accessibilityRole="button"
+                accessibilityLabel="Registrer utlån"
                 className="flex-row items-center px-4 py-4"
               >
                 <Ionicons name="arrow-redo-outline" size={22} color="#1D9E75" />
@@ -359,6 +377,8 @@ export default function CollectionDetailScreen() {
             ) : (
               <TouchableOpacity
                 onPress={() => selectedItem && handleReturn(selectedItem)}
+                accessibilityRole="button"
+                accessibilityLabel="Registrer retur"
                 className="flex-row items-center px-4 py-4"
               >
                 <Ionicons name="arrow-undo-outline" size={22} color="#1D9E75" />
@@ -372,6 +392,8 @@ export default function CollectionDetailScreen() {
           <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl overflow-hidden mb-3">
             <TouchableOpacity
               onPress={() => selectedItem && handleEdit(selectedItem)}
+              accessibilityRole="button"
+              accessibilityLabel="Rediger"
               className="flex-row items-center px-4 py-4 border-b border-border dark:border-border-dark"
             >
               <Ionicons name="pencil-outline" size={22} color="#1D9E75" />
@@ -382,6 +404,8 @@ export default function CollectionDetailScreen() {
 
             <TouchableOpacity
               onPress={() => selectedItem && handleDelete(selectedItem)}
+              accessibilityRole="button"
+              accessibilityLabel="Slett"
               className="flex-row items-center px-4 py-4"
             >
               <Ionicons name="trash-outline" size={22} color="#EF4444" />
@@ -391,6 +415,8 @@ export default function CollectionDetailScreen() {
 
           <TouchableOpacity
             onPress={() => setSelectedItem(null)}
+            accessibilityRole="button"
+            accessibilityLabel="Avbryt"
             className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center"
           >
             <Text className="text-content dark:text-content-dark font-semibold text-base">
@@ -410,6 +436,8 @@ export default function CollectionDetailScreen() {
         <Pressable
           className="flex-1 bg-black/40"
           onPress={() => setLoanModalVisible(false)}
+          accessibilityRole="button"
+          accessibilityLabel="Lukk utlånsmodal"
         />
         <View
           className="bg-surface dark:bg-surface-dark rounded-t-3xl px-4 pt-2"
@@ -437,6 +465,7 @@ export default function CollectionDetailScreen() {
               onChangeText={setBorrowerName}
               autoFocus
               autoCapitalize="words"
+              accessibilityLabel="Navn på låntaker"
             />
           </View>
 
@@ -455,6 +484,8 @@ export default function CollectionDetailScreen() {
               onValueChange={setLoanIsPublic}
               trackColor={{ false: "#D6D3D1", true: "#1D9E75" }}
               thumbColor="white"
+              accessibilityLabel="Synlig for felles venner"
+              accessibilityHint="Viser at du har lånt ut, men ikke hvem til"
             />
           </View>
 
@@ -462,6 +493,9 @@ export default function CollectionDetailScreen() {
           <TouchableOpacity
             onPress={handleLoan}
             disabled={actionLoading}
+            accessibilityRole="button"
+            accessibilityLabel="Lån ut"
+            accessibilityState={{ disabled: actionLoading }}
             className="bg-accent dark:bg-accent-dark rounded-2xl py-4 items-center justify-center mb-3"
           >
             {actionLoading ? (
@@ -473,6 +507,8 @@ export default function CollectionDetailScreen() {
 
           <TouchableOpacity
             onPress={() => setLoanModalVisible(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Avbryt"
             className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center"
           >
             <Text className="text-content dark:text-content-dark font-semibold text-base">

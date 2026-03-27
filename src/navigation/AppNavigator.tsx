@@ -125,6 +125,7 @@ export default function AppNavigator() {
               <TouchableOpacity
                 onPress={() => setModalVisible(true)}
                 style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+                accessibilityRole="button"
                 accessibilityLabel="Ny økt"
               >
                 <View
@@ -173,6 +174,8 @@ export default function AppNavigator() {
         <Pressable
           style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}
           onPress={() => setModalVisible(false)}
+          accessibilityRole="button"
+          accessibilityLabel="Lukk meny"
         />
         <View
           style={{
@@ -213,6 +216,9 @@ export default function AppNavigator() {
             <TouchableOpacity
               key={item.title}
               onPress={() => handleModalAction(item.action)}
+              accessibilityRole="button"
+              accessibilityLabel={item.title}
+              accessibilityHint={item.subtitle}
               style={{
                 flexDirection: "row",
                 alignItems: "center",

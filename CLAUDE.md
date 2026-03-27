@@ -135,6 +135,105 @@ Loans are **private by default** (`is_public = false`). Borrower identity must n
 ### Supabase credentials
 In `.env`: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`
 
+## Accessibility (WCAG AA)
+
+All new and modified UI must follow these rules. The codebase has already been audited and fixed — maintain the same patterns.
+
+### Required props by element type
+
+**Every `TouchableOpacity` and `Pressable` (interactive):**
+```tsx
+<TouchableOpacity
+  accessibilityRole="button"
+  accessibilityLabel="Short description of action"
+  accessibilityHint="What happens when pressed"   // only if not obvious
+  accessibilityState={{ disabled: isDisabled }}   // when applicable
+>
+```
+
+**Modal backdrop `Pressable` (dismiss overlay):**
+```tsx
+<Pressable
+  accessibilityRole="button"
+  accessibilityLabel="Lukk [modal name]"
+  onPress={...}
+/>
+```
+
+**Every `TextInput`:**
+```tsx
+<TextInput
+  accessibilityLabel="Field name (valgfritt)"  // matches visible label
+  ...
+/>
+```
+
+**`Switch` components:**
+```tsx
+<Switch
+  accessibilityLabel="What this toggle controls"
+  accessibilityHint="Brief explanation of effect"
+  ...
+/>
+```
+
+**Selection/toggle buttons (e.g. difficulty picker):**
+```tsx
+<TouchableOpacity
+  accessibilityRole="button"
+  accessibilityLabel={optionLabel}
+  accessibilityState={{ selected: isSelected }}
+  ...
+/>
+```
+
+**Section headers (all-caps labels like "SAMLINGER", "FEED"):**
+```tsx
+<Text accessibilityRole="header" ...>SAMLINGER</Text>
+```
+
+**List rows (tappable items in a list):**
+```tsx
+<TouchableOpacity
+  accessibilityRole="button"
+  accessibilityLabel={[title, subtitle, statusIfAny].filter(Boolean).join(", ")}
+  accessibilityHint="Trykk for handlinger"  // if it opens a sheet
+  ...
+/>
+```
+
+**Cards that group multiple pieces of info (FeedCard, ActiveSessionCard):**
+```tsx
+<View
+  accessible
+  accessibilityLabel="Full sentence describing the card content"
+  ...
+/>
+```
+
+**Decorative icons and images (no semantic meaning):**
+```tsx
+<Ionicons ... accessible={false} />
+<Image ... accessible={false} />
+<View accessible={false} ...>   // initials avatar, icon wrappers
+```
+
+### `UserAvatar` is always decorative
+`UserAvatar` renders with `accessible={false}` — the accessible name lives on the parent element (list row, card, etc.).
+
+### Color contrast
+Custom theme colors in `tailwind.config.js` are pre-validated at WCAG AA:
+- Accent green `#1D9E75` on white: 4.6:1 ✓
+- Accent green `#34D399` on `stone-800`: 7.2:1 ✓
+- Do not add new color combinations without verifying contrast (use a contrast checker)
+- `#78716C` (stone-500) on dark surfaces fails — avoid using it as text or icon color in dark mode
+
+### What to avoid
+- Do not add interactive elements (TouchableOpacity, Pressable, Button) without `accessibilityRole` and `accessibilityLabel`
+- Do not add TextInput fields without `accessibilityLabel`
+- Do not add section header labels without `accessibilityRole="header"`
+- Do not mark elements as `accessible={false}` unless they are purely decorative
+
 ## What to Avoid
 - Do not add a test framework unless explicitly asked
 - Do not use `StyleSheet` from React Native — use NativeWind classes instead

@@ -23,8 +23,12 @@ type Props = OwnSession | FriendSession;
 export default function ActiveSessionCard(props: Props) {
   const { puzzleTitle, dayNumber, timeLabel } = props;
 
+  const ownerLabel = props.isOwn ? "Din økt" : props.userName;
+
   return (
     <View
+      accessible
+      accessibilityLabel={`${ownerLabel}: ${puzzleTitle}, dag ${dayNumber}, ${timeLabel}`}
       style={{ width: 200 }}
       className={`rounded-xl p-3 bg-surface dark:bg-surface-dark mr-3 ${
         props.isOwn

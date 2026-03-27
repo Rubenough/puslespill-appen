@@ -64,6 +64,8 @@ export default function ProfileScreen() {
       {/* Logg ut */}
       <TouchableOpacity
         onPress={signOut}
+        accessibilityRole="button"
+        accessibilityLabel="Logg ut"
         className="w-full bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-xl py-4 items-center"
       >
         <Text className="text-content dark:text-content-dark font-medium">
