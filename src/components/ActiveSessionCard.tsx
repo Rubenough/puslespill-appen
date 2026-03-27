@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, Image, TouchableOpacity } from "react-native";
 import UserAvatar from "./UserAvatar";
 
 type OwnSession = {
@@ -7,6 +7,8 @@ type OwnSession = {
   puzzleTitle: string;
   dayNumber: number;
   timeLabel: string;
+  imageUrl?: string | null;
+  onPress?: () => void;
 };
 
 type FriendSession = {
@@ -16,6 +18,8 @@ type FriendSession = {
   puzzleTitle: string;
   dayNumber: number;
   timeLabel: string;
+  imageUrl?: string | null;
+  onPress?: () => void;
 };
 
 type Props = OwnSession | FriendSession;
@@ -26,9 +30,11 @@ export default function ActiveSessionCard(props: Props) {
   const ownerLabel = props.isOwn ? "Din økt" : props.userName;
 
   return (
-    <View
-      accessible
+    <TouchableOpacity
+      onPress={props.onPress}
+      accessibilityRole="button"
       accessibilityLabel={`${ownerLabel}: ${puzzleTitle}, dag ${dayNumber}, ${timeLabel}`}
+      accessibilityHint="Trykk for å se økt-detaljer"
       style={{ width: 200 }}
       className={`rounded-xl p-3 bg-surface dark:bg-surface-dark mr-3 ${
         props.isOwn
@@ -54,11 +60,20 @@ export default function ActiveSessionCard(props: Props) {
       )}
 
       {/* Bildeplass */}
-      <View className="w-full h-[110px] rounded-lg bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mb-2">
-        <Text className="text-content-secondary dark:text-content-secondary-dark text-xs">
-          Bilde
-        </Text>
-      </View>
+      {props.imageUrl ? (
+        <Image
+          source={{ uri: props.imageUrl }}
+          className="w-full h-[110px] rounded-lg mb-2"
+          resizeMode="cover"
+          accessible={false}
+        />
+      ) : (
+        <View className="w-full h-[110px] rounded-lg bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mb-2">
+          <Text className="text-content-secondary dark:text-content-secondary-dark text-xs">
+            Bilde
+          </Text>
+        </View>
+      )}
 
       {/* Tittel og fremdrift */}
       <Text
@@ -70,6 +85,6 @@ export default function ActiveSessionCard(props: Props) {
       <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-0.5">
         Dag {dayNumber} · {timeLabel}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 }
