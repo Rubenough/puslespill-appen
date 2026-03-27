@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "./AuthContext";
 
 type Profil = {
   id: string;
@@ -22,11 +23,12 @@ const ProfilContext = createContext<ProfilContextType>({
 });
 
 export function ProfilProvider({ children }: { children: React.ReactNode }) {
+  const { session } = useAuth();
   const [profil, setProfil] = useState<Profil | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -49,23 +51,17 @@ export function ProfilProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchProfile();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") fetchProfile();
-      if (event === "SIGNED_OUT") {
-        setProfil(null);
-        setError(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (session) {
+      fetchProfile();
+    } else {
+      setProfil(null);
+      setError(null);
+      setLoading(false);
+    }
+  }, [session, fetchProfile]);
 
   return (
     <ProfilContext.Provider value={{ profil, loading, error, retry: fetchProfile }}>

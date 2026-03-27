@@ -1,3 +1,5 @@
+// TODO (Fase 4): Koble til navigasjon og Supabase-data.
+// Ønskeliste-funksjonalitet er planlagt etter sosiale funksjoner (Fase 3).
 import React from "react";
 import { View, Text } from "react-native";
 

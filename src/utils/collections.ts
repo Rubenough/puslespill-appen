@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 type IoniconsName = ComponentProps<typeof Ionicons>["name"];
 
 export type ItemType = "puslespill" | "brettspill";
+export type ItemStatus = "Tilgjengelig" | "Utlånt";
 
 export const ITEM_ICONS: Record<ItemType, IoniconsName> = {
   puslespill: "extension-puzzle-outline",
@@ -15,6 +16,8 @@ export const ITEM_LABELS: Record<ItemType, string> = {
   brettspill: "Brettspill",
 };
 
+export const DIFFICULTY_OPTIONS = ["Lett", "Middels", "Vanskelig"] as const;
+
 export type Item = {
   id: string;
   title: string;
@@ -22,5 +25,5 @@ export type Item = {
   piece_count: number | null;
   player_count: number | null;
   difficulty: string | null;
-  status: string | null;
+  status: ItemStatus | null;
 };

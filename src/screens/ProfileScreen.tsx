@@ -5,10 +5,7 @@ import UserAvatar from "../components/UserAvatar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProfil } from "../context/ProfilContext";
 
-const MOCK_PROFILE = {
-  name: "Ruben Vareide",
-  memberSince: "Mars 2025",
-};
+const FALLBACK_NAME = "Ukjent bruker";
 
 const MOCK_STATS = [
   { label: "I samlingen", value: "99" },
@@ -31,12 +28,9 @@ export default function ProfileScreen() {
     >
       {/* Avatar og navn */}
       <View className="items-center mb-6">
-        <UserAvatar name={profil?.full_name ?? MOCK_PROFILE.name} avatarUrl={profil?.avatar_url} size={72} />
+        <UserAvatar name={profil?.full_name ?? FALLBACK_NAME} avatarUrl={profil?.avatar_url} size={72} />
         <Text className="text-content dark:text-content-dark text-xl font-semibold mt-3">
-          {profil?.full_name ?? MOCK_PROFILE.name}
-        </Text>
-        <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mt-0.5">
-          Medlem siden {MOCK_PROFILE.memberSince}
+          {profil?.full_name ?? FALLBACK_NAME}
         </Text>
       </View>
 

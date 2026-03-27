@@ -32,8 +32,9 @@ export default function CollectionsScreen() {
   );
   const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  async function fetchData(isRefresh = false) {
+  const fetchData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
 
     const [itemsResult, loansResult] = await Promise.all([
@@ -46,26 +47,41 @@ export default function CollectionsScreen() {
         .order("loaned_at", { ascending: false }),
     ]);
 
-    if (itemsResult.data) {
-      const summaries = COLLECTION_TYPES.map((type) => {
-        const ofType = itemsResult.data.filter((row) => row.type === type);
-        return {
-          type,
-          count: ofType.length,
-          loaned: ofType.filter((row) => row.status === "Utlånt").length,
-        };
-      });
-      setCollections(summaries);
+    if (itemsResult.error) {
+      setFetchError(itemsResult.error.message);
+      setRefreshing(false);
+      return;
+    }
+    if (loansResult.error) {
+      setFetchError(loansResult.error.message);
+      setRefreshing(false);
+      return;
     }
 
-    if (loansResult.data) {
-      setActiveLoans(loansResult.data as unknown as ActiveLoan[]);
-    }
+    setFetchError(null);
 
+    const summaries = COLLECTION_TYPES.map((type) => {
+      const ofType = itemsResult.data.filter((row) => row.type === type);
+      return {
+        type,
+        count: ofType.length,
+        loaned: ofType.filter((row) => row.status === "Utlånt").length,
+      };
+    });
+    setCollections(summaries);
+
+    // Supabase infererer joined tabeller som arrays uten genererte typer
+    const mapped: ActiveLoan[] = loansResult.data.map((row) => ({
+      id: row.id,
+      borrower_name: row.borrower_name,
+      loaned_at: row.loaned_at,
+      items: Array.isArray(row.items) ? (row.items[0] ?? null) : row.items,
+    }));
+    setActiveLoans(mapped);
     setRefreshing(false);
-  }
+  }, [user]);
 
-  useFocusEffect(useCallback(() => { fetchData(); }, []));
+  useFocusEffect(useCallback(() => { fetchData(); }, [fetchData]));
 
   return (
     <ScrollView
@@ -81,6 +97,22 @@ export default function CollectionsScreen() {
       >
         Mine samlinger
       </Text>
+
+      {fetchError && (
+        <View className="mx-4 mb-6 bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-2xl p-4 items-center">
+          <Text className="text-content dark:text-content-dark text-sm text-center mb-3">
+            Kunne ikke laste samlinger.
+          </Text>
+          <TouchableOpacity
+            onPress={() => fetchData()}
+            accessibilityRole="button"
+            accessibilityLabel="Prøv igjen"
+            className="bg-accent dark:bg-accent-dark rounded-xl px-5 py-2"
+          >
+            <Text className="text-white font-semibold text-sm">Prøv igjen</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <Text
         accessibilityRole="header"

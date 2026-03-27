@@ -43,6 +43,7 @@ export default function CollectionDetailScreen() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -52,25 +53,30 @@ export default function CollectionDetailScreen() {
   const [borrowerName, setBorrowerName] = useState("");
   const [loanIsPublic, setLoanIsPublic] = useState(false);
 
-  async function fetchItems(isRefresh = false) {
+  // Refetch when screen comes back into focus (e.g. after adding or editing an item)
+  const fetchItems = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("items")
       .select("id, title, brand, piece_count, player_count, difficulty, status")
       .eq("owner_id", user!.id)
       .eq("type", type)
       .order("created_at", { ascending: false });
 
-    setItems(data ?? []);
+    if (error) {
+      setFetchError(error.message);
+    } else {
+      setItems(data ?? []);
+      setFetchError(null);
+    }
     setLoading(false);
     setRefreshing(false);
-  }
+  }, [user, type]);
 
-  // Refetch when screen comes back into focus (e.g. after adding or editing an item)
   useFocusEffect(
     useCallback(() => {
       fetchItems();
-    }, [type]),
+    }, [fetchItems]),
   );
 
   function openLoanModal() {
@@ -191,6 +197,24 @@ export default function CollectionDetailScreen() {
     return (
       <View className="flex-1 bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center">
         <ActivityIndicator size="large" color="#1D9E75" />
+      </View>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <View className="flex-1 bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center px-8">
+        <Text className="text-content dark:text-content-dark text-center mb-4">
+          Kunne ikke laste samlingen.
+        </Text>
+        <TouchableOpacity
+          onPress={() => fetchItems()}
+          accessibilityRole="button"
+          accessibilityLabel="Prøv igjen"
+          className="bg-accent dark:bg-accent-dark rounded-xl px-6 py-3"
+        >
+          <Text className="text-white font-semibold">Prøv igjen</Text>
+        </TouchableOpacity>
       </View>
     );
   }

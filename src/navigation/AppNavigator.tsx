@@ -172,43 +172,15 @@ export default function AppNavigator() {
         onRequestClose={() => setModalVisible(false)}
       >
         <Pressable
-          style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}
+          className="flex-1 bg-black/50"
           onPress={() => setModalVisible(false)}
           accessibilityRole="button"
           accessibilityLabel="Lukk meny"
         />
-        <View
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: c.surface,
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            padding: 24,
-            paddingBottom: 48,
-          }}
-        >
+        <View className="absolute bottom-0 left-0 right-0 bg-surface dark:bg-surface-dark rounded-t-[20px] p-6 pb-12">
           {/* Drag handle */}
-          <View
-            style={{
-              width: 36,
-              height: 4,
-              borderRadius: 2,
-              backgroundColor: c.border,
-              alignSelf: "center",
-              marginBottom: 20,
-            }}
-          />
-          <Text
-            style={{
-              color: c.text,
-              fontSize: 18,
-              fontWeight: "600",
-              marginBottom: 16,
-            }}
-          >
+          <View className="w-9 h-1 rounded-full bg-border dark:bg-border-dark self-center mb-5" />
+          <Text className="text-content dark:text-content-dark text-lg font-semibold mb-4">
             Hva vil du gjøre?
           </Text>
 
@@ -219,33 +191,16 @@ export default function AppNavigator() {
               accessibilityRole="button"
               accessibilityLabel={item.title}
               accessibilityHint={item.subtitle}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: c.itemBg,
-                borderRadius: 12,
-                padding: 16,
-                marginBottom: 10,
-              }}
+              className="flex-row items-center bg-surface-secondary dark:bg-surface-dark-secondary rounded-xl p-4 mb-2.5"
             >
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 10,
-                  backgroundColor: c.surface,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 14,
-                }}
-              >
+              <View className="w-10 h-10 rounded-[10px] bg-surface dark:bg-surface-dark items-center justify-center mr-3.5">
                 <Ionicons name={item.icon} size={22} color={c.accent} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: c.text, fontWeight: "600", fontSize: 16 }}>
+              <View className="flex-1">
+                <Text className="text-content dark:text-content-dark font-semibold text-base">
                   {item.title}
                 </Text>
-                <Text style={{ color: c.inactive, fontSize: 13 }}>
+                <Text className="text-content-secondary dark:text-content-secondary-dark text-sm">
                   {item.subtitle}
                 </Text>
               </View>

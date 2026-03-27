@@ -10,12 +10,14 @@ import FeedCard from "../components/FeedCard";
 // Vennenes egne separate økter vises i Feed, ikke her.
 const MOCK_SESSIONS = [
   {
+    id: "session-1",
     isOwn: true as const,
     puzzleTitle: "Kinkaku-ji — 1000 brikker",
     dayNumber: 3,
     timeLabel: "i går",
   },
   {
+    id: "session-2",
     isOwn: false as const,
     userName: "Turid",
     avatarUrl: null,
@@ -27,6 +29,7 @@ const MOCK_SESSIONS = [
 
 const MOCK_FEED = [
   {
+    id: "feed-1",
     type: "started" as const,
     userName: "Ole Moen",
     avatarUrl: null,
@@ -35,6 +38,7 @@ const MOCK_FEED = [
     itemTitle: "Paris om natten — 500 brikker",
   },
   {
+    id: "feed-2",
     type: "added" as const,
     userName: "Turid Nielsen",
     avatarUrl: null,
@@ -43,6 +47,7 @@ const MOCK_FEED = [
     itemTitle: "Wingspan",
   },
   {
+    id: "feed-3",
     type: "completed" as const,
     userName: "Turid Nielsen",
     avatarUrl: null,
@@ -51,6 +56,7 @@ const MOCK_FEED = [
     itemTitle: "Blomstereng — 1000 brikker",
   },
   {
+    id: "feed-4",
     type: "started" as const,
     userName: "Petter Moe",
     avatarUrl: null,
@@ -59,6 +65,7 @@ const MOCK_FEED = [
     itemTitle: "Kinkaku-ji — 1000 brikker",
   },
   {
+    id: "feed-5",
     type: "loaned" as const,
     userName: "Lars Berg",
     avatarUrl: null,
@@ -86,8 +93,8 @@ export default function FeedScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
         >
-          {MOCK_SESSIONS.map((session, i) => (
-            <ActiveSessionCard key={i} {...session} />
+          {MOCK_SESSIONS.map((session) => (
+            <ActiveSessionCard key={session.id} {...session} />
           ))}
         </ScrollView>
 
@@ -99,8 +106,8 @@ export default function FeedScreen() {
           FEED
         </Text>
         <View className="pt-2">
-          {MOCK_FEED.map((item, i) => (
-            <FeedCard key={i} {...item} />
+          {MOCK_FEED.map((item) => (
+            <FeedCard key={item.id} {...item} />
           ))}
         </View>
       </ScrollView>
