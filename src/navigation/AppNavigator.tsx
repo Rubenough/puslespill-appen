@@ -73,6 +73,10 @@ export default function AppNavigator() {
         { text: "Brettspill", onPress: () => navigation.navigate("AddItem", { type: "brettspill" }) },
         { text: "Avbryt", style: "cancel" },
       ]);
+    } else if (action === "session") {
+      Alert.alert("Kommer snart", "Start ny økt er ikke klart ennå.");
+    } else if (action === "loan") {
+      Alert.alert("Kommer snart", "Registrer utlån herfra er ikke klart ennå. Bruk handlingsarket på en gjenstand i samlingen.");
     }
   }
 

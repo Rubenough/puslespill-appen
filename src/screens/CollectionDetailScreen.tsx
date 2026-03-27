@@ -96,7 +96,7 @@ export default function CollectionDetailScreen() {
 
     setActionLoading(true);
 
-    // Opprett låneregistrering
+    // Opprett låneregistrering — triggeren trg_sync_item_status setter items.status = 'Utlånt' automatisk
     const { error: loanError } = await supabase.from("loans").insert({
       item_id: loanItem.id,
       owner_id: user!.id,
@@ -104,22 +104,10 @@ export default function CollectionDetailScreen() {
       is_public: loanIsPublic,
     });
 
-    if (loanError) {
-      setActionLoading(false);
-      Alert.alert("Noe gikk galt", loanError.message);
-      return;
-    }
-
-    // Oppdater status på gjenstanden
-    const { error: itemError } = await supabase
-      .from("items")
-      .update({ status: "Utlånt" })
-      .eq("id", loanItem.id);
-
     setActionLoading(false);
 
-    if (itemError) {
-      Alert.alert("Noe gikk galt", itemError.message);
+    if (loanError) {
+      Alert.alert("Noe gikk galt", loanError.message);
       return;
     }
 
@@ -135,29 +123,17 @@ export default function CollectionDetailScreen() {
     setSelectedItem(null);
     setActionLoading(true);
 
-    // Sett returned_at på aktivt lån
+    // Sett returned_at på aktivt lån — triggeren trg_sync_item_status setter items.status = 'Tilgjengelig' automatisk
     const { error: loanError } = await supabase
       .from("loans")
       .update({ returned_at: new Date().toISOString() })
       .eq("item_id", item.id)
       .is("returned_at", null);
 
-    if (loanError) {
-      setActionLoading(false);
-      Alert.alert("Noe gikk galt", loanError.message);
-      return;
-    }
-
-    // Oppdater status på gjenstanden
-    const { error: itemError } = await supabase
-      .from("items")
-      .update({ status: "Tilgjengelig" })
-      .eq("id", item.id);
-
     setActionLoading(false);
 
-    if (itemError) {
-      Alert.alert("Noe gikk galt", itemError.message);
+    if (loanError) {
+      Alert.alert("Noe gikk galt", loanError.message);
       return;
     }
 

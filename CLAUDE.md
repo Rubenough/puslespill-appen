@@ -41,7 +41,6 @@ src/
 │   ├── AddItemScreen.tsx       # Add puzzle/board game form (real Supabase insert)
 │   ├── ProfileScreen.tsx       # User profile + sign-out (real Supabase profile)
 │   ├── FriendsScreen.tsx       # Friends list (mock data)
-│   ├── LoansScreen.tsx         # Placeholder (empty)
 │   └── NewSessionScreen.tsx    # Placeholder (empty)
 ├── navigation/
 │   ├── RootNavigator.tsx       # Stack: Tabs + AddItem modal
@@ -129,7 +128,7 @@ Loans are **private by default** (`is_public = false`). Borrower identity must n
 | ProfileScreen | Hybrid — profile from Supabase, stats are mock |
 | FeedScreen | Mock — `MOCK_SESSIONS`, `MOCK_FEED` |
 | FriendsScreen | Mock — `MOCK_FRIENDS` |
-| LoansScreen | Empty placeholder |
+| LoansScreen | Slettet — utlån lever i CollectionsScreen + ProfileScreen (Fase 3) |
 | NewSessionScreen | Empty placeholder |
 
 ### Supabase credentials

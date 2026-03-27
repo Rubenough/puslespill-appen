@@ -1,7 +1,7 @@
 # Tech Debt Audit — puslespill-appen
 
 **Date:** 2026-03-27
-**Last updated:** 2026-03-27 (Phase A + B resolved)
+**Last updated:** 2026-03-27 (Phase A + B resolved; new items TD-15–TD-19 identified)
 **Scope:** Full codebase (`src/`, `App.tsx`, config files)
 **Methodology:** Manual review + priority scoring: `(Impact + Risk) × (6 − Effort)`
 
@@ -9,28 +9,33 @@
 
 ## Summary
 
-The codebase is clean, well-structured, and has good accessibility coverage. Phase A and B debt has been resolved. The remaining open items are: (1) a critical data-integrity gap in loan operations (Phase C, requires Supabase RPC), and (2) zero test coverage. TD-12 and TD-14 are deferred until the codebase scales further.
+Phase A and B debt has been resolved. A second sweep after the EditItem / ItemForm refactor identified five new items. The critical open items are: (1) non-atomic loan operations (TD-03, Phase C), (2) zero test coverage (TD-05, Phase C), (3) two broken modal actions in the global `+` menu (TD-15, Phase C), and (4) a small type gap on `difficulty` (TD-16, quick win). TD-17–TD-19 are low priority and can be picked up as the codebase grows. TD-12 and TD-14 remain deferred until the codebase scales further.
 
 ---
 
 ## Prioritized Debt Register
 
-| #   | ID    | Title                                                         | Category      | Impact | Risk | Effort | **Score** | **Status** |
-| --- | ----- | ------------------------------------------------------------- | ------------- | ------ | ---- | ------ | --------- | ---------- |
-| 1   | TD-01 | `Item.status` is an untyped string                            | Code          | 3      | 4    | 1      | **35**    | ✅ Resolved |
-| 2   | TD-02 | AddItem / EditItem are near-identical screens                 | Code          | 4      | 3    | 2      | **28**    | ✅ Resolved |
-| 3   | TD-03 | Loan & return are non-atomic (two separate DB writes)         | Architecture  | 4      | 5    | 3      | **27**    | ⏳ Phase C  |
-| 4   | TD-04 | `as unknown as ActiveLoan[]` cast in CollectionsScreen        | Code          | 2      | 3    | 1      | **25**    | ✅ Resolved |
-| 5   | TD-05 | Zero test coverage                                            | Test          | 4      | 4    | 3      | **24**    | ⏳ Phase C  |
-| 6   | TD-06 | Fetch errors are silently swallowed in two screens            | Code          | 3      | 3    | 2      | **24**    | ✅ Resolved |
-| 7   | TD-07 | Array index used as `key` in FeedScreen                       | Code          | 2      | 2    | 1      | **20**    | ✅ Resolved |
-| 8   | TD-08 | `useFocusEffect` missing dependency in two screens            | Code          | 2      | 2    | 1      | **20**    | ✅ Resolved |
-| 9   | TD-09 | ProfilContext adds a second `onAuthStateChange` subscription  | Architecture  | 2      | 2    | 2      | **16**    | ✅ Resolved |
-| 10  | TD-10 | Developer name hardcoded in ProfileScreen mock                | Code          | 1      | 2    | 1      | **15**    | ✅ Resolved |
-| 11  | TD-11 | WishlistScreen exists but is not wired into navigation        | Documentation | 1      | 2    | 1      | **15**    | ✅ Resolved |
-| 12  | TD-12 | No data / repository layer — Supabase calls inline in screens | Architecture  | 3      | 3    | 4      | **12**    | ⏳ Phase D  |
-| 13  | TD-13 | AppNavigator bottom-sheet modal uses inline styles            | Code          | 2      | 1    | 2      | **12**    | ✅ Resolved |
-| 14  | TD-14 | `storage: ExpoSecureStoreAdapter as any` in supabase.ts       | Code          | 1      | 2    | 2      | **9**     | ⏳ Phase D  |
+| #   | ID    | Title                                                              | Category      | Impact | Risk | Effort | **Score** | **Status**  |
+| --- | ----- | ------------------------------------------------------------------ | ------------- | ------ | ---- | ------ | --------- | ----------- |
+| 1   | TD-01 | `Item.status` is an untyped string                                 | Code          | 3      | 4    | 1      | **35**    | ✅ Resolved  |
+| 2   | TD-02 | AddItem / EditItem are near-identical screens                      | Code          | 4      | 3    | 2      | **28**    | ✅ Resolved  |
+| 3   | TD-03 | Loan & return are non-atomic (two separate DB writes)              | Architecture  | 4      | 5    | 3      | **27**    | ⏳ Phase C   |
+| 4   | TD-04 | `as unknown as ActiveLoan[]` cast in CollectionsScreen             | Code          | 2      | 3    | 1      | **25**    | ✅ Resolved  |
+| 5   | TD-05 | Zero test coverage                                                 | Test          | 4      | 4    | 3      | **24**    | ⏳ Phase C   |
+| 6   | TD-06 | Fetch errors silently swallowed in two screens                     | Code          | 3      | 3    | 2      | **24**    | ✅ Resolved  |
+| 7   | TD-15 | Global modal "session" and "loan" actions are silent no-ops        | Code          | 3      | 2    | 2      | **20**    | 🆕 Phase C   |
+| 8   | TD-16 | `difficulty` not typed against `DIFFICULTY_OPTIONS`                | Code          | 2      | 2    | 1      | **20**    | 🆕 Phase C   |
+| 9   | TD-07 | Array index used as `key` in FeedScreen                            | Code          | 2      | 2    | 1      | **20**    | ✅ Resolved  |
+| 10  | TD-08 | `useFocusEffect` missing dependency in two screens                 | Code          | 2      | 2    | 1      | **20**    | ✅ Resolved  |
+| 11  | TD-09 | ProfilContext adds a second `onAuthStateChange` subscription       | Architecture  | 2      | 2    | 2      | **16**    | ✅ Resolved  |
+| 12  | TD-10 | Developer name hardcoded in ProfileScreen mock                     | Code          | 1      | 2    | 1      | **15**    | ✅ Resolved  |
+| 13  | TD-11 | WishlistScreen exists but is not wired into navigation             | Documentation | 1      | 2    | 1      | **15**    | ✅ Resolved  |
+| 14  | TD-17 | `CollectionDetailScreen` is a god component (547 lines, 10 states) | Code         | 3      | 2    | 3      | **15**    | 🆕 Phase D   |
+| 15  | TD-19 | FriendsScreen uses `friend.name` as list key                       | Code          | 1      | 2    | 1      | **15**    | 🆕 Phase C   |
+| 16  | TD-12 | No data/repository layer — Supabase calls inline in screens        | Architecture  | 3      | 3    | 4      | **12**    | ⏳ Phase D   |
+| 17  | TD-13 | AppNavigator bottom-sheet modal uses inline styles                 | Code          | 2      | 1    | 2      | **12**    | ✅ Resolved  |
+| 18  | TD-18 | LoansScreen missing roadmap comment                                | Documentation | 1      | 1    | 1      | **10**    | ✅ Resolved  |
+| 19  | TD-14 | `storage: ExpoSecureStoreAdapter as any` in supabase.ts            | Code          | 1      | 2    | 2      | **9**     | ⏳ Phase D   |
 
 ---
 
@@ -48,7 +53,7 @@ The codebase is clean, well-structured, and has good accessibility coverage. Pha
 
 ---
 
-### TD-03 — Loan & return are non-atomic _(Score: 27)_
+### TD-03 — Loan & return are non-atomic _(Score: 27)_ ⏳ Phase C
 
 **Where:** `src/screens/CollectionDetailScreen.tsx` — `handleLoan()`, `handleReturn()`
 
@@ -71,7 +76,7 @@ If step 2 fails after step 1 succeeds, the database is left inconsistent — a l
 
 ---
 
-### TD-05 — Zero test coverage _(Score: 24)_
+### TD-05 — Zero test coverage _(Score: 24)_ ⏳ Phase C
 
 **Where:** Entire project. No test files, no test runner, no CI checks.
 
@@ -90,6 +95,56 @@ If step 2 fails after step 1 succeeds, the database is left inconsistent — a l
 ### TD-06 — Fetch errors silently swallowed in two screens _(Score: 24)_ ✅
 
 **Resolved 2026-03-27.** Both `CollectionsScreen` and `CollectionDetailScreen` now check the `error` field from every Supabase query. On failure, a `fetchError` state is set and the screen renders an error message with a "Prøv igjen" retry button. The pattern mirrors `ProfilContext`.
+
+---
+
+### TD-15 — Global modal "session" and "loan" actions are silent no-ops _(Score: 20)_ 🆕 Phase C
+
+**Where:** `src/navigation/AppNavigator.tsx:68-77` — `handleModalAction()`
+
+**Problem:** The global "+" modal (`NyOkt` tab) shows three action items: "Legg til i samlingen" (works), "Start ny økt" (silent no-op), and "Registrer utlån" (silent no-op). When a user taps either of the latter two, the modal closes and nothing happens — no feedback, no navigation, no placeholder message. This is inconsistent with `CollectionDetailScreen`, which already shows an `Alert.alert("Kommer snart", ...)` for its own "Start økt" placeholder.
+
+**Current code:**
+```ts
+function handleModalAction(action: string) {
+  setModalVisible(false);
+  if (action === "add") {
+    Alert.alert(...); // only "add" does anything
+  }
+}
+```
+
+**Fix (minimal):** Add `Alert.alert("Kommer snart", "...")` for `"session"` and `"loan"` actions — identical to the pattern already used in `CollectionDetailScreen`. This makes the placeholder behaviour explicit and visible to users rather than silently doing nothing.
+
+**Fix (proper, Phase 3):** Wire "Start ny økt" to `NewSessionScreen` and "Registrer utlån" to a standalone loan-registration flow (separate from the per-item flow in `CollectionDetailScreen`).
+
+**Effort:** 15 min for the placeholder alert fix; ~1–2 days for the full Phase 3 wiring.
+
+---
+
+### TD-16 — `difficulty` not typed against `DIFFICULTY_OPTIONS` _(Score: 20)_ 🆕 Phase C
+
+**Where:** `src/utils/collections.ts:27` and `src/components/ItemForm.tsx:20`
+
+**Problem:** `DIFFICULTY_OPTIONS` is declared as `["Lett", "Middels", "Vanskelig"] as const`, but `Item.difficulty` is typed as `string | null`. This means:
+- Any arbitrary string (e.g. `"Hard"`, `"medium"`) can be stored as a difficulty without a compile-time error.
+- `ItemFormValues.difficulty` is also `string`, so the form's empty-string sentinel (`""`) is not distinguished from a valid value at the type level.
+
+**Fix:**
+```ts
+// In utils/collections.ts
+export type Difficulty = typeof DIFFICULTY_OPTIONS[number]; // "Lett" | "Middels" | "Vanskelig"
+
+// Update Item type
+difficulty: Difficulty | null;
+
+// Update ItemFormValues in ItemForm.tsx
+difficulty: Difficulty | "";
+```
+
+The `|| null` guard in `handleSave` already handles the empty-string → `null` conversion correctly; this just makes the intent explicit in the types.
+
+**Effort:** ~20 min.
 
 ---
 
@@ -123,7 +178,42 @@ If step 2 fails after step 1 succeeds, the database is left inconsistent — a l
 
 ---
 
-### TD-12 — No data / service layer — Supabase calls inline in screens _(Score: 12)_
+### TD-17 — `CollectionDetailScreen` is a god component _(Score: 15)_ 🆕 Phase D
+
+**Where:** `src/screens/CollectionDetailScreen.tsx` — 547 lines, 10 `useState` hooks
+
+**Problem:** The screen manages three distinct concerns in a single file:
+1. The items list (fetch, display, pull-to-refresh, error state)
+2. The item action sheet modal (edit, delete, loan, return triggers)
+3. The loan registration modal (borrower name input, `is_public` toggle, submit)
+
+With 10 state variables (`items`, `loading`, `refreshing`, `fetchError`, `selectedItem`, `actionLoading`, `loanItem`, `loanModalVisible`, `borrowerName`, `loanIsPublic`), the component is already at the edge of readable complexity. Adding sessions (Phase 3) or wishlist integration would push it further.
+
+**Fix (when appropriate):** Extract two child components:
+- `ItemActionSheet` — receives `selectedItem`, `onEdit`, `onDelete`, `onLoan`, `onReturn`, `onClose`
+- `LoanModal` — receives `item`, `visible`, `onSubmit`, `onClose`
+
+The screen itself becomes ~150 lines responsible only for data fetching and coordinating the two modals.
+
+**Note:** Low priority until Phase 3 adds more to this screen. Premature extraction adds indirection without payoff at the current size.
+
+**Effort:** ~2–3 hours refactor.
+
+---
+
+### TD-19 — FriendsScreen uses `friend.name` as list key _(Score: 15)_ 🆕 Phase C
+
+**Where:** `src/screens/FriendsScreen.tsx:74`
+
+**Problem:** The mock friends list uses `key={friend.name}` instead of a stable ID. The pattern was fixed in `FeedScreen` (TD-07) but not applied here. While friend names in this mock are unique, the pattern should be corrected before the screen is wired to real data — otherwise the ID-less pattern may carry over into real data fetching.
+
+**Fix:** Add `id` fields to `MOCK_FRIENDS` and use `key={friend.id}`.
+
+**Effort:** ~5 min.
+
+---
+
+### TD-12 — No data/service layer — Supabase calls inline in screens _(Score: 12)_ ⏳ Phase D
 
 **Where:** All screens that talk to Supabase (`CollectionsScreen`, `CollectionDetailScreen`, `AddItemScreen`, `EditItemScreen`, `ProfileScreen`).
 
@@ -143,7 +233,13 @@ If step 2 fails after step 1 succeeds, the database is left inconsistent — a l
 
 ---
 
-### TD-14 — `storage: ExpoSecureStoreAdapter as any` in supabase.ts _(Score: 9)_
+### TD-18 — LoansScreen slettet _(Score: 10)_ ✅
+
+**Resolved 2026-03-27.** `LoansScreen.tsx` ble slettet. Beslutning: utlån lever naturlig i samlingskonteksten — gjenstanden er primærobjektet, utlånet er en tilstand på gjenstanden. Konkret plan for Fase 3: registrering fra handlingsark + `+`-menyen (TD-15), aktiv oversikt i `CollectionsScreen` (allerede delvis bygget), historikk som seksjon i `ProfileScreen`.
+
+---
+
+### TD-14 — `storage: ExpoSecureStoreAdapter as any` in supabase.ts _(Score: 9)_ ⏳ Phase D
 
 **Where:** `src/lib/supabase.ts:51`
 
@@ -161,25 +257,25 @@ This plan is designed to run **alongside feature development** — nothing here 
 
 ### Phase A — Quick wins ✅ Complete
 
-| ID    | Action                                                               | Status      |
-| ----- | -------------------------------------------------------------------- | ----------- |
-| TD-01 | Add `ItemStatus` union type; update `Item` and all callers           | ✅ Done      |
-| TD-04 | Remove `as unknown as`; explicit row mapping                         | ✅ Done      |
-| TD-07 | Add stable `id` fields to mock data; use as keys                     | ✅ Done      |
-| TD-08 | Fix `useFocusEffect` dependency arrays                               | ✅ Done      |
-| TD-10 | Replace hardcoded dev name with generic placeholder                  | ✅ Done      |
-| TD-11 | Add roadmap comment to WishlistScreen                                | ✅ Done      |
-| TD-13 | Port AppNavigator modal to NativeWind classes                        | ✅ Done      |
+| ID    | Action                                                               | Status  |
+| ----- | -------------------------------------------------------------------- | ------- |
+| TD-01 | Add `ItemStatus` union type; update `Item` and all callers           | ✅ Done  |
+| TD-04 | Remove `as unknown as`; explicit row mapping                         | ✅ Done  |
+| TD-07 | Add stable `id` fields to mock data; use as keys                     | ✅ Done  |
+| TD-08 | Fix `useFocusEffect` dependency arrays                               | ✅ Done  |
+| TD-10 | Replace hardcoded dev name with generic placeholder                  | ✅ Done  |
+| TD-11 | Add roadmap comment to WishlistScreen                                | ✅ Done  |
+| TD-13 | Port AppNavigator modal to NativeWind classes                        | ✅ Done  |
 
 ---
 
 ### Phase B — Before next Supabase feature ✅ Complete
 
-| ID    | Action                                                              | Status      |
-| ----- | ------------------------------------------------------------------- | ----------- |
-| TD-02 | Extract shared `ItemForm` component; delete duplication             | ✅ Done      |
-| TD-06 | Add error state + user-facing message to `fetchData` / `fetchItems` | ✅ Done      |
-| TD-09 | Remove duplicate auth subscription from `ProfilContext`             | ✅ Done      |
+| ID    | Action                                                              | Status  |
+| ----- | ------------------------------------------------------------------- | ------- |
+| TD-02 | Extract shared `ItemForm` component; delete duplication             | ✅ Done  |
+| TD-06 | Add error state + user-facing message to `fetchData` / `fetchItems` | ✅ Done  |
+| TD-09 | Remove duplicate auth subscription from `ProfilContext`             | ✅ Done  |
 
 ---
 
@@ -187,10 +283,14 @@ This plan is designed to run **alongside feature development** — nothing here 
 
 These require backend work or are critical once real users are involved:
 
-| ID    | Action                                                          |
-| ----- | --------------------------------------------------------------- |
-| TD-03 | Implement Postgres RPC (or trigger) to make loan/return atomic  |
-| TD-05 | Add Jest; write unit tests for utilities and auth token parsing |
+| ID    | Action                                                                               |
+| ----- | ------------------------------------------------------------------------------------ |
+| TD-03 | Implement Postgres RPC (or trigger) to make loan/return atomic                       |
+| TD-05 | Add Jest; write unit tests for utilities and auth token parsing                      |
+| TD-15 | Add placeholder alerts for "session"/"loan" in global modal (15 min); full wiring in Fase 3 |
+| TD-16 | Add `Difficulty` union type; update `Item.difficulty` and `ItemFormValues.difficulty` |
+| TD-19 | Add `id` fields to `MOCK_FRIENDS`; use as list keys                                  |
+| TD-18 | ~~Add Fase 3 roadmap comment to `LoansScreen`~~ → slettet, se beslutning            |
 
 ---
 
@@ -198,10 +298,11 @@ These require backend work or are critical once real users are involved:
 
 Defer until there are noticeably more screens or a test-suite is in place:
 
-| ID    | Action                                           |
-| ----- | ------------------------------------------------ |
-| TD-12 | Extract a `services/` layer for Supabase queries |
-| TD-14 | Properly type the SecureStore adapter            |
+| ID    | Action                                                                         |
+| ----- | ------------------------------------------------------------------------------ |
+| TD-12 | Extract a `services/` layer for Supabase queries                               |
+| TD-17 | Extract `ItemActionSheet` and `LoanModal` from `CollectionDetailScreen`        |
+| TD-14 | Properly type the SecureStore adapter                                          |
 
 ---
 
@@ -213,5 +314,7 @@ Defer until there are noticeably more screens or a test-suite is in place:
 - **Dark mode** is handled cleanly via a pre-validated custom Tailwind theme.
 - **TypeScript strict mode** is on — the codebase is clean of any implicit `any` except the one explicit cast in TD-14.
 - **Error boundary** at the app root catches uncaught render errors gracefully.
-- **Error handling** is now consistent across all data-fetching screens — `CollectionsScreen`, `CollectionDetailScreen`, and `ProfilContext` all surface errors with retry options.
+- **Error handling** is consistent across all data-fetching screens — `CollectionsScreen`, `CollectionDetailScreen`, and `ProfilContext` all surface errors with retry options.
 - **Single auth listener** — `ProfilContext` no longer maintains its own `onAuthStateChange` subscription.
+- **ItemForm extraction** succeeded cleanly — `AddItemScreen` and `EditItemScreen` are both thin wrappers (~45–55 lines).
+- **Item status typing** is solid — `ItemStatus` union type prevents invalid values at compile time.

@@ -17,6 +17,7 @@ export const ITEM_LABELS: Record<ItemType, string> = {
 };
 
 export const DIFFICULTY_OPTIONS = ["Lett", "Middels", "Vanskelig"] as const;
+export type Difficulty = (typeof DIFFICULTY_OPTIONS)[number];
 
 export type Item = {
   id: string;
@@ -24,6 +25,6 @@ export type Item = {
   brand: string | null;
   piece_count: number | null;
   player_count: number | null;
-  difficulty: string | null;
+  difficulty: Difficulty | null;
   status: ItemStatus | null;
 };

@@ -5,24 +5,28 @@ import UserAvatar from "../components/UserAvatar";
 
 const MOCK_FRIENDS = [
   {
+    id: "friend-1",
     name: "Turid Nielsen",
     avatarUrl: null,
     mutualItems: 3,
     lastActive: "i dag",
   },
   {
+    id: "friend-2",
     name: "Ole Moen",
     avatarUrl: null,
     mutualItems: 1,
     lastActive: "i går",
   },
   {
+    id: "friend-3",
     name: "Petter Moe",
     avatarUrl: null,
     mutualItems: 5,
     lastActive: "3 dager siden",
   },
   {
+    id: "friend-4",
     name: "Maria Dahl",
     avatarUrl: null,
     mutualItems: 0,
@@ -72,7 +76,7 @@ export default function FriendsScreen() {
       <View className="mx-4 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden">
         {MOCK_FRIENDS.map((friend, i) => (
           <TouchableOpacity
-            key={friend.name}
+            key={friend.id}
             accessibilityRole="button"
             accessibilityLabel={[
               friend.name,

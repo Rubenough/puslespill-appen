@@ -10,14 +10,14 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { type ItemType, ITEM_LABELS, DIFFICULTY_OPTIONS } from "../utils/collections";
+import { type ItemType, type Difficulty, DIFFICULTY_OPTIONS } from "../utils/collections";
 
 export type ItemFormValues = {
   title: string;
   brand: string;
   pieceCount: string;
   playerCount: string;
-  difficulty: string;
+  difficulty: Difficulty | "";
 };
 
 type ItemFormProps = {
