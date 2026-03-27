@@ -339,9 +339,11 @@ export default function CollectionDetailScreen() {
           <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl overflow-hidden mb-3">
             {/* Start økt */}
             <TouchableOpacity
-              onPress={() =>
-                Alert.alert("Kommer snart", "Økt-funksjon kommer i fase 3.")
-              }
+              onPress={() => {
+                if (!selectedItem) return;
+                setSelectedItem(null);
+                navigation.navigate("NewSession", { itemId: selectedItem.id });
+              }}
               disabled={selectedItem?.status === "Utlånt"}
               accessibilityRole="button"
               accessibilityLabel="Start økt"

@@ -29,7 +29,14 @@
     },
     "plugins": [
       ["expo-web-browser", { "experimentalLauncherActivity": false }],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Appen bruker bilder for å lagre øktbilder.",
+          "cameraPermission": "Appen bruker kameraet for å ta bilder av økter."
+        }
+      ]
     ]
   }
 }

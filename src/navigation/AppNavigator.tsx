@@ -74,7 +74,7 @@ export default function AppNavigator() {
         { text: "Avbryt", style: "cancel" },
       ]);
     } else if (action === "session") {
-      Alert.alert("Kommer snart", "Start ny økt er ikke klart ennå.");
+      navigation.navigate("NewSession", {});
     } else if (action === "loan") {
       Alert.alert("Kommer snart", "Registrer utlån herfra er ikke klart ennå. Bruk handlingsarket på en gjenstand i samlingen.");
     }

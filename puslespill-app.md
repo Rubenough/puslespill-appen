@@ -1,6 +1,6 @@
 # Puslespill-appen — Prosjektdokumentasjon
 
-> Versjon 0.7 — Mars 2026
+> Versjon 0.9 — Mars 2026
 
 ---
 
@@ -109,8 +109,8 @@ Vennenes egne separate økter vises i Feed som `started`-hendelse, ikke i aktive
 | EditItemScreen          | Ferdig — forhåndsutfylt update til Supabase                   |
 | FriendsScreen           | Mock-data — kobles til Supabase i Fase 5                      |
 | ProfileScreen           | Hybrid — avatar/navn ekte, statistikk mock                    |
-| LoansScreen             | Ikke i bruk (utlån lever i CollectionsScreen)                 |
-| NewSessionScreen        | Placeholder — implementeres i Fase 3                          |
+| LoansScreen             | Slettet — utlån lever i CollectionsScreen + ProfileScreen     |
+| NewSessionScreen        | Ferdig — modal med gjenstand, deltakere, fullført-toggle, bilde og notat |
 
 ---
 
@@ -126,13 +126,14 @@ Søkefelt øverst. Liste over venner du følger: avatar, navn, antall felles i s
 
 ### Ny økt-flyt
 
-Fullskjerm med tilbake-pil. Seksjoner:
+Modal (samme mønster som Legg til gjenstand). Seksjoner:
 
-- **VELG GJENSTAND** — søkbart kort, valgt gjenstand vises med grønn hake
-- **DELTAKERE** — chips med initialer + navn, × for å fjerne, "+ Legg til"-knapp
-- **BILDE (VALGFRITT)** — stiplet boks, "Ta eller velg bilde"
+- **GJENSTAND** — scrollbar liste over alle dine gjenstander, grønn hake på valgt
+- **DELTAKERE (VALGFRITT)** — fritekst-navn, chips med × for å fjerne; byttes med vennepicker i Fase 5
+- **FULLFØRT** — toggle som setter `completed_at`; skiller pågående fra avsluttede økter
+- **BILDE (VALGFRITT)** — henter fra kamerarulle via `expo-image-picker`, lastes opp til Supabase Storage (`session-images`-bucket)
 - **NOTAT (VALGFRITT)** — fritekstfelt
-- Stor grønn **"Start økt"**-knapp nederst
+- Grønn **"Start økt"**-knapp sticky nederst; grå og deaktivert til gjenstand er valgt
 
 ### Innlogging/onboarding
 
@@ -160,9 +161,11 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 
 ### Aktivitetslogg (kjerne)
 
-- Opprett en økt via +-modal: velg gjenstand, legg til deltakere, ta bilde, skriv notat
-- Venner kan se loggen i feeden
-- Enkel statistikk: dato, hvem som var med
+- Opprett en økt via +-modal eller "Start økt" på en gjenstand i handlingsarket
+- Felter: gjenstand, deltakere (fritekst-navn), fullført-toggle, bilde, notat
+- Lagres til `sessions` + `session_participants`; deltakere utvides til vennepicker i Fase 5
+- Venner kan se loggen i feeden (kobles til Supabase i Fase 3, rest)
+- `sessions.guest_names text[]` holder fritekst-deltakere; `session_participants` brukes for ekte brukere
 
 ### Ønskeliste (fremtidig)
 
@@ -221,12 +224,16 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 - [x] Supabase-klient med `ExpoSecureStoreAdapter` (erstatter AsyncStorage, chunker tokens > 2048 bytes)
 - [x] Google OAuth innlogging fungerer i Expo Go
 - [x] Supabase-trigger oppretter profil automatisk ved første innlogging
+- [x] Supabase-trigger `trg_sync_item_status` holder `items.status` i sync med `loans` — utlån og retur er atomiske (én DB-operasjon fra klienten)
+- [x] Supabase Storage bucket `session-images` med RLS-policies for opplasting og lesing
+- [x] `sessions.guest_names text[]` kolonne for fritekst-deltakere
+- [x] RLS på `sessions` og `session_participants`
 - [x] `ProfilContext` eksponerer `{ profil, loading, error, retry }` med feilhåndtering
 
 **Navigasjon**
 
 - [x] Tab-bar: Feed | Samlinger | + | Venner | Profil (symmetrisk med + i sentrum)
-- [x] `RootNavigator` — Stack som wrapper tabs + AddItem og EditItem som modaler
+- [x] `RootNavigator` — Stack som wrapper tabs + AddItem, EditItem og NewSession som modaler
 - [x] `CollectionsStack` — Stack for CollectionsList → CollectionDetail
 - [x] +-knapp åpner bottom sheet modal med tre valg
 - [x] Safe area håndtert korrekt på alle skjermer
@@ -240,11 +247,17 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 - [x] `AddItemScreen` — skjema for puslespill/brettspill, insert til Supabase
 - [x] `EditItemScreen` — forhåndsutfylt redigeringsskjerm, update til Supabase
 
+**Økter (Fase 3 — delvis)**
+
+- [x] `NewSessionScreen` — gjenstand, fritekst-deltakere, fullført-toggle, bilde (Supabase Storage), notat
+- [x] Lagres til `sessions` + `session_participants`
+- [x] `expo-image-picker` integrert med `session-images` bucket
+
 **Utlån (Fase 4 — delvis)**
 
 - [x] Registrer utlån fra handlingsark: fritekst-navn på låntaker
 - [x] Synlighets-toggle (offentlig/privat) — viser aktivitet i feed uten å avsløre låntaker
-- [x] "Registrer retur" setter `returned_at` og oppdaterer status
+- [x] "Registrer retur" setter `returned_at` og oppdaterer status atomisk (via DB-trigger)
 - [x] Lån er private som standard — RLS sikrer at kun eier ser sine lån
 - [x] "UTLÅNT NÅ" i CollectionsScreen viser gjenstandsnavn, låntaker og dager siden utlån
 
@@ -254,11 +267,14 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 
 **Fase 3 — Aktive økter og feed**
 
-- [ ] Ny økt-flyt — velg gjenstand, legg til deltakere, ta bilde, skriv notat, start økt
-- [ ] "Start økt" i handlingsarket kobles til Ny økt-flyt med gjenstand forhåndsvalgt
+- [x] `NewSessionScreen` — modal med gjenstand, deltakere, fullført-toggle, bilde og notat
+- [x] "Start økt" i handlingsarket åpner `NewSessionScreen` med gjenstand forhåndsvalgt
+- [x] "Start ny økt" i +-menyen åpner `NewSessionScreen`
+- [ ] "Registrer utlån" fra +-menyen kobles til utlånsflyt (gjenstand-velger + skjema)
 - [ ] Koble FeedCard og ActiveSessionCard til ekte data fra Supabase
 - [ ] Feed: kun aktive økter du er deltaker i (ikke alle venners private økter)
 - [ ] `loaned`-hendelse i feed basert på `is_public = true` lån (uten å vise låntaker)
+- [ ] Utlånshistorikk som seksjon i ProfileScreen ("Mine utlån" — aktive + returnerte)
 
 **Fase 4 — Utlån (resterende)**
 
@@ -278,7 +294,7 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 - [ ] Push-notifikasjoner for utlån og retur (Expo Notifications)
 - [ ] Apple Sign-In + onboarding-skjerm
 - [ ] Søk og filtrer på tvers av vennegjengens samlinger
-- [ ] Bildeopplasting via Supabase Storage
+- [x] Bildeopplasting via Supabase Storage (implementert for økter)
 
 ---
 
@@ -299,19 +315,21 @@ puslespill-appen/
 │   │   ├── AddItemScreen.tsx         # Legg til gjenstand
 │   │   ├── EditItemScreen.tsx        # Rediger gjenstand
 │   │   ├── FriendsScreen.tsx         # Venneliste og søk (mock)
-│   │   └── ProfileScreen.tsx         # Profil, statistikk og logg ut
+│   │   ├── ProfileScreen.tsx         # Profil, statistikk og logg ut
+│   │   └── NewSessionScreen.tsx      # Ny økt-modal (ekte data, Supabase Storage)
 │   ├── components/
 │   │   ├── Header.tsx                # Toppbar med app-navn og bjelle
 │   │   ├── UserAvatar.tsx            # Avatar med bilde eller initialer
 │   │   ├── ActiveSessionCard.tsx     # Kort for pågående økt
 │   │   ├── FeedCard.tsx              # Aktivitetskort i feed (type-agnostisk)
+│   │   ├── ItemForm.tsx              # Delt skjema for Legg til / Rediger gjenstand
 │   │   └── ErrorBoundary.tsx         # Fanger render-krasj
 │   ├── context/
 │   │   ├── AuthContext.tsx           # Session og auth-tilstand
 │   │   └── ProfilContext.tsx         # { profil, loading, error, retry }
 │   ├── utils/
 │   │   ├── initials.ts               # getInitials og getAvatarColor
-│   │   └── collections.ts            # ItemType, Item, ITEM_ICONS, ITEM_LABELS
+│   │   └── collections.ts            # ItemType, ItemStatus, Difficulty, Item, ITEM_ICONS, ITEM_LABELS
 │   └── lib/
 │       └── supabase.ts               # Supabase-klient med SecureStore
 ├── assets/                           # Ikoner og splash screen
