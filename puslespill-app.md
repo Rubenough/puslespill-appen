@@ -103,7 +103,7 @@ Vennenes egne separate økter vises i Feed som `started`-hendelse, ikke i aktive
 | Skjerm                  | Status                                                                             |
 | ----------------------- | ---------------------------------------------------------------------------------- |
 | AuthScreen              | Ferdig — Google OAuth med feilhåndtering                                                        |
-| FeedScreen              | Ekte data — aktive egne økter + feed fra sessions/items/lån (krever RLS-policy for kryss-bruker) |
+| FeedScreen              | Ekte data — aktive egne økter + feed fra alle brukeres sessions/items + egne offentlige lån       |
 | CollectionsScreen       | Ferdig — ekte data, "UTLÅNT NÅ" tappbar med registrer-retur-flyt                               |
 | CollectionDetailScreen  | Ferdig — ekte data, handlingsark med alle lånefunksjoner                                        |
 | AddItemScreen           | Ferdig — insert til Supabase                                                                    |
@@ -284,7 +284,7 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 - [x] Aktive egne økter i FeedScreen koblet til Supabase
 - [x] `SessionDetailScreen` — progresjonstidslinje, bilde-opplasting, merk som fullført
 - [x] `EditSessionScreen` — rediger deltakere og notat
-- [ ] Feed: venners aktiviteter (krever RLS-policy: `sessions` og `items` lesbare av alle innloggede)
+- [x] Feed: venners aktiviteter — RLS-policyene lagt til, `sessions` og `items` lesbare av alle innloggede
 - [ ] Feed: aktive økter fra venner der du er invitert som deltaker (krever Fase 5)
 
 **Fase 4 — Utlån (resterende)**
