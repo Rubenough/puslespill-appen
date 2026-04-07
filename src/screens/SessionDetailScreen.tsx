@@ -12,7 +12,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation, useRoute, RouteProp, useFocusEffect } from "@react-navigation/native";
+import {
+  useNavigation,
+  useRoute,
+  RouteProp,
+  useFocusEffect,
+} from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
 import { supabase } from "../lib/supabase";
@@ -21,7 +26,10 @@ import { ITEM_ICONS, type ItemType } from "../utils/collections";
 import { RootStackParamList } from "../navigation/RootNavigator";
 
 type SessionDetailRouteProp = RouteProp<RootStackParamList, "SessionDetail">;
-type SessionDetailNavProp = NativeStackNavigationProp<RootStackParamList, "SessionDetail">;
+type SessionDetailNavProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "SessionDetail"
+>;
 
 type SessionImage = {
   id: string;
@@ -66,23 +74,28 @@ export default function SessionDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [completing, setCompleting] = useState(false);
-  const [fullscreenImage, setFullscreenImage] = useState<SessionImage | null>(null);
+  const [fullscreenImage, setFullscreenImage] = useState<SessionImage | null>(
+    null,
+  );
 
   const fetchData = useCallback(async () => {
     const [sessionRes, imagesRes] = await Promise.all([
       supabase
         .from("sessions")
-        .select("id, started_at, completed_at, guest_names, notes, item:items!inner(id, title, type)")
+        .select(
+          "id, started_at, completed_at, guest_names, notes, item:items!inner(id, title, type)",
+        )
         .eq("id", sessionId)
         .single(),
       supabase
         .from("session_images")
         .select("id, image_url, captured_at")
         .eq("session_id", sessionId)
-        .order("captured_at", { ascending: true }),
+        .order("captured_at", { ascending: false }),
     ]);
 
-    if (sessionRes.data) setSession(sessionRes.data as unknown as SessionDetail);
+    if (sessionRes.data)
+      setSession(sessionRes.data as unknown as SessionDetail);
     if (imagesRes.data) setImages(imagesRes.data as SessionImage[]);
     setLoading(false);
   }, [sessionId]);
@@ -138,25 +151,29 @@ export default function SessionDetailScreen() {
   }
 
   function handleComplete() {
-    Alert.alert("Merk som fullført", "Er du sikker på at du vil avslutte denne økten?", [
-      { text: "Avbryt", style: "cancel" },
-      {
-        text: "Fullfør",
-        onPress: async () => {
-          setCompleting(true);
-          const { error } = await supabase
-            .from("sessions")
-            .update({ completed_at: new Date().toISOString() })
-            .eq("id", sessionId);
-          setCompleting(false);
-          if (error) {
-            Alert.alert("Noe gikk galt", error.message);
-            return;
-          }
-          navigation.goBack();
+    Alert.alert(
+      "Merk som fullført",
+      "Er du sikker på at du vil avslutte denne økten?",
+      [
+        { text: "Avbryt", style: "cancel" },
+        {
+          text: "Fullfør",
+          onPress: async () => {
+            setCompleting(true);
+            const { error } = await supabase
+              .from("sessions")
+              .update({ completed_at: new Date().toISOString() })
+              .eq("id", sessionId);
+            setCompleting(false);
+            if (error) {
+              Alert.alert("Noe gikk galt", error.message);
+              return;
+            }
+            navigation.goBack();
+          },
         },
-      },
-    ]);
+      ],
+    );
   }
 
   if (loading || !session) {
@@ -186,7 +203,12 @@ export default function SessionDetailScreen() {
           accessibilityLabel="Tilbake"
           className="mr-3"
         >
-          <Ionicons name="arrow-back" size={24} color="#78716C" accessible={false} />
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color="#78716C"
+            accessible={false}
+          />
         </TouchableOpacity>
         <Text
           className="text-content dark:text-content-dark text-lg font-semibold flex-1"
@@ -205,7 +227,9 @@ export default function SessionDetailScreen() {
           accessibilityRole="button"
           accessibilityLabel="Rediger økt"
         >
-          <Text className="text-accent dark:text-accent-dark text-base font-medium">Rediger</Text>
+          <Text className="text-accent dark:text-accent-dark text-base font-medium">
+            Rediger
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -258,7 +282,12 @@ export default function SessionDetailScreen() {
               <ActivityIndicator size="small" color="#1D9E75" />
             ) : (
               <>
-                <Ionicons name="camera-outline" size={20} color="#1D9E75" accessible={false} />
+                <Ionicons
+                  name="camera-outline"
+                  size={20}
+                  color="#1D9E75"
+                  accessible={false}
+                />
                 <Text className="text-accent dark:text-accent-dark text-sm font-semibold">
                   Oppdater fremgang
                 </Text>
@@ -320,7 +349,9 @@ export default function SessionDetailScreen() {
                   accessibilityLabel={name}
                   className="bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-full px-3 py-1.5"
                 >
-                  <Text className="text-content dark:text-content-dark text-sm">{name}</Text>
+                  <Text className="text-content dark:text-content-dark text-sm">
+                    {name}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -363,7 +394,9 @@ export default function SessionDetailScreen() {
           {completing ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
-            <Text className="text-white text-base font-semibold">Merk som fullført</Text>
+            <Text className="text-white text-base font-semibold">
+              Merk som fullført
+            </Text>
           )}
         </TouchableOpacity>
       </View>
@@ -382,7 +415,12 @@ export default function SessionDetailScreen() {
             onPress={() => setFullscreenImage(null)}
             accessibilityRole="button"
             accessibilityLabel="Lukk fullskjerm"
-            style={{ position: "absolute", top: insets.top + 12, right: 16, zIndex: 10 }}
+            style={{
+              position: "absolute",
+              top: insets.top + 12,
+              right: 16,
+              zIndex: 10,
+            }}
             className="bg-black/50 rounded-full p-2"
           >
             <Ionicons name="close" size={24} color="white" accessible={false} />
