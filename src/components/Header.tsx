@@ -13,7 +13,7 @@ export default function Header() {
     >
       <View className="flex-row items-center justify-between px-[18px] py-3 border-b border-border dark:border-border-dark">
         <Text className="text-content dark:text-content-dark font-bold text-2xl">
-          Fordrive
+          Fordriv
         </Text>
         <Ionicons
           name="notifications-outline"
