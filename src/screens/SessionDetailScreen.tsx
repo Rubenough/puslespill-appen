@@ -187,7 +187,7 @@ export default function SessionDetailScreen() {
     );
   }
 
-  const latestImage = images[images.length - 1];
+  const latestImage = images[0]; // images er sortert nyeste først (ascending: false)
   const dayNumber = getDayNumber(session.started_at);
 
   return (

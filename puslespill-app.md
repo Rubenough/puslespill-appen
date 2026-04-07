@@ -1,6 +1,6 @@
 # Puslespill-appen — Prosjektdokumentasjon
 
-> Versjon 0.9 — Mars 2026
+> Versjon 0.10 — April 2026 | Arbeidsnavn: **Fordriv**
 
 ---
 
@@ -102,17 +102,17 @@ Vennenes egne separate økter vises i Feed som `started`-hendelse, ikke i aktive
 
 | Skjerm                  | Status                                                                             |
 | ----------------------- | ---------------------------------------------------------------------------------- |
-| AuthScreen              | Ferdig — Google OAuth med feilhåndtering                                           |
-| FeedScreen              | Hybrid — aktive egne økter ekte (Supabase), feed mock                              |
-| CollectionsScreen       | Ferdig — ekte data, "UTLÅNT NÅ" tappbar med registrer-retur-flyt                  |
-| CollectionDetailScreen  | Ferdig — ekte data, handlingsark med alle lånefunksjoner                           |
-| AddItemScreen           | Ferdig — insert til Supabase                                                       |
-| EditItemScreen          | Ferdig — forhåndsutfylt update til Supabase                                        |
-| FriendsScreen           | Mock-data — kobles til Supabase i Fase 5                                           |
-| ProfileScreen           | Hybrid — avatar/navn ekte, statistikk mock                                         |
-| NewSessionScreen        | Ferdig — modal med gjenstand, deltakere, fullført-toggle, bilde og notat           |
-| SessionDetailScreen     | Ferdig — hero-bilde, progresjonstidslinje, fullskjerm-modal, merk som fullført     |
-| EditSessionScreen       | Ferdig — rediger deltakere og notat (modal)                                        |
+| AuthScreen              | Ferdig — Google OAuth med feilhåndtering                                                        |
+| FeedScreen              | Ekte data — aktive egne økter + feed fra sessions/items/lån (krever RLS-policy for kryss-bruker) |
+| CollectionsScreen       | Ferdig — ekte data, "UTLÅNT NÅ" tappbar med registrer-retur-flyt                               |
+| CollectionDetailScreen  | Ferdig — ekte data, handlingsark med alle lånefunksjoner                                        |
+| AddItemScreen           | Ferdig — insert til Supabase                                                                    |
+| EditItemScreen          | Ferdig — forhåndsutfylt update til Supabase                                                     |
+| FriendsScreen           | Mock-data — kobles til Supabase i Fase 5                                                        |
+| ProfileScreen           | Hybrid — avatar/navn + utlånshistorikk ekte, statistikk mock                                   |
+| NewSessionScreen        | Ferdig — modal med gjenstand, deltakere, fullført-toggle, bilde og notat                        |
+| SessionDetailScreen     | Ferdig — hero-bilde (nyeste), progresjonstidslinje nyeste først, fullskjerm-modal, merk fullført |
+| EditSessionScreen       | Ferdig — rediger deltakere og notat (modal)                                                     |
 
 ---
 
@@ -249,16 +249,19 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 - [x] `AddItemScreen` — skjema for puslespill/brettspill, insert til Supabase
 - [x] `EditItemScreen` — forhåndsutfylt redigeringsskjerm, update til Supabase
 
-**Økter (Fase 3 — delvis)**
+**Økter (Fase 3)**
 
 - [x] `NewSessionScreen` — gjenstand, fritekst-deltakere, fullført-toggle, bilde (Supabase Storage), notat
 - [x] Lagres til `sessions` + `session_participants`
 - [x] `expo-image-picker` integrert med `session-images` bucket
 - [x] `FeedScreen` — aktive egne økter fra Supabase (`sessions` + `session_images`)
 - [x] `ActiveSessionCard` — tappbar, navigerer til `SessionDetailScreen`
-- [x] `SessionDetailScreen` — hero-bilde (siste fra `session_images`), progresjonstidslinje, deltakere, notat, fullskjerm-modal, "Merk som fullført"
+- [x] `SessionDetailScreen` — hero-bilde (nyeste), progresjonstidslinje nyeste til venstre, deltakere, notat, fullskjerm-modal, "Merk som fullført"
 - [x] `EditSessionScreen` — rediger deltakere og notat (modal fra SessionDetail)
 - [x] `session_images`-tabell for progresjon med tidslinje per økt
+- [x] `FeedScreen` — feed koblet til ekte Supabase-data (sessions + items + egne lån), sortert nyest øverst
+- [x] `loaned`-hendelse i feed for egne offentlige lån (`is_public = true`)
+- [x] `ProfileScreen` — "MINE UTLÅN"-seksjon med aktive og returnerte lån fra `loans`-tabellen
 
 **Utlån (Fase 4 — delvis)**
 
@@ -281,10 +284,8 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 - [x] Aktive egne økter i FeedScreen koblet til Supabase
 - [x] `SessionDetailScreen` — progresjonstidslinje, bilde-opplasting, merk som fullført
 - [x] `EditSessionScreen` — rediger deltakere og notat
-- [ ] Feed: aktive økter fra venner der du er invitert som deltaker
-- [ ] `loaned`-hendelse i feed basert på `is_public = true` lån (uten å vise låntaker)
-- [ ] FeedCard koblet til ekte data (erstatting for `MOCK_FEED`)
-- [ ] Utlånshistorikk som seksjon i ProfileScreen ("Mine utlån" — aktive + returnerte)
+- [ ] Feed: venners aktiviteter (krever RLS-policy: `sessions` og `items` lesbare av alle innloggede)
+- [ ] Feed: aktive økter fra venner der du er invitert som deltaker (krever Fase 5)
 
 **Fase 4 — Utlån (resterende)**
 
