@@ -15,7 +15,8 @@ type BaseCard = {
 type AddedCard = BaseCard & { type: "added" };
 type StartedCard = BaseCard & { type: "started"; withUsers?: string[] };
 type CompletedCard = BaseCard & { type: "completed" };
-type LoanedCard = BaseCard & { type: "loaned"; loanedTo: string };
+// loanedTo er kun synlig for eieren — utelates når vi viser venners lån (Fase 5)
+type LoanedCard = BaseCard & { type: "loaned"; loanedTo?: string };
 
 type Props = AddedCard | StartedCard | CompletedCard | LoanedCard;
 
@@ -32,7 +33,9 @@ function getActionText(props: Props): string {
     case "completed":
       return `fullførte · ${props.timeLabel}`;
     case "loaned":
-      return `lånte ut til ${props.loanedTo} · ${props.timeLabel}`;
+      return props.loanedTo
+        ? `lånte ut til ${props.loanedTo} · ${props.timeLabel}`
+        : `lånte ut · ${props.timeLabel}`;
   }
 }
 

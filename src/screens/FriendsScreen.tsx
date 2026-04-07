@@ -33,6 +33,7 @@ const MOCK_FRIENDS = [
     lastActive: "1 uke siden",
   },
   {
+    id: "friend-5",
     name: "Lars Berg",
     avatarUrl: null,
     mutualItems: 2,
