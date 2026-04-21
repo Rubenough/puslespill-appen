@@ -15,6 +15,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system/legacy";
+import { decode } from "base64-arraybuffer";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { ITEM_ICONS, type ItemType } from "../utils/collections";
@@ -85,12 +87,13 @@ export default function NewSessionScreen() {
 
   async function uploadImage(uri: string): Promise<string | null> {
     const fileName = `${user!.id}/${Date.now()}.jpg`;
-    const response = await fetch(uri);
-    const arrayBuffer = await response.arrayBuffer();
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
 
     const { error } = await supabase.storage
       .from("session-images")
-      .upload(fileName, arrayBuffer, { contentType: "image/jpeg" });
+      .upload(fileName, decode(base64), { contentType: "image/jpeg" });
 
     if (error) return null;
 

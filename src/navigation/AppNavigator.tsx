@@ -29,7 +29,12 @@ const colors = {
   itemBg: { light: "#F5F5F4", dark: "#3C3938" },
 };
 
-const MODAL_ITEMS: { icon: IoniconsName; title: string; subtitle: string; action: string }[] = [
+const MODAL_ITEMS: {
+  icon: IoniconsName;
+  title: string;
+  subtitle: string;
+  action: string;
+}[] = [
   {
     icon: "add-circle-outline",
     title: "Legg til i samlingen",
@@ -63,8 +68,14 @@ export default function AppNavigator() {
     setModalVisible(false);
     if (action === "add") {
       Alert.alert("Legg til i samlingen", "Velg type", [
-        { text: "Puslespill", onPress: () => navigation.navigate("AddItem", { type: "puslespill" }) },
-        { text: "Brettspill", onPress: () => navigation.navigate("AddItem", { type: "brettspill" }) },
+        {
+          text: "Puslespill",
+          onPress: () => navigation.navigate("AddItem", { type: "puslespill" }),
+        },
+        {
+          text: "Brettspill",
+          onPress: () => navigation.navigate("AddItem", { type: "brettspill" }),
+        },
         { text: "Avbryt", style: "cancel" },
       ]);
     } else if (action === "session") {
@@ -120,7 +131,12 @@ export default function AppNavigator() {
             tabBarButton: () => (
               <TouchableOpacity
                 onPress={() => setModalVisible(true)}
-                style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transform: [{ translateY: -4 }],
+                }}
                 accessibilityRole="button"
                 accessibilityLabel="Ny økt"
               >

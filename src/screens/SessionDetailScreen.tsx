@@ -28,6 +28,8 @@ import { ITEM_ICONS, type ItemType, type Difficulty } from "../utils/collections
 import { RootStackParamList } from "../navigation/RootNavigator";
 import PuzzleProgressIcon, { progressToFilled } from "../components/PuzzleProgressIcon";
 import ProgressSheet from "../components/ProgressSheet";
+import * as FileSystem from "expo-file-system/legacy";
+import { decode } from "base64-arraybuffer";
 
 type SessionDetailRouteProp = RouteProp<RootStackParamList, "SessionDetail">;
 type SessionDetailNavProp = NativeStackNavigationProp<
@@ -129,12 +131,13 @@ export default function SessionDetailScreen() {
     let imageId: string | null = null;
     if (imageUri) {
       const fileName = `${user!.id}/${sessionId}/${Date.now()}.jpg`;
-      const response = await fetch(imageUri);
-      const arrayBuffer = await response.arrayBuffer();
+      const base64 = await FileSystem.readAsStringAsync(imageUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
 
       const { error: uploadError } = await supabase.storage
         .from("session-images")
-        .upload(fileName, arrayBuffer, { contentType: "image/jpeg" });
+        .upload(fileName, decode(base64), { contentType: "image/jpeg" });
 
       if (uploadError) {
         setUpdating(false);
