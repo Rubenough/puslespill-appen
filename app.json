@@ -13,22 +13,35 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "no.rubenvareide.puslespill",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "no.rubenvareide.puslespill",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      ["expo-web-browser", { "experimentalLauncherActivity": false }],
+      [
+        "expo-web-browser",
+        {
+          "experimentalLauncherActivity": false
+        }
+      ],
       "expo-secure-store",
       [
         "expo-image-picker",
@@ -37,6 +50,18 @@
           "cameraPermission": "Appen bruker kameraet for å ta bilder av økter."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1d9af33b-3ec3-404c-a77f-7f9a66d60083"
+      }
+    },
+    "owner": "rubenough",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1d9af33b-3ec3-404c-a77f-7f9a66d60083"
+    }
   }
 }
