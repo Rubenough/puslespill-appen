@@ -110,8 +110,8 @@ Vennenes egne separate økter vises i Feed som `started`-hendelse, ikke i aktive
 | EditItemScreen          | Ferdig — forhåndsutfylt update til Supabase                                                     |
 | FriendsScreen           | Mock-data — kobles til Supabase i Fase 5                                                        |
 | ProfileScreen           | Hybrid — avatar/navn + utlånshistorikk ekte, statistikk mock                                   |
-| NewSessionScreen        | Ferdig — modal med gjenstand, deltakere, fullført-toggle, bilde og notat                        |
-| SessionDetailScreen     | Ferdig — hero-bilde, metadata-kort, puslespill-progresjonsikon (0–4 brikker), bildenotater, ···-meny (rediger/slett), CompletionModal for puslespill |
+| NewSessionScreen        | Ferdig — modal med gjenstand, deltakere, fullført-toggle, bilde ("Bilde av boksen" for puslespill) og notat |
+| SessionDetailScreen     | Ferdig — hero (siste fremgang eller cover), metadata-kort med cover-thumbnail + progresjon, "Oppdater"-knapp (bilde + progresjon + notat i én flyt), ···-meny (rediger/slett), blur-modal for fullskjerm |
 | EditSessionScreen       | Ferdig — rediger deltakere og notat (modal)                                                     |
 
 ---
@@ -133,7 +133,7 @@ Modal (samme mønster som Legg til gjenstand). Seksjoner:
 - **GJENSTAND** — scrollbar liste over alle dine gjenstander, grønn hake på valgt
 - **DELTAKERE (VALGFRITT)** — fritekst-navn, chips med × for å fjerne; byttes med vennepicker i Fase 5
 - **FULLFØRT** — toggle som setter `completed_at`; skiller pågående fra avsluttede økter
-- **BILDE (VALGFRITT)** — henter fra kamerarulle via `expo-image-picker`, lastes opp til Supabase Storage (`session-images`-bucket)
+- **BILDE AV BOKSEN** (puslespill) / **BILDE (VALGFRITT)** (brettspill) — henter fra kamerarulle via `expo-image-picker`, lagres som cover i `sessions.image_url`
 - **NOTAT (VALGFRITT)** — fritekstfelt
 - Grønn **"Start økt"**-knapp sticky nederst; grå og deaktivert til gjenstand er valgt
 
@@ -256,12 +256,12 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 - [x] `expo-image-picker` integrert med `session-images` bucket
 - [x] `FeedScreen` — aktive egne økter fra Supabase (`sessions` + `session_images`)
 - [x] `ActiveSessionCard` — tappbar, navigerer til `SessionDetailScreen`
-- [x] `SessionDetailScreen` — hero-bilde, metadata-kort, puslespill-progresjon (PuzzleProgressIcon), progresjonstidslinje, ···-meny (rediger/slett), fullskjerm-modal, CompletionModal for puslespill
+- [x] `SessionDetailScreen` — hero (siste fremgang eller cover), metadata-kort med cover-thumbnail + progresjon-ikon, "Oppdater"-knapp, ···-meny (rediger/slett), blur-modal for fullskjerm
 - [x] `EditSessionScreen` — rediger deltakere og notat (modal fra SessionDetail)
 - [x] `session_images`-tabell for progresjon med tidslinje per økt
 - [x] `PuzzleProgressIcon` — custom SVG 2×2 puslespillbrikker, fylles 0→4
-- [x] `ProgressSheet` — bottom sheet for å oppdatere fremgang (5 steg + bildenotat)
-- [x] `CompletionModal` — fullføringseremoni for puslespill (ferdigbilde + notat)
+- [x] `ProgressSheet` — samlet oppdateringsflyt: bildevelger + progresjon (5 steg) + notat, "Fullfør økt" ved 100%
+- [x] Cover-bilde (boksen) lagres i `sessions.image_url`, fremgangsbilder i `session_images`
 - [x] Fullført-tilstand: skjuler action-knapper, viser fullføringsdato i dag-badge
 - [x] `progress_pct` på `sessions` + `note` på `session_images` (DB-kolonner legges til manuelt)
 - [x] `FeedScreen` — feed koblet til ekte Supabase-data (sessions + items + egne lån), sortert nyest øverst
@@ -332,8 +332,8 @@ puslespill-appen/
 │   │   ├── EditItemScreen.tsx        # Rediger gjenstand
 │   │   ├── FriendsScreen.tsx         # Venneliste og søk (mock)
 │   │   ├── ProfileScreen.tsx         # Profil, statistikk og logg ut
-│   │   ├── NewSessionScreen.tsx      # Ny økt-modal (ekte data, Supabase Storage)
-│   │   ├── SessionDetailScreen.tsx   # Økt-detaljer, metadata, progresjon, ···-meny, CompletionModal
+│   │   ├── NewSessionScreen.tsx      # Ny økt-modal (ekte data, cover til Supabase Storage)
+│   │   ├── SessionDetailScreen.tsx   # Økt-detaljer, cover+progresjon i metadata, "Oppdater"-flyt, blur-modal
 │   │   └── EditSessionScreen.tsx     # Rediger deltakere og notat (modal)
 │   ├── components/
 │   │   ├── Header.tsx                # Toppbar med app-navn og bjelle
@@ -342,8 +342,7 @@ puslespill-appen/
 │   │   ├── FeedCard.tsx              # Aktivitetskort i feed (type-agnostisk)
 │   │   ├── ItemForm.tsx              # Delt skjema for Legg til / Rediger gjenstand
 │   │   ├── PuzzleProgressIcon.tsx    # Custom SVG: 4 puslespillbrikker, fylles 0→4
-│   │   ├── ProgressSheet.tsx         # Bottom sheet for fremgangs-input (5 steg + notat)
-│   │   ├── CompletionModal.tsx       # Fullføringseremoni for puslespill
+│   │   ├── ProgressSheet.tsx         # Samlet oppdateringsflyt: bilde + progresjon + notat
 │   │   └── ErrorBoundary.tsx         # Fanger render-krasj
 │   ├── context/
 │   │   ├── AuthContext.tsx           # Session og auth-tilstand

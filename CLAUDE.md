@@ -11,6 +11,7 @@ A React Native / Expo mobile app for managing puzzle and board game collections,
 - **Supabase 2** — auth, database, real-time
 - **expo-secure-store** — encrypted session storage
 - **expo-splash-screen** — prevents white flash during auth check
+- **expo-blur** — blur overlay for fullscreen image modal
 
 ## Commands
 ```bash
@@ -34,8 +35,7 @@ src/
 │   ├── ActiveSessionCard.tsx   # Card for active puzzle sessions
 │   ├── FeedCard.tsx            # Card for activity feed items
 │   ├── PuzzleProgressIcon.tsx  # Custom SVG: 4 puzzle pieces filled 0–4 (progress indicator)
-│   ├── ProgressSheet.tsx       # Bottom sheet for progress input (5 steps + image note)
-│   └── CompletionModal.tsx     # Puzzle completion ceremony (final photo + notes)
+│   └── ProgressSheet.tsx       # Combined update flow: image picker + progress (5 steps) + note
 ├── screens/
 │   ├── AuthScreen.tsx              # Google OAuth login
 │   ├── FeedScreen.tsx              # Active sessions (real Supabase) + activity feed (mock)
@@ -44,8 +44,8 @@ src/
 │   ├── AddItemScreen.tsx           # Add puzzle/board game form (real Supabase insert)
 │   ├── ProfileScreen.tsx           # User profile + sign-out (real Supabase profile)
 │   ├── FriendsScreen.tsx           # Friends list (mock data)
-│   ├── NewSessionScreen.tsx        # Start session: item → participants → image → notes
-│   ├── SessionDetailScreen.tsx     # View session: hero image, metadata, puzzle progress, timeline, ··· menu, complete action
+│   ├── NewSessionScreen.tsx        # Start session: item → participants → box photo (puzzle) / image → notes
+│   ├── SessionDetailScreen.tsx     # View session: hero (latest progress or cover), metadata with cover thumbnail + progress icon, "Oppdater" flow, blur fullscreen modal
 │   └── EditSessionScreen.tsx       # Edit session participants + notes (modal)
 ├── navigation/
 │   ├── RootNavigator.tsx       # Stack: Tabs + AddItem + EditItem + NewSession + SessionDetail + EditSession
@@ -150,7 +150,7 @@ Loans are **private by default** (`is_public = false`). Borrower identity must n
 | ProfileScreen | Hybrid — profile from Supabase, stats are mock |
 | FriendsScreen | Mock — `MOCK_FRIENDS` |
 | NewSessionScreen | Real — inserts to `sessions` + `session_participants`, uploads to `session-images` bucket |
-| SessionDetailScreen | Real — reads `sessions` + `session_images` + `items` metadata, puzzle progress icon, ··· menu (edit/delete), completion modal |
+| SessionDetailScreen | Real — reads `sessions` (incl. `image_url` cover) + `session_images` + `items` metadata, progress icon in metadata card, "Oppdater" flow (image + progress + note via ProgressSheet), ··· menu (edit/delete), blur fullscreen modal |
 | EditSessionScreen | Real — updates `sessions.guest_names` + `sessions.notes` |
 
 ### Supabase credentials
