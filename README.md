@@ -1,72 +1,68 @@
 # 🧩 Puslespill-appen
 
-En sosial app for vennegjenger som pusler mye sammen. Del samlinger, lån puslespill, og følg hverandres øktlogger.
+Sosial mobilapp for vennegjenger som pusler sammen. Del samlinger, hold styr på utlån, og følg hverandres puslespilløkter.
 
-## Kom i gang
+> **Status:** Kjernefunksjonalitet på plass: samlinger, utlån, fremgangssporing, feed og Google-autentisering via Supabase. Venne-seksjonen er foreløpig mock data, reell kobling mellom brukere er neste steg. Jobber mot offentlig beta.
 
-Installer avhengigheter og start Metro:
+<p align="center">
+  <img src="docs/screenshots/01-feed.png" width="240" alt="Feed med aktive økter og social aktivitet" />
+  <img src="docs/screenshots/02-progress.png" width="240" alt="Fremgangssporing med bilder og notater" />
+  <img src="docs/screenshots/03-collections.png" width="240" alt="Samlinger og aktive utlån" />
+</p>
 
-```bash
-npm install
-npx expo start --dev-client
-```
+## Om prosjektet
 
-Prosjektet kjører på Expo SDK 55 og bruker development build i stedet for Expo Go. Du må derfor installere en development build på mobilen før du kan koble til Metro. Se seksjonen under.
+Et personlig prosjekt bygget rundt en reell use case: vennegjengen min låner puslespill av hverandre og mister oversikt. Appen løser tre ting: delte samlinger synlig for hele gjengen, utlånslogg så ingen glemmer hvem som har hva, og en økt-feed som gjør pusling til en sosial aktivitet snarere enn en isolert hobby.
 
-## Development build
-
-Prosjektet bruker `expo-dev-client` og bygges med EAS Build.
-
-```bash
-# Logg inn på Expo-kontoen din (én gang per maskin)
-eas login
-
-# Bygg development-APK for Android
-eas build --profile development --platform android
-```
-
-Når bygget er ferdig får du en lenke og QR-kode fra EAS. Scan QR-koden fra mobilen, last ned APK-en, og installer. Deretter kjører du `npx expo start --dev-client` lokalt og åpner development build-appen, som automatisk kobler seg til Metro.
-
-### Andre build-profiler
-
-```bash
-# Intern preview-build (APK for testbrukere)
-eas build --profile preview --platform android
-
-# Produksjonsbuild (AAB for Play Store)
-eas build --profile production --platform android
-```
-
-Se `eas.json` for konfigurasjon av alle profiler.
+Prosjektet brukes også som utforsking av React Native-stacken mot Expo SDK 55 med development builds, NativeWind for styling, og Supabase som backend inkludert auth, database og bildeopplasting.
 
 ## Stack
 
-- **React Native** via Expo (managed workflow)
-- **TypeScript** — strict mode
-- **NativeWind** — Tailwind CSS for React Native
-- **React Navigation** — Bottom Tab Navigator
-- **Supabase** — database, auth og bildeopplasting
-- **Expo Vector Icons** — Ionicons
+React Native med Expo (SDK 55), TypeScript i strict mode, NativeWind for Tailwind-styling, React Navigation med bottom tabs pluss modal, og Supabase som backend for auth, Postgres og storage. Expo Vector Icons for ikonografi. Development builds via EAS i stedet for Expo Go.
 
-## Navigasjon
+## Arkitektur
 
-Tab-bar: Feed | Samlinger | + | Venner | Profil
-
-- **Samlinger** viser samlingstyper (puslespill, brettspill) + "UTLÅNT NÅ"-seksjon
-- **+** åpner en modal med valg: Legg til i samlingen / Start ny økt / Registrer utlån
-
-## Mappestruktur
+Tab-basert navigasjon med fem ankerpunkter: Feed, Samlinger, en sentral `+`-knapp, Venner og Profil. `+`-knappen åpner en modal med kontekstavhengige handlinger (legg til i samling, start ny økt, registrer utlån) heller enn å navigere til en egen fane. Valget reduserer dybden i navigasjonstreet for hyppige handlinger.
 
 ```
 src/
-├── navigation/     # App-navigasjon og +-modal
-├── screens/        # En fil per skjerm
-├── components/     # Gjenbrukbare UI-komponenter
-├── context/        # React Context (profil m.m.)
-├── utils/          # Delte hjelpefunksjoner
-└── lib/            # Supabase-klient
+├── navigation/     App-navigasjon og +-modal
+├── screens/        Én fil per skjerm
+├── components/     Gjenbrukbare UI-komponenter
+├── context/        React Context (profil m.m.)
+├── utils/          Delte hjelpefunksjoner
+└── lib/            Supabase-klient
 ```
 
-## Dokumentasjon
+Full prosjektdokumentasjon, konsept, wireframes og fremdrift ligger i [puslespill-app.md](./puslespill-app.md). Kjent teknisk gjeld er dokumentert i [tech-debt.md](./tech-debt.md).
 
-Se [puslespill-app.md](puslespill-app.md) for fullstendig prosjektdokumentasjon, konsept, wireframes og fremdrift.
+## Lokal utvikling
+
+Prosjektet kjører på Expo SDK 55 og bruker development builds i stedet for Expo Go. Førstegangsoppsett:
+
+```bash
+npm install
+```
+
+Deretter trenger du enten en development build installert på mobilen, eller Expo Go i simulator:
+
+```bash
+# Med development build installert
+npx expo start --dev-client
+
+# Eller med Expo Go i iOS-simulator
+npx expo start --go
+```
+
+### Bygge development build
+
+```bash
+eas login
+eas build --profile development --platform android
+```
+
+EAS gir deg en lenke og QR-kode til APK-en når bygget er ferdig. Scan fra mobilen, installer, ferdig. Se `eas.json` for profiler.
+
+## Om utvikleren
+
+Frontend- og mobilutvikler med bachelor fra Høyskolen Kristiania (2026) og bakgrunn som autorisert optiker. Prosjektet er en del av porteføljen min. Mer på [rubenvareide.no](https://rubenvareide.no) og [LinkedIn](https://www.linkedin.com/in/rubenvareide/).

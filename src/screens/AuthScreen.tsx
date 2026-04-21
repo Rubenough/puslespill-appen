@@ -10,7 +10,10 @@ WebBrowser.maybeCompleteAuthSession();
 export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
 
-  const redirectUri = makeRedirectUri();
+  const redirectUri = makeRedirectUri({
+    scheme: "puslespill",
+    path: "auth/callback",
+  });
 
   async function signInWithGoogle() {
     setLoading(true);
@@ -26,12 +29,16 @@ export default function AuthScreen() {
       if (signInError || !data.url) {
         Alert.alert(
           "Innlogging feilet",
-          signInError?.message ?? "Kunne ikke starte Google-innlogging. Sjekk nettverkstilkoblingen."
+          signInError?.message ??
+            "Kunne ikke starte Google-innlogging. Sjekk nettverkstilkoblingen.",
         );
         return;
       }
 
-      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
+      const result = await WebBrowser.openAuthSessionAsync(
+        data.url,
+        redirectUri,
+      );
 
       if (result.type === "cancel") {
         // Brukeren lukket nettleseren selv — ikke vis feil
@@ -39,7 +46,10 @@ export default function AuthScreen() {
       }
 
       if (result.type !== "success" || !result.url) {
-        Alert.alert("Innlogging feilet", "Ingen gyldig respons fra nettleseren. Prøv igjen.");
+        Alert.alert(
+          "Innlogging feilet",
+          "Ingen gyldig respons fra nettleseren. Prøv igjen.",
+        );
         return;
       }
 
@@ -48,7 +58,10 @@ export default function AuthScreen() {
       const refresh_token = params.get("refresh_token");
 
       if (!access_token || !refresh_token) {
-        Alert.alert("Innlogging feilet", "Ugyldig innloggingsrespons. Prøv igjen.");
+        Alert.alert(
+          "Innlogging feilet",
+          "Ugyldig innloggingsrespons. Prøv igjen.",
+        );
         return;
       }
 
@@ -58,7 +71,10 @@ export default function AuthScreen() {
       });
 
       if (sessionError) {
-        Alert.alert("Innlogging feilet", "Kunne ikke opprette sesjon. Prøv igjen.");
+        Alert.alert(
+          "Innlogging feilet",
+          "Kunne ikke opprette sesjon. Prøv igjen.",
+        );
       }
     } catch (err) {
       console.error("OAuth-feil:", err);
