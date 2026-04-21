@@ -32,7 +32,10 @@ src/
 │   ├── ErrorBoundary.tsx       # Class component error handler
 │   ├── UserAvatar.tsx          # Avatar with initials fallback
 │   ├── ActiveSessionCard.tsx   # Card for active puzzle sessions
-│   └── FeedCard.tsx            # Card for activity feed items
+│   ├── FeedCard.tsx            # Card for activity feed items
+│   ├── PuzzleProgressIcon.tsx  # Custom SVG: 4 puzzle pieces filled 0–4 (progress indicator)
+│   ├── ProgressSheet.tsx       # Bottom sheet for progress input (5 steps + image note)
+│   └── CompletionModal.tsx     # Puzzle completion ceremony (final photo + notes)
 ├── screens/
 │   ├── AuthScreen.tsx              # Google OAuth login
 │   ├── FeedScreen.tsx              # Active sessions (real Supabase) + activity feed (mock)
@@ -42,7 +45,7 @@ src/
 │   ├── ProfileScreen.tsx           # User profile + sign-out (real Supabase profile)
 │   ├── FriendsScreen.tsx           # Friends list (mock data)
 │   ├── NewSessionScreen.tsx        # Start session: item → participants → image → notes
-│   ├── SessionDetailScreen.tsx     # View session: hero image, progress timeline, complete action
+│   ├── SessionDetailScreen.tsx     # View session: hero image, metadata, puzzle progress, timeline, ··· menu, complete action
 │   └── EditSessionScreen.tsx       # Edit session participants + notes (modal)
 ├── navigation/
 │   ├── RootNavigator.tsx       # Stack: Tabs + AddItem + EditItem + NewSession + SessionDetail + EditSession
@@ -63,6 +66,15 @@ App.tsx                         # Entry point — wraps AuthProvider, routes on 
 - **Functions, constants, variables, types: English**
 - **UI text (labels, placeholders, headings): Norwegian**
 - **Code comments: Norwegian is fine**
+
+## Design System
+The visual language is documented in `wireframes/design-system.html` (open in a browser). It contains:
+- All color tokens (light + dark), with WCAG AA contrast table
+- Avatar palette (deterministic 6-color from `utils/initials.ts`)
+- Typography scale, radius tokens, layout rhythm
+- Component specimens: Avatar, Badge, Button, List row, Action sheet, Switch, Difficulty picker, Feed card, Active session card
+
+Consult this file when adding new UI — all new components should follow the same tokens and patterns.
 
 ## Styling
 - Use NativeWind (Tailwind class names) for all styling
@@ -115,6 +127,9 @@ Supabase tables in use:
 - `profiles` — user profile (id, full_name, avatar_url)
 - `items` — puzzle/board game collection (id, owner_id, type, title, brand, piece_count, player_count, difficulty, status, created_at)
 - `loans` — loan records (id, item_id, owner_id, borrower_user_id [nullable], borrower_name, loaned_at, returned_at [null = active loan], is_public)
+- `sessions` — activity sessions (id, item_id, created_by, started_at, completed_at, progress_pct [0–100, puzzle only], guest_names, notes)
+- `session_images` — progress photos (id, session_id, image_url, captured_at, note)
+- `session_participants` — user participants (session_id, profile_id)
 
 Item types: `"puslespill"` | `"brettspill"` (defined in `utils/collections.ts` as `ItemType`)
 
@@ -135,7 +150,7 @@ Loans are **private by default** (`is_public = false`). Borrower identity must n
 | ProfileScreen | Hybrid — profile from Supabase, stats are mock |
 | FriendsScreen | Mock — `MOCK_FRIENDS` |
 | NewSessionScreen | Real — inserts to `sessions` + `session_participants`, uploads to `session-images` bucket |
-| SessionDetailScreen | Real — reads `sessions` + `session_images`, progress timeline, complete + upload actions |
+| SessionDetailScreen | Real — reads `sessions` + `session_images` + `items` metadata, puzzle progress icon, ··· menu (edit/delete), completion modal |
 | EditSessionScreen | Real — updates `sessions.guest_names` + `sessions.notes` |
 
 ### Supabase credentials
