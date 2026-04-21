@@ -65,4 +65,4 @@ EAS gir deg en lenke og QR-kode til APK-en når bygget er ferdig. Scan fra mobil
 
 ## Om utvikleren
 
-Frontend- og mobilutvikler med bachelor fra Høyskolen Kristiania (2026) og bakgrunn som autorisert optiker. Prosjektet er en del av porteføljen min. Mer på [rubenvareide.no](https://rubenvareide.no) og [LinkedIn](https://www.linkedin.com/in/rubenvareide/).
+Frontend- og mobilutvikler med bachelor fra Høyskolen Kristiania (2026) og bakgrunn som autorisert optiker. Prosjektet er en del av porteføljen min. Mer [LinkedIn](https://www.linkedin.com/in/rubenvareide/).
