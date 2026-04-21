@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fordriv – Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --surface:#FFFFFF; --surface-secondary:#F2F1EF;
+  --surface-dark:#292524; --surface-dark-secondary:#1C1917;
+  --border:#E7E5E4; --border-secondary:#D6D3D1;
+  --border-dark:#44403C; --border-dark-secondary:#57534E;
+  --content:#1C1917; --content-secondary:#78716C;
+  --content-tertiary:#A8A29E; --content-dark:#FAFAF9;
+  --content-dark-secondary:#A8A29E; --content-dark-tertiary:#57534E;
+  --accent:#1D9E75; --accent-dark:#34D399; --accent-10:rgba(29,158,117,0.10);
+  --destructive:#EF4444;
+  --radius-sm:8px; --radius-md:12px; --radius-lg:16px; --radius-xl:24px; --radius-full:9999px;
+  --doc-bg:#F5F3EF; --doc-ink:#1C1917; --doc-ink-2:#57534E;
+  --doc-ink-3:#A8A29E; --doc-line:#E7E5E4; --doc-card:#FFFFFF;
+}
+*{box-sizing:border-box} html,body{margin:0;padding:0}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--doc-bg);color:var(--doc-ink);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.page{max-width:1280px;margin:0 auto;padding:72px 48px 160px}
+.cover{border-bottom:1px solid var(--doc-line);padding-bottom:64px;margin-bottom:72px;display:grid;grid-template-columns:1.2fr 1fr;gap:64px;align-items:end}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--doc-ink-2);margin-bottom:20px}
+.cover h1{font-weight:700;font-size:80px;line-height:.94;letter-spacing:-.045em;margin:0 0 24px}
+.cover h1 .accent{color:var(--accent)}
+.cover .lede{font-size:17px;line-height:1.55;color:var(--doc-ink-2);max-width:500px;margin:0}
+.cover-meta{display:grid;grid-template-columns:1fr 1fr;gap:20px 32px;border-top:1px solid var(--doc-line);padding-top:28px}
+.cover-meta dt{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--doc-ink-3);margin-bottom:4px}
+.cover-meta dd{margin:0;font-size:14px}
+.section{margin-bottom:112px}
+.section-head{display:flex;align-items:baseline;gap:24px;padding-bottom:20px;margin-bottom:40px;border-bottom:1px solid var(--doc-line)}
+.section-head .num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--doc-ink-3)}
+.section-head h2{font-size:40px;font-weight:600;letter-spacing:-.025em;margin:0;line-height:1}
+.section-head p{margin:0 0 0 auto;max-width:420px;color:var(--doc-ink-2);font-size:14px;text-align:right}
+.subhead{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--doc-ink-2);margin:48px 0 20px;padding-bottom:10px;border-bottom:1px dashed var(--doc-line)}
+.subhead:first-child{margin-top:0}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.spec{background:var(--doc-card);border:1px solid var(--doc-line);border-radius:14px;padding:24px}
+.spec .spec-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--doc-ink-3);margin-bottom:6px}
+.spec .spec-title{font-size:18px;font-weight:600;margin:0 0 4px}
+.spec .spec-desc{font-size:13px;color:var(--doc-ink-2);margin:0 0 20px;max-width:56ch}
+.spec-body{background:var(--surface-secondary);border-radius:10px;padding:28px;display:flex;align-items:center;justify-content:center;min-height:140px}
+.spec-meta{display:flex;gap:24px;flex-wrap:wrap;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--doc-ink-2)}
+.spec-meta span strong{color:var(--doc-ink);font-weight:500}
+.swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.swatch{border:1px solid var(--doc-line);border-radius:12px;overflow:hidden;background:var(--doc-card)}
+.swatch .chip{height:96px;display:flex;align-items:flex-end;padding:12px}
+.swatch .chip .role{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+.swatch .meta{padding:12px 14px 14px}
+.swatch .meta .name{font-size:13px;font-weight:600;margin-bottom:2px}
+.swatch .meta .hex{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--doc-ink-2)}
+.swatch .meta .usage{font-size:11px;color:var(--doc-ink-3);margin-top:6px}
+.type-row{display:grid;grid-template-columns:180px 1fr 220px;gap:24px;padding:20px 0;border-bottom:1px solid var(--doc-line);align-items:baseline}
+.type-row:last-child{border-bottom:none}
+.type-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--doc-ink-3)}
+.type-spec{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--doc-ink-2);text-align:right}
+.sl{font-size:12px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--content-secondary)}
+.token-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.token{background:var(--doc-card);border:1px solid var(--doc-line);border-radius:10px;padding:20px;text-align:center}
+.token .box{width:72px;height:72px;margin:0 auto 14px;background:var(--surface-secondary);border:1px dashed var(--border-secondary)}
+.token .name{font-size:13px;font-weight:600}
+.token .val{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--doc-ink-2)}
+.token .usage{font-size:11px;color:var(--doc-ink-3);margin-top:4px}
+.avatar{border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600;flex:0 0 auto}
+.s-24{width:24px;height:24px;font-size:10px} .s-32{width:32px;height:32px;font-size:12px}
+.s-36{width:36px;height:36px;font-size:13px} .s-48{width:48px;height:48px;font-size:16px}
+.s-72{width:72px;height:72px;font-size:26px}
+.c-green{background:#A7F3D0;color:#065F46} .c-pink{background:#FBCFE8;color:#9D174D}
+.c-blue{background:#BFDBFE;color:#1E40AF} .c-yellow{background:#FDE68A;color:#92400E}
+.c-purple{background:#CECBF6;color:#3C3489} .c-red{background:#F9A8D4;color:#831843}
+.badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:var(--radius-full);font-size:11px;font-weight:600;line-height:1}
+.badge.accent{background:var(--accent-10);color:var(--accent)}
+.badge.neutral{background:var(--surface-secondary);color:var(--content-secondary)}
+.icon-tile{width:40px;height:40px;border-radius:var(--radius-md);background:var(--surface-secondary);display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--accent)}
+.icon-tile.lg{width:56px;height:56px;border-radius:var(--radius-sm);color:var(--content-secondary)}
+.btn{font-family:'Inter',sans-serif;font-weight:600;font-size:15px;border-radius:var(--radius-lg);padding:14px 20px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;cursor:pointer;width:100%}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary.disabled{background:var(--border-secondary);color:#fff;cursor:not-allowed}
+.btn-secondary{background:var(--surface-secondary);color:var(--content);font-weight:600}
+.btn-outline{background:var(--surface);color:var(--content);border-color:var(--border);font-weight:500}
+.field{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 16px;font-size:16px;color:var(--content);font-family:'Inter',sans-serif;width:100%}
+.field::placeholder{color:var(--content-tertiary)}
+.switch{width:51px;height:31px;border-radius:16px;background:var(--border-secondary);position:relative;display:inline-block}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.1)}
+.switch.on{background:var(--accent)} .switch.on::after{left:22px}
+.pill-select{padding:12px 0;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface);font-size:14px;font-weight:500;color:var(--content);text-align:center;flex:1;cursor:pointer}
+.pill-select.selected{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip-guest{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--accent);border-radius:var(--radius-full);background:var(--surface);font-size:14px;color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.card.mx{margin:0 16px}
+.row{display:flex;align-items:center;padding:16px;gap:14px}
+.row+.row{border-top:1px solid var(--border)}
+.row-main{flex:1;min-width:0}
+.row-title{font-size:15px;font-weight:500;color:var(--content)}
+.row-sub{font-size:12px;color:var(--content-secondary);margin-top:2px}
+.feed-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin:0 0 12px;overflow:hidden}
+.feed-card .fhead{display:flex;align-items:center;gap:12px;padding:14px 16px 10px}
+.feed-card .fhead .who .wname{font-size:13px;font-weight:600;color:var(--content)}
+.feed-card .fhead .who .wact{font-size:12px;color:var(--content-secondary)}
+.feed-card .fbody{display:flex;align-items:center;gap:12px;padding:0 16px 14px}
+.feed-card .fbody .ttl{font-size:13px;font-weight:500;color:var(--content)}
+.feed-card .fbody .kind{font-size:12px;color:var(--content-secondary);margin-top:2px}
+.session-card{width:200px;flex:0 0 200px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px}
+.session-card.own{border:2px solid var(--accent)}
+.session-card .sc-head{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;font-weight:600;color:var(--accent)}
+.session-card .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.session-card .img-ph{height:110px;border-radius:var(--radius-sm);background:var(--surface-secondary);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--content-secondary);margin-bottom:8px}
+.session-card .sc-title{font-size:13px;font-weight:500;color:var(--content);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.session-card .sc-meta{font-size:12px;color:var(--content-secondary);margin-top:2px}
+.sheet{background:var(--surface);border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding:8px 16px 20px}
+.sheet .grabber{width:40px;height:4px;background:var(--border);border-radius:2px;margin:8px auto 16px}
+.sheet-group{background:var(--surface-secondary);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:12px}
+.sheet-item{display:flex;align-items:center;gap:12px;padding:16px;color:var(--content);font-size:16px}
+.sheet-item+.sheet-item{border-top:1px solid var(--border)}
+.sheet-item svg{color:var(--accent)}
+.sheet-item.destr{color:var(--destructive)} .sheet-item.destr svg{color:var(--destructive)}
+.sheet-cancel{background:var(--surface-secondary);border-radius:var(--radius-lg);padding:16px;text-align:center;font-weight:600;color:var(--content)}
+.comp-card{background:var(--doc-card);border:1px solid var(--doc-line);border-radius:14px;overflow:hidden;margin-bottom:24px}
+.comp-card .ch{padding:20px 24px 16px;border-bottom:1px solid var(--doc-line)}
+.comp-card .ch .cl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--doc-ink-3);margin-bottom:6px}
+.comp-card .ch h3{font-size:18px;font-weight:600;margin:0 0 4px}
+.comp-card .ch p{font-size:13px;color:var(--doc-ink-2);margin:0}
+.stage{background:var(--surface-secondary);padding:32px 28px;display:flex;align-items:center;justify-content:center;min-height:200px}
+.stage.as{align-items:flex-start}
+.cfooter{padding:16px 24px;border-top:1px solid var(--doc-line);display:flex;gap:24px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--doc-ink-2)}
+.cfooter strong{color:var(--doc-ink);font-weight:500}
+.specrow{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+.callout{border-left:3px solid var(--accent);background:var(--doc-card);padding:16px 20px;border-radius:0 10px 10px 0;font-size:13px;color:var(--doc-ink-2);margin-bottom:16px}
+.callout strong{color:var(--doc-ink);font-weight:600}
+table.ct{width:100%;border-collapse:collapse;font-size:13px;background:var(--doc-card);border:1px solid var(--doc-line);border-radius:10px;overflow:hidden}
+table.ct th,table.ct td{padding:14px 18px;text-align:left;border-bottom:1px solid var(--doc-line)}
+table.ct th{background:var(--surface-secondary);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--doc-ink-2);font-weight:500}
+table.ct tr:last-child td{border-bottom:none}
+.pass{color:var(--accent);font-weight:600} .fail{color:var(--destructive);font-weight:600}
+.fmark{width:64px;height:64px;border-radius:16px;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:36px}
+.doc-footer{margin-top:120px;padding-top:40px;border-top:1px solid var(--doc-line);display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--doc-ink-3);letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="cover">
+  <div>
+    <div class="eyebrow">Fordriv &middot; Design System &middot; v0.10</div>
+    <h1>The <span class="accent">Fordriv</span><br>design system.</h1>
+    <p class="lede">Visual language and component inventory for Puslespill-appen &mdash; den sosiale aktivitetsloggen for vennegjenger som samler p&aring; puslespill og brettspill. Alle tokens og komponenter er hentet direkte fra React Native / NativeWind-implementasjonen.</p>
+  </div>
+  <dl class="cover-meta">
+    <div><dt>Platform</dt><dd>iOS &middot; Android &middot; Expo 55</dd></div>
+    <div><dt>Styling</dt><dd>NativeWind 4 &middot; Tailwind 3</dd></div>
+    <div><dt>Modes</dt><dd>Light &middot; Dark (useColorScheme)</dd></div>
+    <div><dt>Accent</dt><dd>Green #1D9E75 / #34D399</dd></div>
+    <div><dt>Language</dt><dd>Norsk bokm&aring;l &middot; Inter (web)</dd></div>
+    <div><dt>Accessibility</dt><dd>WCAG AA verified</dd></div>
+  </dl>
+</header>
+
+<!-- 01 FOUNDATIONS -->
+<section class="section">
+  <div class="section-head">
+    <span class="num">01</span><h2>Foundations</h2>
+    <p>The raw tokens. Every specimen below reads from these.</p>
+  </div>
+
+  <div class="subhead">Brand mark</div>
+  <div class="spec">
+    <div class="spec-label">Wordmark</div>
+    <div class="spec-title">Fordriv</div>
+    <p class="spec-desc">Header.tsx renders the wordmark in 24px/700 top-left on every primary tab, paired with a bell icon.</p>
+    <div class="spec-body">
+      <div style="display:flex;align-items:center;gap:32px">
+        <div class="fmark">F</div>
+        <div style="font-size:48px;font-weight:700;letter-spacing:-.03em">Fordriv</div>
+        <div style="font-size:24px;font-weight:700">Fordriv</div>
+      </div>
+    </div>
+    <div class="spec-meta"><span><strong>Header.tsx</strong></span><span>700 weight</span><span>24px / text-2xl</span></div>
+  </div>
+
+  <div class="subhead">Color &middot; Light mode</div>
+  <div class="swatches">
+    <div class="swatch"><div class="chip" style="background:#FFF;border-bottom:1px solid var(--border)"><span class="role" style="color:var(--content-secondary)">Surface</span></div><div class="meta"><div class="name">surface</div><div class="hex">#FFFFFF</div><div class="usage">Cards &middot; header &middot; tab-bar</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#F2F1EF"><span class="role" style="color:var(--content-secondary)">Surface&thinsp;/&thinsp;secondary</span></div><div class="meta"><div class="name">surface.secondary</div><div class="hex">#F2F1EF</div><div class="usage">App background</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#1C1917"><span class="role" style="color:#FAFAF9">Content</span></div><div class="meta"><div class="name">content</div><div class="hex">#1C1917</div><div class="usage">Primary text</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#78716C"><span class="role" style="color:#F2F1EF">Content&thinsp;/&thinsp;secondary</span></div><div class="meta"><div class="name">content.secondary</div><div class="hex">#78716C</div><div class="usage">Subtitles &middot; meta</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#A8A29E"><span class="role" style="color:#fff">Content&thinsp;/&thinsp;tertiary</span></div><div class="meta"><div class="name">content.tertiary</div><div class="hex">#A8A29E</div><div class="usage">Placeholder &middot; chevrons</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#E7E5E4"><span class="role" style="color:var(--content-secondary)">Border</span></div><div class="meta"><div class="name">border</div><div class="hex">#E7E5E4</div><div class="usage">Subtle dividers</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#D6D3D1"><span class="role" style="color:var(--content-secondary)">Border&thinsp;/&thinsp;secondary</span></div><div class="meta"><div class="name">border.secondary</div><div class="hex">#D6D3D1</div><div class="usage">Switch track</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#1D9E75"><span class="role" style="color:#fff">Accent</span></div><div class="meta"><div class="name">accent</div><div class="hex">#1D9E75</div><div class="usage">Primary CTA &middot; active</div></div></div>
+  </div>
+
+  <div class="subhead">Color &middot; Dark mode</div>
+  <div class="swatches">
+    <div class="swatch"><div class="chip" style="background:#292524"><span class="role" style="color:#FAFAF9">Surface&thinsp;/&thinsp;dark</span></div><div class="meta"><div class="name">surface.dark</div><div class="hex">#292524</div><div class="usage">Cards &middot; header</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#1C1917"><span class="role" style="color:#FAFAF9">Surface&thinsp;/&thinsp;dark-sec</span></div><div class="meta"><div class="name">surface.dark-secondary</div><div class="hex">#1C1917</div><div class="usage">App background</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#FAFAF9"><span class="role" style="color:var(--content-secondary)">Content&thinsp;/&thinsp;dark</span></div><div class="meta"><div class="name">content.dark</div><div class="hex">#FAFAF9</div><div class="usage">Primary text dark</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#A8A29E"><span class="role" style="color:#1C1917">Content&thinsp;/&thinsp;dark-sec</span></div><div class="meta"><div class="name">content.dark-secondary</div><div class="hex">#A8A29E</div><div class="usage">Subtitles dark</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#57534E"><span class="role" style="color:#FAFAF9">Content&thinsp;/&thinsp;dark-tert</span></div><div class="meta"><div class="name">content.dark-tertiary</div><div class="hex">#57534E</div><div class="usage">Placeholder dark</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#44403C"><span class="role" style="color:#FAFAF9">Border&thinsp;/&thinsp;dark</span></div><div class="meta"><div class="name">border.dark</div><div class="hex">#44403C</div><div class="usage">Dividers dark</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#57534E"><span class="role" style="color:#FAFAF9">Border&thinsp;/&thinsp;dark-sec</span></div><div class="meta"><div class="name">border.dark-secondary</div><div class="hex">#57534E</div><div class="usage">Firmer lines dark</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#34D399"><span class="role" style="color:#1C1917">Accent&thinsp;/&thinsp;dark</span></div><div class="meta"><div class="name">accent.dark</div><div class="hex">#34D399</div><div class="usage">Primary CTA dark</div></div></div>
+  </div>
+
+  <div class="subhead">Avatar palette (deterministic from utils/initials.ts)</div>
+  <div class="swatches" style="grid-template-columns:repeat(6,1fr)">
+    <div class="swatch"><div class="chip" style="background:#A7F3D0"><span class="role" style="color:#065F46">Gr&oslash;nn</span></div><div class="meta"><div class="hex">#A7F3D0 / #065F46</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#FBCFE8"><span class="role" style="color:#9D174D">Rosa</span></div><div class="meta"><div class="hex">#FBCFE8 / #9D174D</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#BFDBFE"><span class="role" style="color:#1E40AF">Bl&aring;</span></div><div class="meta"><div class="hex">#BFDBFE / #1E40AF</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#FDE68A"><span class="role" style="color:#92400E">Gul</span></div><div class="meta"><div class="hex">#FDE68A / #92400E</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#CECBF6"><span class="role" style="color:#3C3489">Lilla</span></div><div class="meta"><div class="hex">#CECBF6 / #3C3489</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#F9A8D4"><span class="role" style="color:#831843">R&oslash;d</span></div><div class="meta"><div class="hex">#F9A8D4 / #831843</div></div></div>
+  </div>
+
+  <div class="subhead">Contrast</div>
+  <table class="ct">
+    <thead><tr><th>Foreground</th><th>Background</th><th>Ratio</th><th>WCAG AA</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td>accent #1D9E75</td><td>white #FFFFFF</td><td>4.6 : 1</td><td class="pass">Pass</td><td>Accent text on cards (light)</td></tr>
+      <tr><td>accent.dark #34D399</td><td>surface.dark #292524</td><td>7.2 : 1</td><td class="pass">Pass</td><td>Accent text on cards (dark)</td></tr>
+      <tr><td>content #1C1917</td><td>surface #FFFFFF</td><td>16.9 : 1</td><td class="pass">Pass</td><td>Body copy (light)</td></tr>
+      <tr><td>content.dark #FAFAF9</td><td>surface.dark #292524</td><td>13.2 : 1</td><td class="pass">Pass</td><td>Body copy (dark)</td></tr>
+      <tr><td>content.secondary #78716C</td><td>surface.dark #292524</td><td>3.0 : 1</td><td class="fail">Avoid</td><td>Do not use stone-500 as text on dark</td></tr>
+    </tbody>
+  </table>
+
+  <div class="subhead">Typography</div>
+  <div class="spec">
+    <div class="type-row"><div class="type-label">Screen title</div><div style="font-size:26px;font-weight:500;letter-spacing:-.01em;color:var(--content)">Mine samlinger</div><div class="type-spec">text-2xl / font-medium<br>26/32 &middot; 500</div></div>
+    <div class="type-row"><div class="type-label">Header logo</div><div style="font-size:24px;font-weight:700;letter-spacing:-.02em;color:var(--content)">Fordriv</div><div class="type-spec">text-2xl / font-bold<br>24/28 &middot; 700</div></div>
+    <div class="type-row"><div class="type-label">Modal header</div><div style="font-size:17px;font-weight:600;color:var(--content)">Ny &oslash;kt</div><div class="type-spec">text-lg / font-semibold<br>17/22 &middot; 600</div></div>
+    <div class="type-row"><div class="type-label">Body / Input</div><div style="font-size:16px;color:var(--content)">f.eks. Kari Nordmann</div><div class="type-spec">text-base<br>16/22 &middot; 400</div></div>
+    <div class="type-row"><div class="type-label">Row title</div><div style="font-size:15px;font-weight:500;color:var(--content)">Catan &ndash; Sj&oslash;farere</div><div class="type-spec">font-medium<br>15/20 &middot; 500</div></div>
+    <div class="type-row"><div class="type-label">Meta / subtitle</div><div style="font-size:12px;color:var(--content-secondary)">Dag 3 &middot; i g&aring;r</div><div class="type-spec">text-xs<br>12/16 &middot; 400</div></div>
+    <div class="type-row"><div class="type-label">Section label</div><div class="sl">UTL&Aring;NT N&Aring;</div><div class="type-spec">text-xs / font-semibold<br>tracking-widest uppercase</div></div>
+    <div class="type-row"><div class="type-label">Badge</div><div><span class="badge accent">Utl&aring;nt</span></div><div class="type-spec">11/12 &middot; 600</div></div>
+  </div>
+
+  <div class="subhead">Radius scale</div>
+  <div class="token-grid">
+    <div class="token"><div class="box" style="border-radius:8px"></div><div class="name">rounded-lg</div><div class="val">8px</div><div class="usage">Timeline thumbnails</div></div>
+    <div class="token"><div class="box" style="border-radius:12px"></div><div class="name">rounded-xl</div><div class="val">12px</div><div class="usage">Icon tiles &middot; session cards</div></div>
+    <div class="token"><div class="box" style="border-radius:16px"></div><div class="name">rounded-2xl</div><div class="val">16px</div><div class="usage">Cards &middot; buttons &middot; inputs</div></div>
+    <div class="token"><div class="box" style="border-radius:24px"></div><div class="name">rounded-3xl</div><div class="val">24px</div><div class="usage">Bottom sheet top corners</div></div>
+    <div class="token"><div class="box" style="border-radius:9999px"></div><div class="name">rounded-full</div><div class="val">&infin;</div><div class="usage">Badges &middot; chips &middot; avatars</div></div>
+  </div>
+
+  <div class="subhead">Layout rhythm</div>
+  <div class="grid-3">
+    <div class="spec"><div class="spec-label">Screen padding</div><div class="spec-title">16 px horizontal</div><p class="spec-desc">Every scrollable screen uses <code>px-4</code>. Top padding: <code>insets.top + 16</code>.</p></div>
+    <div class="spec"><div class="spec-label">Row padding</div><div class="spec-title">16 &times; 16 px</div><p class="spec-desc">List rows use <code>px-4 py-4</code>, 40px icon tile, 14px gap. Internal dividers are 1px border.</p></div>
+    <div class="spec"><div class="spec-label">Card stack gap</div><div class="spec-title">12 px / 32 px</div><p class="spec-desc">Cards: <code>mb-3</code> (12px). Section groups: <code>mb-8</code> (32px).</p></div>
+  </div>
+</section>
+
+<!-- 02 COMPONENTS -->
+<section class="section">
+  <div class="section-head">
+    <span class="num">02</span><h2>Components</h2>
+    <p>Each specimen matches the React Native source 1:1.</p>
+  </div>
+
+  <div class="subhead">Foundational</div>
+
+  <div class="comp-card">
+    <div class="ch"><div class="cl">Component &middot; UserAvatar.tsx</div><h3>Avatar</h3><p>Initials on deterministic pastel color when no avatarUrl. Always <code>accessible=false</code> &mdash; name lives on parent.</p></div>
+    <div class="stage">
+      <div class="specrow" style="gap:28px">
+        <div style="text-align:center"><div class="avatar s-24 c-green">RS</div><div style="font-size:10px;margin-top:8px;color:var(--content-secondary);font-family:monospace">24</div></div>
+        <div style="text-align:center"><div class="avatar s-36 c-pink">TO</div><div style="font-size:10px;margin-top:8px;color:var(--content-secondary);font-family:monospace">36 &middot; FeedCard</div></div>
+        <div style="text-align:center"><div class="avatar s-48 c-yellow">LA</div><div style="font-size:10px;margin-top:8px;color:var(--content-secondary);font-family:monospace">48</div></div>
+        <div style="text-align:center"><div class="avatar s-72 c-purple">KN</div><div style="font-size:10px;margin-top:8px;color:var(--content-secondary);font-family:monospace">72 &middot; Profile</div></div>
+      </div>
+    </div>
+    <div class="cfooter"><span>Props: <strong>name</strong> string|null &middot; <strong>avatarUrl</strong> string|null &middot; <strong>size</strong> number</span><span>font-size = size &times; 0.35</span></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="comp-card">
+      <div class="ch"><div class="cl">Component &middot; Badge</div><h3>Status badge</h3><p>Tonal pill. Accent for affirmative (Utl&aring;nt, Ferdig). Neutral for Returnert/inaktiv.</p></div>
+      <div class="stage"><div class="specrow" style="gap:12px"><span class="badge accent">Utl&aring;nt</span><span class="badge accent">Ferdig</span><span class="badge neutral">Returnert</span><span class="badge accent">Din &oslash;kt</span></div></div>
+      <div class="cfooter"><span><strong>accent</strong>: utl&aring;nt &middot; ferdig &middot; Din &oslash;kt</span><span><strong>neutral</strong>: returnert</span></div>
+    </div>
+    <div class="comp-card">
+      <div class="ch"><div class="cl">Pattern &middot; Segmented select</div><h3>Difficulty picker</h3><p>3-up equal-flex. Selected = accent fill + white text. Re-tap clears.</p></div>
+      <div class="stage as" style="flex-direction:column;gap:10px">
+        <div class="sl" style="padding:0;margin-bottom:4px">VANSKELIGHETSGRAD (VALGFRITT)</div>
+        <div style="display:flex;gap:12px;width:100%"><button class="pill-select">Lett</button><button class="pill-select selected">Middels</button><button class="pill-select">Vanskelig</button></div>
+      </div>
+      <div class="cfooter"><span>Height <strong>44px</strong></span><span>Radius <strong>rounded-2xl</strong></span></div>
+    </div>
+  </div>
+
+  <div class="comp-card" style="margin-top:24px">
+    <div class="ch"><div class="cl">Component &middot; Button</div><h3>Buttons</h3><p>Primary 100% width, sticky-bottom on modals. Secondary = cancel. Outline = profile.</p></div>
+    <div class="stage as" style="flex-direction:column;gap:14px">
+      <div style="display:grid;grid-template-columns:repeat(2,240px);gap:16px">
+        <div><div style="font-family:monospace;font-size:10px;color:var(--content-secondary);margin-bottom:6px">PRIMARY &middot; ACTIVE</div><button class="btn btn-primary">Start &oslash;kt</button></div>
+        <div><div style="font-family:monospace;font-size:10px;color:var(--content-secondary);margin-bottom:6px">PRIMARY &middot; DISABLED</div><button class="btn btn-primary disabled">Start &oslash;kt</button></div>
+        <div><div style="font-family:monospace;font-size:10px;color:var(--content-secondary);margin-bottom:6px">SECONDARY</div><button class="btn btn-secondary">Avbryt</button></div>
+        <div><div style="font-family:monospace;font-size:10px;color:var(--content-secondary);margin-bottom:6px">OUTLINE</div><button class="btn btn-outline">Logg ut</button></div>
+      </div>
+    </div>
+    <div class="cfooter"><span>Height <strong>52px</strong> (py-4)</span><span>Radius <strong>rounded-2xl</strong></span><span>Label <strong>font-semibold 15px</strong></span></div>
+  </div>
+
+  <div class="comp-card" style="margin-top:24px">
+    <div class="ch"><div class="cl">Component &middot; List row</div><h3>List row</h3><p>Icon tile &middot; two-line text &middot; trailing slot (chevron / badge / action icon). All rows inside a single card; 1px border dividers.</p></div>
+    <div class="stage as">
+      <div class="card" style="width:100%">
+        <div class="row">
+          <div class="icon-tile"><svg width="20" height="20" viewBox="0 0 512 512" fill="none"><path d="M414.67 182.23c-9.43 0-21.23 2.68-28.42 6.12-1.61.77-3.33 1.23-5 1.23a11.62 11.62 0 01-11.68-11.68v-51.82a46.36 46.36 0 00-46.2-46.2h-49c-6.35 0-11.39-5.79-11.39-12.15A40.64 40.64 0 00254 49.68a41.18 41.18 0 00-29.4-11.84c-22.34-.37-41 18.36-41 40.71 0 6.35-5 12.15-11.39 12.15h-49a46.36 46.36 0 00-46.16 46.18v44.54c0 6.35 5.79 11.39 12.14 11.39a48.22 48.22 0 0120.33 4.57c17.15 7.82 28.29 25.12 28.29 44.11 0 26.72-21.72 48.44-49.61 48.44a46.09 46.09 0 01-19-4.25c-6.35-2.82-12.14 1.82-12.14 8.18v51.82a46.36 46.36 0 0046.2 46.2h226.72a46.36 46.36 0 0046.2-46.2v-49c0-6.35 5.79-11.39 12.15-11.39a39.64 39.64 0 0119.54 5.11c6.45 3.52 14 7 23.62 7 22.35 0 41.08-18.54 40.71-40.89a41.18 41.18 0 00-11.84-29.4 40.64 40.64 0 00-28.05-12.91z" stroke="currentColor" stroke-width="32" stroke-linejoin="round"/></svg></div>
+          <div class="row-main"><div class="row-title">Puslespill</div><div class="row-sub">14 stk &middot; 2 utl&aring;nt</div></div>
+          <span style="color:var(--content-tertiary);font-size:18px">&rsaquo;</span>
+        </div>
+        <div class="row">
+          <div class="icon-tile"><svg width="20" height="20" viewBox="0 0 512 512" fill="none"><rect x="64" y="64" width="384" height="384" rx="48" stroke="currentColor" stroke-width="32"/><circle cx="168" cy="168" r="24" fill="currentColor"/><circle cx="256" cy="256" r="24" fill="currentColor"/><circle cx="344" cy="344" r="24" fill="currentColor"/></svg></div>
+          <div class="row-main"><div class="row-title">Catan &ndash; Sj&oslash;farere</div><div class="row-sub">3&ndash;4 spillere</div></div>
+          <span class="badge accent" style="margin-right:8px">Utl&aring;nt</span>
+          <span style="color:var(--content-tertiary);font-size:18px">&rsaquo;</span>
+        </div>
+        <div class="row">
+          <div class="icon-tile"><svg width="20" height="20" viewBox="0 0 512 512" fill="none"><path d="M414.67 182.23c-9.43 0-21.23 2.68-28.42 6.12-1.61.77-3.33 1.23-5 1.23a11.62 11.62 0 01-11.68-11.68v-51.82a46.36 46.36 0 00-46.2-46.2h-49c-6.35 0-11.39-5.79-11.39-12.15A40.64 40.64 0 00254 49.68a41.18 41.18 0 00-29.4-11.84c-22.34-.37-41 18.36-41 40.71 0 6.35-5 12.15-11.39 12.15h-49a46.36 46.36 0 00-46.16 46.18v44.54c0 6.35 5.79 11.39 12.14 11.39a48.22 48.22 0 0120.33 4.57c17.15 7.82 28.29 25.12 28.29 44.11 0 26.72-21.72 48.44-49.61 48.44a46.09 46.09 0 01-19-4.25c-6.35-2.82-12.14 1.82-12.14 8.18v51.82a46.36 46.36 0 0046.2 46.2h226.72a46.36 46.36 0 0046.2-46.2v-49c0-6.35 5.79-11.39 12.15-11.39a39.64 39.64 0 0119.54 5.11c6.45 3.52 14 7 23.62 7 22.35 0 41.08-18.54 40.71-40.89a41.18 41.18 0 00-11.84-29.4 40.64 40.64 0 00-28.05-12.91z" stroke="currentColor" stroke-width="32" stroke-linejoin="round"/></svg></div>
+          <div class="row-main"><div class="row-title">Kinkaku-ji</div><div class="row-sub">til Kari Nordmann &middot; 3 dager siden</div></div>
+          <span style="color:var(--content-tertiary);font-size:20px">&#8617;</span>
+        </div>
+      </div>
+    </div>
+    <div class="cfooter"><span>Padding <strong>16 &times; 16</strong></span><span>Divider <strong>1px border</strong> no offset</span><span>Trailing <strong>chevron &middot; badge &middot; action icon</strong></span></div>
+  </div>
+
+  <div class="comp-card" style="margin-top:24px">
+    <div class="ch"><div class="cl">Pattern &middot; Bottom sheet</div><h3>Action sheet</h3><p>Swipe-up modal. Grabber &middot; icon+title header &middot; grouped cards &middot; destructive group &middot; sticky Avbryt.</p></div>
+    <div class="stage as" style="padding:20px;background:rgba(0,0,0,.35)">
+      <div style="width:100%;max-width:420px;margin:0 auto">
+        <div class="sheet">
+          <div class="grabber"></div>
+          <div class="sheet-group">
+            <div class="sheet-item"><svg width="22" height="22" viewBox="0 0 512 512" fill="none"><circle cx="256" cy="256" r="208" stroke="currentColor" stroke-width="32"/><path d="M200 160l120 96-120 96z" fill="currentColor"/></svg>Start &oslash;kt</div>
+            <div class="sheet-item"><svg width="22" height="22" viewBox="0 0 512 512" fill="none"><path d="M448 256L304 112v80c-131.8 0-191.79 91.18-192 224 49.88-74.06 111.44-128 192-128v80z" stroke="currentColor" stroke-width="32" stroke-linejoin="round"/></svg>Registrer utl&aring;n</div>
+            <div class="sheet-item"><svg width="22" height="22" viewBox="0 0 512 512" fill="none"><path d="M358.62 129.28L86.49 402l-22.9 76.93a5.67 5.67 0 007.23 7L148.64 464 420.79 191.85zM413.24 89.66l-22.63 22.62a4 4 0 000 5.66l83.57 83.57a4 4 0 005.66 0l22.4-22.41a16 16 0 000-22.62l-66.39-66.82a16 16 0 00-22.61 0z" stroke="currentColor" stroke-width="32" stroke-linejoin="round"/></svg>Rediger</div>
+          </div>
+          <div class="sheet-group">
+            <div class="sheet-item destr"><svg width="22" height="22" viewBox="0 0 512 512" fill="none"><path d="M112 112l20 320c.95 18.49 14.4 32 32 32h184c17.67 0 30.87-13.51 32-32l20-320M80 112h352M192 112V72h128v40" stroke="currentColor" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/></svg>Slett</div>
+          </div>
+          <div class="sheet-cancel">Avbryt</div>
+        </div>
+      </div>
+    </div>
+    <div class="cfooter"><span>Top radius <strong>rounded-3xl &middot; 24px</strong></span><span>Grabber <strong>40 &times; 4 &middot; border</strong></span><span>Bottom inset <strong>insets.bottom + 16</strong></span></div>
+  </div>
+
+  <div class="comp-card" style="margin-top:24px">
+    <div class="ch"><div class="cl">Component &middot; Switch</div><h3>Toggle &middot; Switch</h3><p>iOS-style track: false = #D6D3D1, true = #1D9E75. White thumb. Used for loan visibility and session flags.</p></div>
+    <div class="stage as" style="flex-direction:column;gap:12px">
+      <div style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px">
+        <div style="flex:1"><div style="font-size:15px;font-weight:500">Synlig for felles venner</div><div style="font-size:12px;color:var(--content-secondary);margin-top:2px">Viser at du har l&aring;nt ut &mdash; ikke hvem til</div></div>
+        <div class="switch on"></div>
+      </div>
+      <div style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px">
+        <div style="flex:1"><div style="font-size:15px;font-weight:500">Fullf&oslash;rt</div><div style="font-size:12px;color:var(--content-secondary);margin-top:2px">Ble gjenstanden ferdig?</div></div>
+        <div class="switch"></div>
+      </div>
+    </div>
+    <div class="cfooter"><span>trackColor.false <strong>#D6D3D1</strong></span><span>trackColor.true <strong>#1D9E75</strong></span><span>thumbColor <strong>white</strong></span></div>
+  </div>
+</section>
+
+<!-- 03 PRINCIPLES -->
+<section class="section">
+  <div class="section-head">
+    <span class="num">03</span><h2>Principles</h2>
+    <p>How the pieces stay coherent as the product grows.</p>
+  </div>
+  <div class="grid-2">
+    <div class="callout"><strong>&Eacute;n aksent.</strong> Gr&oslash;nn er eneste aksentfarge. Ikke introduser nye kul&oslash;r-toner for nye kategorier; bruk ikonografi og kopi som differensiator.</div>
+    <div class="callout"><strong>Card-first rytme.</strong> Nesten alt er en hvit <code>rounded-2xl</code> kort-container med subtil border. Grupper beslektede rader i samme kort.</div>
+    <div class="callout"><strong>Handlinger lever der konteksten er.</strong> Utl&aring;n registreres p&aring; gjenstanden, ikke i +-menyen. La bottom-sheet b&aelig;re handlingene.</div>
+    <div class="callout"><strong>Personvern i komponentniv&aring;.</strong> L&aring;ntakers navn vises kun til eieren &mdash; designet skal aldri eksponere det for andre brukere.</div>
+    <div class="callout"><strong>Norsk kopi, engelsk kode.</strong> All UI-tekst er p&aring; bokm&aring;l. Kode, props og typer forblir engelske.</div>
+    <div class="callout"><strong>Lys og m&oslash;rk er likeverdige.</strong> Enhver komponent m&aring; oppgi <code>dark:</code>-variant. Ikke-parvise komponenter er feil.</div>
+  </div>
+</section>
+
+<footer class="doc-footer">
+  <span>Fordriv &middot; Design System &middot; v0.10</span>
+  <span>Ekstrahert fra puslespill-appen</span>
+  <span>April 2026</span>
+</footer>
+</div>
+</body>
+</html>
