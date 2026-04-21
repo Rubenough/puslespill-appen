@@ -48,6 +48,9 @@ export default function NewSessionScreen() {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const selectedItem = items.find((i) => i.id === selectedItemId) ?? null;
+  const isPuzzle = selectedItem?.type === "puslespill";
+
   useEffect(() => {
     async function fetchItems() {
       const { data } = await supabase
@@ -315,7 +318,7 @@ export default function NewSessionScreen() {
           accessibilityRole="header"
           className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2"
         >
-          BILDE (VALGFRITT)
+          {isPuzzle ? "BILDE AV BOKSEN" : "BILDE (VALGFRITT)"}
         </Text>
         {imageUri ? (
           <View className="relative mb-6">
@@ -338,12 +341,12 @@ export default function NewSessionScreen() {
           <TouchableOpacity
             onPress={pickImage}
             accessibilityRole="button"
-            accessibilityLabel="Velg bilde fra bildebiblioteket"
+            accessibilityLabel={isPuzzle ? "Ta bilde av boksen" : "Velg bilde fra bildebiblioteket"}
             className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark p-6 items-center mb-6"
           >
             <Ionicons name="camera-outline" size={32} color="#78716C" accessible={false} />
             <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mt-2">
-              Velg bilde
+              {isPuzzle ? "Ta bilde av forsiden" : "Velg bilde"}
             </Text>
           </TouchableOpacity>
         )}
