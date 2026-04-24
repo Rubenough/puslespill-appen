@@ -7,7 +7,8 @@ Sosial mobilapp for vennegjenger som pusler sammen. Del samlinger, hold styr på
 <p align="center">
   <img src="docs/screenshots/01-feed.png" width="240" alt="Feed med aktive økter og social aktivitet" />
   <img src="docs/screenshots/02-progress.png" width="240" alt="Fremgangssporing med bilder og notater" />
-  <img src="docs/screenshots/03-collections.png" width="240" alt="Samlinger og aktive utlån" />
+  <img src="docs/screenshots/03-update-progress.png" width="240" alt="Oppdatere fremgangen" />
+  <img src="docs/screenshots/04-collections.png" width="240" alt="Samlinger og aktive utlån" />
 </p>
 
 ## Om prosjektet
