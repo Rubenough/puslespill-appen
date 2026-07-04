@@ -12,7 +12,8 @@
     "test:ci": "jest --ci --runInBand",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "gen:types": "supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > src/lib/database.types.ts"
   },
   "jest": {
     "preset": "jest-expo",
