@@ -3,6 +3,7 @@ import { Alert, View, Text } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
 import { supabase } from "../lib/supabase";
+import { parseOAuthRedirect } from "../utils/auth";
 import GoogleSignInButton from "../components/GoogleSignInButton";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -50,19 +51,14 @@ export default function AuthScreen() {
         return;
       }
 
-      const params = new URLSearchParams(result.url.split("#")[1]);
-      const access_token = params.get("access_token");
-      const refresh_token = params.get("refresh_token");
+      const tokens = parseOAuthRedirect(result.url);
 
-      if (!access_token || !refresh_token) {
+      if (!tokens) {
         Alert.alert("Innlogging feilet", "Ugyldig innloggingsrespons. Prøv igjen.");
         return;
       }
 
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token,
-        refresh_token,
-      });
+      const { error: sessionError } = await supabase.auth.setSession(tokens);
 
       if (sessionError) {
         Alert.alert("Innlogging feilet", "Kunne ikke opprette sesjon. Prøv igjen.");

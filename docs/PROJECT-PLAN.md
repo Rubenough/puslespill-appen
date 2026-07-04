@@ -44,9 +44,10 @@ Not a blocking phase; keep these green/moving as you build.
 - [x] Jest (`jest-expo`) + tests for `date`, `initials`, `progressToFilled`, `toStoragePath`.
 - [x] Loan/return atomic via `trg_sync_item_status` trigger (one client write).
 - [x] Session images: private bucket + signed URLs (GDPR).
-- [ ] **Supabase-generated types** (`src/lib/database.types.ts`) → type the client, delete the `as any` / `as unknown as` casts in `FeedScreen` / `SessionDetailScreen` / `ProfileScreen`. _(High leverage; do early — every phase below adds queries.)_
+- [x] **Supabase-generated types** (`src/lib/database.types.ts`, via `npm run gen:types`) → client typed with `createClient<Database>`. Generated file is git-tracked but excluded from lint/format.
+- [ ] **Finish cast removal — needs DB constraints.** Generated types revealed the DB stores `items.type/difficulty/status` as plain `text` (→ `string`) and `sessions.started_at` / `items.created_at` as nullable-with-default. So the app's enum narrowing + non-null feed timestamps still need boundary casts. Proper fix: add `CHECK`/enum + `NOT NULL` constraints in the dashboard, regenerate, then delete the remaining `as any` in `FeedScreen` and `as unknown as` in `SessionDetailScreen` / `ProfileScreen`.
 - [ ] `delete_session(session_id)` RPC or `ON DELETE CASCADE` on `session_images` / `session_participants` → single-call delete; keep storage cleanup after.
-- [ ] More tests as logic lands: `collections.ts`, `AuthScreen` token-parse (extract to a pure fn first), friend-graph helpers.
+- [x] More tests as logic lands — `collections`, `AuthScreen` token-parse (extracted to pure `parseOAuthRedirect`). (Ongoing for future logic.)
 - [ ] npm-audit findings: all are Expo **dev-tooling** transitive deps (not shipped) — resolve at the next SDK bump, don't `--force`.
 
 ---

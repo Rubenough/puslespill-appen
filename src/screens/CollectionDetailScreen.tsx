@@ -64,7 +64,8 @@ export default function CollectionDetailScreen() {
       if (error) {
         setFetchError(error.message);
       } else {
-        setItems(data ?? []);
+        // DB lagrer difficulty/status som text; vi smalner til app-unionene her.
+        setItems((data ?? []) as Item[]);
         setFetchError(null);
       }
       setLoading(false);
