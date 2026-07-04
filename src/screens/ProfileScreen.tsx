@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import { useProfil } from "../context/ProfilContext";
 import UserAvatar from "../components/UserAvatar";
 import { type ItemType, ITEM_ICONS } from "../utils/collections";
+import { getRelativeDayOrWeekLabel } from "../utils/date";
 import { Ionicons } from "@expo/vector-icons";
 
 const FALLBACK_NAME = "Ukjent bruker";
@@ -19,17 +20,6 @@ type LoanHistoryItem = {
   items: { title: string; type: ItemType } | null;
 };
 
-function getDaysLabel(dateStr: string): string {
-  const diffDays = Math.floor(
-    (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24)
-  );
-  if (diffDays === 0) return "i dag";
-  if (diffDays === 1) return "i går";
-  if (diffDays < 7) return `${diffDays} dager siden`;
-  if (diffDays < 14) return "1 uke siden";
-  return `${Math.floor(diffDays / 7)} uker siden`;
-}
-
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -37,18 +27,20 @@ export default function ProfileScreen() {
 
   const [loans, setLoans] = useState<LoanHistoryItem[]>([]);
   const [loadingLoans, setLoadingLoans] = useState(true);
+  const [loansError, setLoansError] = useState(false);
 
   const fetchLoans = useCallback(async () => {
     if (!user) return;
     setLoadingLoans(true);
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("loans")
       .select("id, borrower_name, loaned_at, returned_at, items(title, type)")
       .eq("owner_id", user.id)
       .order("loaned_at", { ascending: false })
       .limit(20);
 
+    setLoansError(!!error);
     setLoans((data as unknown as LoanHistoryItem[]) ?? []);
     setLoadingLoans(false);
   }, [user]);
@@ -108,6 +100,20 @@ export default function ProfileScreen() {
 
       {loadingLoans ? (
         <ActivityIndicator color="#1D9E75" style={{ marginVertical: 24 }} />
+      ) : loansError ? (
+        <View className="mx-4 bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-2xl p-4 items-center">
+          <Text className="text-content dark:text-content-dark text-sm text-center mb-3">
+            Kunne ikke laste utlån.
+          </Text>
+          <TouchableOpacity
+            onPress={() => fetchLoans()}
+            accessibilityRole="button"
+            accessibilityLabel="Prøv igjen"
+            className="bg-accent dark:bg-accent-dark rounded-xl px-5 py-2"
+          >
+            <Text className="text-white font-semibold text-sm">Prøv igjen</Text>
+          </TouchableOpacity>
+        </View>
       ) : loans.length === 0 ? (
         <Text className="text-content-secondary dark:text-content-secondary-dark text-sm px-4">
           Ingen utlån registrert ennå
@@ -158,7 +164,7 @@ function LoanRow({ loan, isLast }: LoanRowProps) {
       accessibilityLabel={[
         loan.items?.title ?? "Ukjent gjenstand",
         `til ${loan.borrower_name}`,
-        isActive ? `utlånt ${getDaysLabel(loan.loaned_at)}` : `returnert ${getDaysLabel(loan.returned_at!)}`,
+        isActive ? `utlånt ${getRelativeDayOrWeekLabel(loan.loaned_at)}` : `returnert ${getRelativeDayOrWeekLabel(loan.returned_at!)}`,
       ].join(", ")}
       className={`flex-row items-center px-4 py-3 ${
         !isLast ? "border-b border-border dark:border-border-dark" : ""
@@ -178,8 +184,8 @@ function LoanRow({ loan, isLast }: LoanRowProps) {
         </Text>
         <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-0.5">
           {isActive
-            ? `til ${loan.borrower_name} · ${getDaysLabel(loan.loaned_at)}`
-            : `til ${loan.borrower_name} · returnert ${getDaysLabel(loan.returned_at!)}`}
+            ? `til ${loan.borrower_name} · ${getRelativeDayOrWeekLabel(loan.loaned_at)}`
+            : `til ${loan.borrower_name} · returnert ${getRelativeDayOrWeekLabel(loan.returned_at!)}`}
         </Text>
       </View>
 

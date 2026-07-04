@@ -8,6 +8,7 @@ import { type ItemType, ITEM_ICONS, ITEM_LABELS } from "../utils/collections";
 import { CollectionsStackParamList } from "../navigation/CollectionsStack";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import { getRelativeDayLabel } from "../utils/date";
 
 type NavProp = NativeStackNavigationProp<CollectionsStackParamList, "CollectionsList">;
 
@@ -201,11 +202,7 @@ export default function CollectionsScreen() {
           <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden">
             {activeLoans.map((loan, i) => {
               const itemType = loan.items?.type as ItemType | undefined;
-              const daysAgo = Math.floor(
-                (Date.now() - new Date(loan.loaned_at).getTime()) / 86_400_000
-              );
-              const dateLabel =
-                daysAgo === 0 ? "i dag" : daysAgo === 1 ? "i går" : `${daysAgo} dager siden`;
+              const dateLabel = getRelativeDayLabel(loan.loaned_at);
 
               const isReturning = returningId === loan.id;
               return (

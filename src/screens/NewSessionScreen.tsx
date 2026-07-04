@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -15,11 +15,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system/legacy";
-import { decode } from "base64-arraybuffer";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { ITEM_ICONS, type ItemType } from "../utils/collections";
+import { uploadSessionImage, removeSessionImages } from "../utils/sessionImages";
 import { RootStackParamList } from "../navigation/RootNavigator";
 
 type NewSessionRouteProp = RouteProp<RootStackParamList, "NewSession">;
@@ -40,6 +39,7 @@ export default function NewSessionScreen() {
 
   const [items, setItems] = useState<SessionItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
+  const [itemsError, setItemsError] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(
     route.params?.itemId ?? null,
   );
@@ -53,22 +53,27 @@ export default function NewSessionScreen() {
   const selectedItem = items.find((i) => i.id === selectedItemId) ?? null;
   const isPuzzle = selectedItem?.type === "puslespill";
 
-  useEffect(() => {
-    async function fetchItems() {
-      const { data } = await supabase
-        .from("items")
-        .select("id, title, brand, type")
-        .eq("owner_id", user!.id)
-        .order("title", { ascending: true });
-      setItems((data as SessionItem[]) ?? []);
-      setLoadingItems(false);
-    }
-    fetchItems();
+  const fetchItems = useCallback(async () => {
+    setLoadingItems(true);
+    const { data, error } = await supabase
+      .from("items")
+      .select("id, title, brand, type")
+      .eq("owner_id", user!.id)
+      .order("title", { ascending: true });
+    setItemsError(!!error);
+    setItems((data as SessionItem[]) ?? []);
+    setLoadingItems(false);
   }, [user]);
+
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
 
   function addGuestName() {
     const trimmed = nameInput.trim();
-    if (!trimmed || guestNames.includes(trimmed)) return;
+    if (!trimmed || guestNames.some((n) => n.toLowerCase() === trimmed.toLowerCase())) {
+      return;
+    }
     setGuestNames((prev) => [...prev, trimmed]);
     setNameInput("");
   }
@@ -85,25 +90,6 @@ export default function NewSessionScreen() {
     }
   }
 
-  async function uploadImage(uri: string): Promise<string | null> {
-    const fileName = `${user!.id}/${Date.now()}.jpg`;
-    const base64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-
-    const { error } = await supabase.storage
-      .from("session-images")
-      .upload(fileName, decode(base64), { contentType: "image/jpeg" });
-
-    if (error) return null;
-
-    const { data } = supabase.storage
-      .from("session-images")
-      .getPublicUrl(fileName);
-
-    return data.publicUrl;
-  }
-
   async function handleStart() {
     if (!selectedItemId) {
       Alert.alert("Velg gjenstand", "Du må velge en gjenstand for å starte en økt.");
@@ -112,47 +98,49 @@ export default function NewSessionScreen() {
 
     setSaving(true);
 
-    let imageUrl: string | null = null;
-    if (imageUri) {
-      imageUrl = await uploadImage(imageUri);
-      if (!imageUrl) {
-        setSaving(false);
-        Alert.alert("Noe gikk galt", "Kunne ikke laste opp bildet. Prøv igjen.");
-        return;
+    // Lagringssti holdes utenfor try slik at vi kan rydde opp foreldreløst bilde ved feil.
+    let uploadedPath: string | null = null;
+    try {
+      let imageUrl: string | null = null;
+      if (imageUri) {
+        uploadedPath = `${user!.id}/${Date.now()}.jpg`;
+        imageUrl = await uploadSessionImage(uploadedPath, imageUri);
       }
-    }
 
-    const { data: session, error: sessionError } = await supabase
-      .from("sessions")
-      .insert({
-        item_id: selectedItemId,
-        created_by: user!.id,
-        notes: notes.trim() || null,
-        guest_names: guestNames,
-        image_url: imageUrl,
-        completed_at: completed ? new Date().toISOString() : null,
-      })
-      .select("id")
-      .single();
+      const { data: session, error: sessionError } = await supabase
+        .from("sessions")
+        .insert({
+          item_id: selectedItemId,
+          created_by: user!.id,
+          notes: notes.trim() || null,
+          guest_names: guestNames,
+          image_url: imageUrl,
+          completed_at: completed ? new Date().toISOString() : null,
+        })
+        .select("id")
+        .single();
 
-    if (sessionError) {
+      if (sessionError) throw sessionError;
+      // Økten peker nå på bildet — ikke rydd det bort om deltaker-innsettingen feiler.
+      uploadedPath = null;
+
+      const { error: participantError } = await supabase
+        .from("session_participants")
+        .insert({ session_id: session.id, profile_id: user!.id });
+
+      if (participantError) throw participantError;
+
+      navigation.goBack();
+    } catch (err) {
+      // Rydd opp bildet vi lastet opp før feilen slik at bucketen ikke fylles med foreldreløse filer.
+      if (uploadedPath) await removeSessionImages([uploadedPath]).catch(() => {});
+      Alert.alert(
+        "Noe gikk galt",
+        err instanceof Error ? err.message : "Kunne ikke starte økten. Prøv igjen.",
+      );
+    } finally {
       setSaving(false);
-      Alert.alert("Noe gikk galt", sessionError.message);
-      return;
     }
-
-    const { error: participantError } = await supabase
-      .from("session_participants")
-      .insert({ session_id: session.id, profile_id: user!.id });
-
-    setSaving(false);
-
-    if (participantError) {
-      Alert.alert("Noe gikk galt", participantError.message);
-      return;
-    }
-
-    navigation.goBack();
   }
 
   return (
@@ -189,6 +177,20 @@ export default function NewSessionScreen() {
         </Text>
         {loadingItems ? (
           <ActivityIndicator color="#1D9E75" style={{ marginVertical: 24 }} />
+        ) : itemsError ? (
+          <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-4 mb-6 items-center">
+            <Text className="text-content dark:text-content-dark text-sm text-center mb-3">
+              Kunne ikke laste gjenstandene.
+            </Text>
+            <TouchableOpacity
+              onPress={() => fetchItems()}
+              accessibilityRole="button"
+              accessibilityLabel="Prøv igjen"
+              className="bg-accent dark:bg-accent-dark rounded-xl px-5 py-2"
+            >
+              <Text className="text-white font-semibold text-sm">Prøv igjen</Text>
+            </TouchableOpacity>
+          </View>
         ) : items.length === 0 ? (
           <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-4 mb-6">
             <Text className="text-content-secondary dark:text-content-secondary-dark text-base">

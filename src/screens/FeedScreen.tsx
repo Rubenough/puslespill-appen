@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { View, Text, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
@@ -9,6 +9,7 @@ import FeedCard from "../components/FeedCard";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { type ItemType } from "../utils/collections";
+import { getDayNumber, getRelativeDayLabel } from "../utils/date";
 
 // ─── Typer ───────────────────────────────────────────────────────────────────
 
@@ -26,22 +27,6 @@ type FeedItem =
   | { id: string; type: "completed"; timestamp: string; userName: string; avatarUrl: string | null; itemType: ItemType; itemTitle: string }
   | { id: string; type: "added"; timestamp: string; userName: string; avatarUrl: string | null; itemType: ItemType; itemTitle: string }
   | { id: string; type: "loaned"; timestamp: string; userName: string; avatarUrl: string | null; itemType: ItemType; itemTitle: string; loanedTo?: string };
-
-// ─── Hjelpefunksjoner ─────────────────────────────────────────────────────────
-
-function getDayNumber(createdAt: string): number {
-  const diffMs = Date.now() - new Date(createdAt).getTime();
-  return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-}
-
-function getTimeLabel(dateStr: string): string {
-  const diffDays = Math.floor(
-    (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24)
-  );
-  if (diffDays === 0) return "i dag";
-  if (diffDays === 1) return "i går";
-  return `${diffDays} dager siden`;
-}
 
 // ─── Datahenting ──────────────────────────────────────────────────────────────
 
@@ -100,6 +85,9 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
       .order("loaned_at", { ascending: false })
       .limit(10),
   ]);
+
+  const queryError = sessionsRes.error ?? itemsRes.error ?? loansRes.error;
+  if (queryError) throw queryError;
 
   // Samle alle unike bruker-IDer fra sessions og items, hent profiler i ett kall
   const userIds = new Set<string>([userId]);
@@ -175,21 +163,24 @@ export default function FeedScreen() {
 
   const [sessions, setSessions] = useState<ActiveSession[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
+  const [sessionsError, setSessionsError] = useState(false);
 
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
+  const [feedError, setFeedError] = useState(false);
 
   const fetchSessions = useCallback(async () => {
     if (!user) return;
     setLoadingSessions(true);
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("sessions")
       .select("id, started_at, guest_names, image_url, item:items(id, title, type)")
       .eq("created_by", user.id)
       .is("completed_at", null)
       .order("started_at", { ascending: false });
 
+    setSessionsError(!!error);
     const rows = (data as unknown as ActiveSession[]) ?? [];
     setSessions(await attachSessionImages(rows));
     setLoadingSessions(false);
@@ -198,8 +189,14 @@ export default function FeedScreen() {
   const fetchFeed = useCallback(async () => {
     if (!user) return;
     setLoadingFeed(true);
-    setFeedItems(await fetchFeedItems(user.id));
-    setLoadingFeed(false);
+    try {
+      setFeedItems(await fetchFeedItems(user.id));
+      setFeedError(false);
+    } catch {
+      setFeedError(true);
+    } finally {
+      setLoadingFeed(false);
+    }
   }, [user]);
 
   useFocusEffect(
@@ -222,6 +219,8 @@ export default function FeedScreen() {
         </Text>
         {loadingSessions ? (
           <ActivityIndicator color="#1D9E75" style={{ marginVertical: 24, marginLeft: 16 }} />
+        ) : sessionsError ? (
+          <SectionError onRetry={fetchSessions} />
         ) : sessions.length === 0 ? (
           <Text className="text-content-secondary dark:text-content-secondary-dark text-sm px-4 pb-4">
             Ingen aktive økter
@@ -238,7 +237,7 @@ export default function FeedScreen() {
                 isOwn
                 puzzleTitle={s.item.title}
                 dayNumber={getDayNumber(s.started_at)}
-                timeLabel={getTimeLabel(s.started_at)}
+                timeLabel={getRelativeDayLabel(s.started_at)}
                 imageUrl={s.image_url}
                 onPress={() => navigation.navigate("SessionDetail", { sessionId: s.id })}
               />
@@ -255,6 +254,8 @@ export default function FeedScreen() {
         </Text>
         {loadingFeed ? (
           <ActivityIndicator color="#1D9E75" style={{ marginVertical: 24 }} />
+        ) : feedError ? (
+          <SectionError onRetry={fetchFeed} />
         ) : feedItems.length === 0 ? (
           <Text className="text-content-secondary dark:text-content-secondary-dark text-sm px-4 pb-4">
             Ingen aktivitet de siste 14 dagene
@@ -267,7 +268,7 @@ export default function FeedScreen() {
                 type={item.type}
                 userName={item.userName}
                 avatarUrl={item.avatarUrl}
-                timeLabel={getTimeLabel(item.timestamp)}
+                timeLabel={getRelativeDayLabel(item.timestamp)}
                 itemType={item.itemType}
                 itemTitle={item.itemTitle}
                 {...(item.type === "started" ? { withUsers: item.withUsers } : {})}
@@ -277,6 +278,24 @@ export default function FeedScreen() {
           </View>
         )}
       </ScrollView>
+    </View>
+  );
+}
+
+function SectionError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <View className="mx-4 mb-4 bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-2xl p-4 items-center">
+      <Text className="text-content dark:text-content-dark text-sm text-center mb-3">
+        Kunne ikke laste innhold.
+      </Text>
+      <TouchableOpacity
+        onPress={onRetry}
+        accessibilityRole="button"
+        accessibilityLabel="Prøv igjen"
+        className="bg-accent dark:bg-accent-dark rounded-xl px-5 py-2"
+      >
+        <Text className="text-white font-semibold text-sm">Prøv igjen</Text>
+      </TouchableOpacity>
     </View>
   );
 }
