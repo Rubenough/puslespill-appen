@@ -111,13 +111,20 @@ export default function EditSessionScreen() {
                 accessibilityLabel={name}
                 className="flex-row items-center bg-surface dark:bg-surface-dark border border-accent dark:border-accent-dark rounded-full px-3 py-1.5"
               >
-                <Text className="text-accent dark:text-accent-dark text-sm mr-1.5">{name}</Text>
+                <Text className="text-accent dark:text-accent-dark text-sm mr-1.5">
+                  {name}
+                </Text>
                 <TouchableOpacity
                   onPress={() => setGuestNames((prev) => prev.filter((n) => n !== name))}
                   accessibilityRole="button"
                   accessibilityLabel={`Fjern ${name}`}
                 >
-                  <Ionicons name="close-circle" size={16} color="#1D9E75" accessible={false} />
+                  <Ionicons
+                    name="close-circle"
+                    size={16}
+                    color="#1D9E75"
+                    accessible={false}
+                  />
                 </TouchableOpacity>
               </View>
             ))}

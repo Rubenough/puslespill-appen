@@ -1,5 +1,11 @@
 import React, { useState, useCallback } from "react";
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "../lib/supabase";
@@ -48,7 +54,7 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchLoans();
-    }, [fetchLoans])
+    }, [fetchLoans]),
   );
 
   async function signOut() {
@@ -84,9 +90,7 @@ export default function ProfileScreen() {
           accessibilityLabel="Logg ut"
           className="w-full bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-xl py-4 items-center mb-8"
         >
-          <Text className="text-content dark:text-content-dark font-medium">
-            Logg ut
-          </Text>
+          <Text className="text-content dark:text-content-dark font-medium">Logg ut</Text>
         </TouchableOpacity>
       </View>
 
@@ -140,11 +144,7 @@ export default function ProfileScreen() {
 
           {/* Returnerte utlån */}
           {returnedLoans.map((loan, i) => (
-            <LoanRow
-              key={loan.id}
-              loan={loan}
-              isLast={i === returnedLoans.length - 1}
-            />
+            <LoanRow key={loan.id} loan={loan} isLast={i === returnedLoans.length - 1} />
           ))}
         </View>
       )}
@@ -164,7 +164,9 @@ function LoanRow({ loan, isLast }: LoanRowProps) {
       accessibilityLabel={[
         loan.items?.title ?? "Ukjent gjenstand",
         `til ${loan.borrower_name}`,
-        isActive ? `utlånt ${getRelativeDayOrWeekLabel(loan.loaned_at)}` : `returnert ${getRelativeDayOrWeekLabel(loan.returned_at!)}`,
+        isActive
+          ? `utlånt ${getRelativeDayOrWeekLabel(loan.loaned_at)}`
+          : `returnert ${getRelativeDayOrWeekLabel(loan.returned_at!)}`,
       ].join(", ")}
       className={`flex-row items-center px-4 py-3 ${
         !isLast ? "border-b border-border dark:border-border-dark" : ""
@@ -173,13 +175,21 @@ function LoanRow({ loan, isLast }: LoanRowProps) {
       {/* Kategoriikon */}
       <View className="w-9 h-9 rounded-lg bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-3">
         {itemType ? (
-          <Ionicons name={ITEM_ICONS[itemType]} size={18} color="#78716C" accessible={false} />
+          <Ionicons
+            name={ITEM_ICONS[itemType]}
+            size={18}
+            color="#78716C"
+            accessible={false}
+          />
         ) : null}
       </View>
 
       {/* Tittel og låntaker */}
       <View className="flex-1">
-        <Text className="text-content dark:text-content-dark text-sm font-medium" numberOfLines={1}>
+        <Text
+          className="text-content dark:text-content-dark text-sm font-medium"
+          numberOfLines={1}
+        >
           {loan.items?.title ?? "Ukjent gjenstand"}
         </Text>
         <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-0.5">

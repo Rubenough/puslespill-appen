@@ -13,7 +13,7 @@ const ExpoSecureStoreAdapter = {
     }
     const numChunks = parseInt(numChunksStr, 10);
     const chunks = await Promise.all(
-      Array.from({ length: numChunks }, (_, i) => getItemAsync(`${key}_chunk_${i}`))
+      Array.from({ length: numChunks }, (_, i) => getItemAsync(`${key}_chunk_${i}`)),
     );
     if (chunks.some((c) => c === null)) return null;
     return chunks.join("");
@@ -36,7 +36,7 @@ const ExpoSecureStoreAdapter = {
       const numChunks = parseInt(numChunksStr, 10);
       await deleteItemAsync(`${key}_numChunks`);
       await Promise.all(
-        Array.from({ length: numChunks }, (_, i) => deleteItemAsync(`${key}_chunk_${i}`))
+        Array.from({ length: numChunks }, (_, i) => deleteItemAsync(`${key}_chunk_${i}`)),
       );
     }
     return deleteItemAsync(key);

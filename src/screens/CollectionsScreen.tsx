@@ -1,5 +1,13 @@
 import React, { useState, useCallback } from "react";
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Alert, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -29,61 +37,68 @@ export default function CollectionsScreen() {
   const { user } = useAuth();
 
   const [collections, setCollections] = useState<CollectionSummary[]>(
-    COLLECTION_TYPES.map((type) => ({ type, count: 0, loaned: 0 }))
+    COLLECTION_TYPES.map((type) => ({ type, count: 0, loaned: 0 })),
   );
   const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [returningId, setReturningId] = useState<string | null>(null);
 
-  const fetchData = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
+  const fetchData = useCallback(
+    async (isRefresh = false) => {
+      if (isRefresh) setRefreshing(true);
 
-    const [itemsResult, loansResult] = await Promise.all([
-      supabase.from("items").select("type, status").eq("owner_id", user!.id),
-      supabase
-        .from("loans")
-        .select("id, borrower_name, loaned_at, items(title, type)")
-        .eq("owner_id", user!.id)
-        .is("returned_at", null)
-        .order("loaned_at", { ascending: false }),
-    ]);
+      const [itemsResult, loansResult] = await Promise.all([
+        supabase.from("items").select("type, status").eq("owner_id", user!.id),
+        supabase
+          .from("loans")
+          .select("id, borrower_name, loaned_at, items(title, type)")
+          .eq("owner_id", user!.id)
+          .is("returned_at", null)
+          .order("loaned_at", { ascending: false }),
+      ]);
 
-    if (itemsResult.error) {
-      setFetchError(itemsResult.error.message);
+      if (itemsResult.error) {
+        setFetchError(itemsResult.error.message);
+        setRefreshing(false);
+        return;
+      }
+      if (loansResult.error) {
+        setFetchError(loansResult.error.message);
+        setRefreshing(false);
+        return;
+      }
+
+      setFetchError(null);
+
+      const summaries = COLLECTION_TYPES.map((type) => {
+        const ofType = itemsResult.data.filter((row) => row.type === type);
+        return {
+          type,
+          count: ofType.length,
+          loaned: ofType.filter((row) => row.status === "Utlånt").length,
+        };
+      });
+      setCollections(summaries);
+
+      // Supabase infererer joined tabeller som arrays uten genererte typer
+      const mapped: ActiveLoan[] = loansResult.data.map((row) => ({
+        id: row.id,
+        borrower_name: row.borrower_name,
+        loaned_at: row.loaned_at,
+        items: Array.isArray(row.items) ? (row.items[0] ?? null) : row.items,
+      }));
+      setActiveLoans(mapped);
       setRefreshing(false);
-      return;
-    }
-    if (loansResult.error) {
-      setFetchError(loansResult.error.message);
-      setRefreshing(false);
-      return;
-    }
+    },
+    [user],
+  );
 
-    setFetchError(null);
-
-    const summaries = COLLECTION_TYPES.map((type) => {
-      const ofType = itemsResult.data.filter((row) => row.type === type);
-      return {
-        type,
-        count: ofType.length,
-        loaned: ofType.filter((row) => row.status === "Utlånt").length,
-      };
-    });
-    setCollections(summaries);
-
-    // Supabase infererer joined tabeller som arrays uten genererte typer
-    const mapped: ActiveLoan[] = loansResult.data.map((row) => ({
-      id: row.id,
-      borrower_name: row.borrower_name,
-      loaned_at: row.loaned_at,
-      items: Array.isArray(row.items) ? (row.items[0] ?? null) : row.items,
-    }));
-    setActiveLoans(mapped);
-    setRefreshing(false);
-  }, [user]);
-
-  useFocusEffect(useCallback(() => { fetchData(); }, [fetchData]));
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData]),
+  );
 
   function handleReturn(loan: ActiveLoan) {
     Alert.alert(
@@ -180,7 +195,12 @@ export default function CollectionsScreen() {
                 {col.loaned > 0 ? ` · ${col.loaned} utlånt` : ""}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#78716C" accessible={false} />
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color="#78716C"
+              accessible={false}
+            />
           </TouchableOpacity>
         ))}
       </View>
@@ -239,7 +259,12 @@ export default function CollectionsScreen() {
                   {isReturning ? (
                     <ActivityIndicator size="small" color="#1D9E75" />
                   ) : (
-                    <Ionicons name="return-down-back-outline" size={20} color="#78716C" accessible={false} />
+                    <Ionicons
+                      name="return-down-back-outline"
+                      size={20}
+                      color="#78716C"
+                      accessible={false}
+                    />
                   )}
                 </TouchableOpacity>
               );

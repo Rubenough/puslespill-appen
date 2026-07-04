@@ -130,7 +130,12 @@ export default function ProgressSheet({
             accessibilityLabel="Legg til bilde"
             className="border border-dashed border-border dark:border-border-dark rounded-2xl py-5 items-center mb-4"
           >
-            <Ionicons name="camera-outline" size={28} color="#A8A29E" accessible={false} />
+            <Ionicons
+              name="camera-outline"
+              size={28}
+              color="#A8A29E"
+              accessible={false}
+            />
             <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mt-1.5">
               Legg til bilde (valgfritt)
             </Text>
@@ -139,10 +144,7 @@ export default function ProgressSheet({
 
         {/* Puslespill-ikon preview */}
         <View className="items-center mb-4">
-          <PuzzleProgressIcon
-            filled={progressToFilled(effectiveSelected)}
-            size={64}
-          />
+          <PuzzleProgressIcon filled={progressToFilled(effectiveSelected)} size={64} />
           {effectiveSelected !== null && (
             <Text className="text-accent dark:text-accent-dark text-sm font-semibold mt-1.5">
               {effectiveSelected}%
@@ -195,7 +197,9 @@ export default function ProgressSheet({
         <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-4">
           <TextInput
             className="text-content dark:text-content-dark text-base"
-            placeholder={isCompletion ? "Noen siste tanker?" : "Hva skjedde siden sist? (valgfritt)"}
+            placeholder={
+              isCompletion ? "Noen siste tanker?" : "Hva skjedde siden sist? (valgfritt)"
+            }
             placeholderTextColor="#A8A29E"
             value={note}
             onChangeText={setNote}

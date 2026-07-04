@@ -207,7 +207,9 @@ export default function NewSessionScreen() {
                   key={item.id}
                   onPress={() => setSelectedItemId(item.id)}
                   accessibilityRole="button"
-                  accessibilityLabel={item.brand ? `${item.title}, ${item.brand}` : item.title}
+                  accessibilityLabel={
+                    item.brand ? `${item.title}, ${item.brand}` : item.title
+                  }
                   accessibilityState={{ selected: isSelected }}
                   className={`flex-row items-center px-4 py-4 ${
                     !isLast ? "border-b border-border dark:border-border-dark" : ""
@@ -267,7 +269,12 @@ export default function NewSessionScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={`Fjern ${name}`}
                 >
-                  <Ionicons name="close-circle" size={16} color="#1D9E75" accessible={false} />
+                  <Ionicons
+                    name="close-circle"
+                    size={16}
+                    color="#1D9E75"
+                    accessible={false}
+                  />
                 </TouchableOpacity>
               </View>
             ))}
@@ -303,7 +310,9 @@ export default function NewSessionScreen() {
         {/* Fullført */}
         <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-4 mb-6 flex-row items-center justify-between">
           <View className="flex-1 mr-4">
-            <Text className="text-content dark:text-content-dark text-base">Fullført</Text>
+            <Text className="text-content dark:text-content-dark text-base">
+              Fullført
+            </Text>
             <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-0.5">
               Ble gjenstanden ferdig denne gangen?
             </Text>
@@ -346,10 +355,17 @@ export default function NewSessionScreen() {
           <TouchableOpacity
             onPress={pickImage}
             accessibilityRole="button"
-            accessibilityLabel={isPuzzle ? "Ta bilde av boksen" : "Velg bilde fra bildebiblioteket"}
+            accessibilityLabel={
+              isPuzzle ? "Ta bilde av boksen" : "Velg bilde fra bildebiblioteket"
+            }
             className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark p-6 items-center mb-6"
           >
-            <Ionicons name="camera-outline" size={32} color="#78716C" accessible={false} />
+            <Ionicons
+              name="camera-outline"
+              size={32}
+              color="#78716C"
+              accessible={false}
+            />
             <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mt-2">
               {isPuzzle ? "Ta bilde av forsiden" : "Velg bilde"}
             </Text>

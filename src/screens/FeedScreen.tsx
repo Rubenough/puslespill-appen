@@ -1,5 +1,11 @@
 import React, { useState, useCallback } from "react";
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
@@ -23,10 +29,44 @@ type ActiveSession = {
 
 // Felles type for alle feed-hendelser
 type FeedItem =
-  | { id: string; type: "started"; timestamp: string; userName: string; avatarUrl: string | null; itemType: ItemType; itemTitle: string; withUsers: string[] }
-  | { id: string; type: "completed"; timestamp: string; userName: string; avatarUrl: string | null; itemType: ItemType; itemTitle: string }
-  | { id: string; type: "added"; timestamp: string; userName: string; avatarUrl: string | null; itemType: ItemType; itemTitle: string }
-  | { id: string; type: "loaned"; timestamp: string; userName: string; avatarUrl: string | null; itemType: ItemType; itemTitle: string; loanedTo?: string };
+  | {
+      id: string;
+      type: "started";
+      timestamp: string;
+      userName: string;
+      avatarUrl: string | null;
+      itemType: ItemType;
+      itemTitle: string;
+      withUsers: string[];
+    }
+  | {
+      id: string;
+      type: "completed";
+      timestamp: string;
+      userName: string;
+      avatarUrl: string | null;
+      itemType: ItemType;
+      itemTitle: string;
+    }
+  | {
+      id: string;
+      type: "added";
+      timestamp: string;
+      userName: string;
+      avatarUrl: string | null;
+      itemType: ItemType;
+      itemTitle: string;
+    }
+  | {
+      id: string;
+      type: "loaned";
+      timestamp: string;
+      userName: string;
+      avatarUrl: string | null;
+      itemType: ItemType;
+      itemTitle: string;
+      loanedTo?: string;
+    };
 
 // ─── Datahenting ──────────────────────────────────────────────────────────────
 
@@ -47,7 +87,10 @@ async function attachSessionImages(sessions: ActiveSession[]): Promise<ActiveSes
       latestBySession.set(img.session_id, img.image_url);
     }
   }
-  return sessions.map((s) => ({ ...s, image_url: latestBySession.get(s.id) ?? s.image_url }));
+  return sessions.map((s) => ({
+    ...s,
+    image_url: latestBySession.get(s.id) ?? s.image_url,
+  }));
 }
 
 // Henter feed-hendelser fra tre parallelle queries og returnerer dem sortert nyest først.
@@ -114,9 +157,20 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
     };
 
     if (s.completed_at) {
-      feedItems.push({ id: `completed-${s.id}`, type: "completed", timestamp: s.completed_at, ...base });
+      feedItems.push({
+        id: `completed-${s.id}`,
+        type: "completed",
+        timestamp: s.completed_at,
+        ...base,
+      });
     } else {
-      feedItems.push({ id: `started-${s.id}`, type: "started", timestamp: s.started_at, ...base, withUsers: s.guest_names ?? [] });
+      feedItems.push({
+        id: `started-${s.id}`,
+        type: "started",
+        timestamp: s.started_at,
+        ...base,
+        withUsers: s.guest_names ?? [],
+      });
     }
   }
 
@@ -150,7 +204,9 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
   }
 
   // Sorter nyeste hendelse øverst
-  feedItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  feedItems.sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+  );
 
   return feedItems;
 }
@@ -203,7 +259,7 @@ export default function FeedScreen() {
     useCallback(() => {
       fetchSessions();
       fetchFeed();
-    }, [fetchSessions, fetchFeed])
+    }, [fetchSessions, fetchFeed]),
   );
 
   return (
@@ -218,7 +274,10 @@ export default function FeedScreen() {
           AKTIVE ØKTER
         </Text>
         {loadingSessions ? (
-          <ActivityIndicator color="#1D9E75" style={{ marginVertical: 24, marginLeft: 16 }} />
+          <ActivityIndicator
+            color="#1D9E75"
+            style={{ marginVertical: 24, marginLeft: 16 }}
+          />
         ) : sessionsError ? (
           <SectionError onRetry={fetchSessions} />
         ) : sessions.length === 0 ? (

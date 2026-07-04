@@ -11,21 +11,22 @@
 
 A second full review was run after Fase 5 (real feed). The following were **fixed in this pass**:
 
-| Item | What was wrong | Fix |
-| ---- | -------------- | --- |
-| **Missing dependency** | `@expo/vector-icons` was imported in 13 files but never declared/installed — a clean build failed. | Installed via `expo install`; declared in `package.json`. |
-| **Stuck loading flags** | `handleProgressSelect` / `handleStart` could throw in the file-read step and never reset `updating`/`saving`. | Wrapped in `try/catch/finally`; alert on catch. |
-| **Orphaned uploads** | Image uploaded before DB write; a failed write left files in the bucket. | Track path, clean up on failure; null it once a row references the file. |
-| **Delete ordering** | Storage files were deleted *before* the `sessions` row; a failed delete left a live session with no images. | Remove storage only after the row delete is verified. |
-| **`player_count` corruption** | Field placeholder `"2–5"` but stored via `parseInt` → `"2-5"` saved as `2`. | Field is now numeric (`number-pad`, digit-sanitised). |
-| **Silent fetch errors** | `FeedScreen`, `ProfileScreen`, `NewSessionScreen` swallowed query errors and showed empty states. | Error state + "Prøv igjen" retry, matching the existing pattern. |
-| **Duplicated date logic** | 4 copies of day-diff/relative-label helpers. | Extracted to `utils/date.ts`. |
-| **Duplicated storage logic** | Inline `supabase.storage` calls + fragile URL-split in 2–3 places. | Extracted to `utils/sessionImages.ts`. |
-| **Case-sensitive dedup** | Guest-name dedup allowed "Kari"/"kari". | Case-insensitive compare. |
-| **Dead code** | `CompletionModal.tsx` (unused) and `WishlistScreen.tsx` (unwired stub). | Deleted. |
+| Item                          | What was wrong                                                                                                | Fix                                                                      |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Missing dependency**        | `@expo/vector-icons` was imported in 13 files but never declared/installed — a clean build failed.            | Installed via `expo install`; declared in `package.json`.                |
+| **Stuck loading flags**       | `handleProgressSelect` / `handleStart` could throw in the file-read step and never reset `updating`/`saving`. | Wrapped in `try/catch/finally`; alert on catch.                          |
+| **Orphaned uploads**          | Image uploaded before DB write; a failed write left files in the bucket.                                      | Track path, clean up on failure; null it once a row references the file. |
+| **Delete ordering**           | Storage files were deleted _before_ the `sessions` row; a failed delete left a live session with no images.   | Remove storage only after the row delete is verified.                    |
+| **`player_count` corruption** | Field placeholder `"2–5"` but stored via `parseInt` → `"2-5"` saved as `2`.                                   | Field is now numeric (`number-pad`, digit-sanitised).                    |
+| **Silent fetch errors**       | `FeedScreen`, `ProfileScreen`, `NewSessionScreen` swallowed query errors and showed empty states.             | Error state + "Prøv igjen" retry, matching the existing pattern.         |
+| **Duplicated date logic**     | 4 copies of day-diff/relative-label helpers.                                                                  | Extracted to `utils/date.ts`.                                            |
+| **Duplicated storage logic**  | Inline `supabase.storage` calls + fragile URL-split in 2–3 places.                                            | Extracted to `utils/sessionImages.ts`.                                   |
+| **Case-sensitive dedup**      | Guest-name dedup allowed "Kari"/"kari".                                                                       | Case-insensitive compare.                                                |
+| **Dead code**                 | `CompletionModal.tsx` (unused) and `WishlistScreen.tsx` (unwired stub).                                       | Deleted.                                                                 |
 
 **Corrections to the register below (were stale):**
-- **TD-11** — `WishlistScreen` did *not* have a roadmap comment; it was an unwired stub and has now been **deleted**. The completion plan tracks a real wishlist feature in `docs/PROJECT-PLAN.md`.
+
+- **TD-11** — `WishlistScreen` did _not_ have a roadmap comment; it was an unwired stub and has now been **deleted**. The completion plan tracks a real wishlist feature in `docs/PROJECT-PLAN.md`.
 - **TD-15** — the global `+` modal has **2** items (both wired: add item → alert→AddItem; start session → NewSession), not 3 with a broken "Registrer utlån". No longer applicable.
 - References to `MOCK_FEED` / `MOCK_SESSIONS` are obsolete — `FeedScreen` is fully real.
 
@@ -41,27 +42,27 @@ Phase A and B debt has been resolved. A second sweep after the EditItem / ItemFo
 
 ## Prioritized Debt Register
 
-| #   | ID    | Title                                                              | Category      | Impact | Risk | Effort | **Score** | **Status**  |
-| --- | ----- | ------------------------------------------------------------------ | ------------- | ------ | ---- | ------ | --------- | ----------- |
-| 1   | TD-01 | `Item.status` is an untyped string                                 | Code          | 3      | 4    | 1      | **35**    | ✅ Resolved  |
-| 2   | TD-02 | AddItem / EditItem are near-identical screens                      | Code          | 4      | 3    | 2      | **28**    | ✅ Resolved  |
-| 3   | TD-03 | Loan & return are non-atomic (two separate DB writes)              | Architecture  | 4      | 5    | 3      | **27**    | ⏳ Phase C   |
-| 4   | TD-04 | `as unknown as ActiveLoan[]` cast in CollectionsScreen             | Code          | 2      | 3    | 1      | **25**    | ✅ Resolved  |
-| 5   | TD-05 | Zero test coverage                                                 | Test          | 4      | 4    | 3      | **24**    | ⏳ Phase C   |
-| 6   | TD-06 | Fetch errors silently swallowed in two screens                     | Code          | 3      | 3    | 2      | **24**    | ✅ Resolved  |
+| #   | ID    | Title                                                              | Category      | Impact | Risk | Effort | **Score** | **Status**               |
+| --- | ----- | ------------------------------------------------------------------ | ------------- | ------ | ---- | ------ | --------- | ------------------------ |
+| 1   | TD-01 | `Item.status` is an untyped string                                 | Code          | 3      | 4    | 1      | **35**    | ✅ Resolved              |
+| 2   | TD-02 | AddItem / EditItem are near-identical screens                      | Code          | 4      | 3    | 2      | **28**    | ✅ Resolved              |
+| 3   | TD-03 | Loan & return are non-atomic (two separate DB writes)              | Architecture  | 4      | 5    | 3      | **27**    | ⏳ Phase C               |
+| 4   | TD-04 | `as unknown as ActiveLoan[]` cast in CollectionsScreen             | Code          | 2      | 3    | 1      | **25**    | ✅ Resolved              |
+| 5   | TD-05 | Zero test coverage                                                 | Test          | 4      | 4    | 3      | **24**    | ⏳ Phase C               |
+| 6   | TD-06 | Fetch errors silently swallowed in two screens                     | Code          | 3      | 3    | 2      | **24**    | ✅ Resolved              |
 | 7   | TD-15 | Global modal "session" and "loan" actions are silent no-ops        | Code          | 3      | 2    | 2      | **20**    | ❌ Obsolete (see banner) |
-| 8   | TD-16 | `difficulty` not typed against `DIFFICULTY_OPTIONS`                | Code          | 2      | 2    | 1      | **20**    | 🆕 Phase C   |
-| 9   | TD-07 | Array index used as `key` in FeedScreen                            | Code          | 2      | 2    | 1      | **20**    | ✅ Resolved  |
-| 10  | TD-08 | `useFocusEffect` missing dependency in two screens                 | Code          | 2      | 2    | 1      | **20**    | ✅ Resolved  |
-| 11  | TD-09 | ProfilContext adds a second `onAuthStateChange` subscription       | Architecture  | 2      | 2    | 2      | **16**    | ✅ Resolved  |
-| 12  | TD-10 | Developer name hardcoded in ProfileScreen mock                     | Code          | 1      | 2    | 1      | **15**    | ✅ Resolved  |
-| 13  | TD-11 | WishlistScreen exists but is not wired into navigation             | Documentation | 1      | 2    | 1      | **15**    | 🗑️ Deleted (see banner) |
-| 14  | TD-17 | `CollectionDetailScreen` is a god component (547 lines, 10 states) | Code         | 3      | 2    | 3      | **15**    | 🆕 Phase D   |
-| 15  | TD-19 | FriendsScreen uses `friend.name` as list key                       | Code          | 1      | 2    | 1      | **15**    | 🆕 Phase C   |
-| 16  | TD-12 | No data/repository layer — Supabase calls inline in screens        | Architecture  | 3      | 3    | 4      | **12**    | ⏳ Phase D   |
-| 17  | TD-13 | AppNavigator bottom-sheet modal uses inline styles                 | Code          | 2      | 1    | 2      | **12**    | ✅ Resolved  |
-| 18  | TD-18 | LoansScreen missing roadmap comment                                | Documentation | 1      | 1    | 1      | **10**    | ✅ Resolved  |
-| 19  | TD-14 | `storage: ExpoSecureStoreAdapter as any` in supabase.ts            | Code          | 1      | 2    | 2      | **9**     | ⏳ Phase D   |
+| 8   | TD-16 | `difficulty` not typed against `DIFFICULTY_OPTIONS`                | Code          | 2      | 2    | 1      | **20**    | 🆕 Phase C               |
+| 9   | TD-07 | Array index used as `key` in FeedScreen                            | Code          | 2      | 2    | 1      | **20**    | ✅ Resolved              |
+| 10  | TD-08 | `useFocusEffect` missing dependency in two screens                 | Code          | 2      | 2    | 1      | **20**    | ✅ Resolved              |
+| 11  | TD-09 | ProfilContext adds a second `onAuthStateChange` subscription       | Architecture  | 2      | 2    | 2      | **16**    | ✅ Resolved              |
+| 12  | TD-10 | Developer name hardcoded in ProfileScreen mock                     | Code          | 1      | 2    | 1      | **15**    | ✅ Resolved              |
+| 13  | TD-11 | WishlistScreen exists but is not wired into navigation             | Documentation | 1      | 2    | 1      | **15**    | 🗑️ Deleted (see banner)  |
+| 14  | TD-17 | `CollectionDetailScreen` is a god component (547 lines, 10 states) | Code          | 3      | 2    | 3      | **15**    | 🆕 Phase D               |
+| 15  | TD-19 | FriendsScreen uses `friend.name` as list key                       | Code          | 1      | 2    | 1      | **15**    | 🆕 Phase C               |
+| 16  | TD-12 | No data/repository layer — Supabase calls inline in screens        | Architecture  | 3      | 3    | 4      | **12**    | ⏳ Phase D               |
+| 17  | TD-13 | AppNavigator bottom-sheet modal uses inline styles                 | Code          | 2      | 1    | 2      | **12**    | ✅ Resolved              |
+| 18  | TD-18 | LoansScreen missing roadmap comment                                | Documentation | 1      | 1    | 1      | **10**    | ✅ Resolved              |
+| 19  | TD-14 | `storage: ExpoSecureStoreAdapter as any` in supabase.ts            | Code          | 1      | 2    | 2      | **9**     | ⏳ Phase D               |
 
 ---
 
@@ -131,6 +132,7 @@ If step 2 fails after step 1 succeeds, the database is left inconsistent — a l
 **Problem:** The global "+" modal (`NyOkt` tab) shows three action items: "Legg til i samlingen" (works), "Start ny økt" (silent no-op), and "Registrer utlån" (silent no-op). When a user taps either of the latter two, the modal closes and nothing happens — no feedback, no navigation, no placeholder message. This is inconsistent with `CollectionDetailScreen`, which already shows an `Alert.alert("Kommer snart", ...)` for its own "Start økt" placeholder.
 
 **Current code:**
+
 ```ts
 function handleModalAction(action: string) {
   setModalVisible(false);
@@ -153,13 +155,15 @@ function handleModalAction(action: string) {
 **Where:** `src/utils/collections.ts:27` and `src/components/ItemForm.tsx:20`
 
 **Problem:** `DIFFICULTY_OPTIONS` is declared as `["Lett", "Middels", "Vanskelig"] as const`, but `Item.difficulty` is typed as `string | null`. This means:
+
 - Any arbitrary string (e.g. `"Hard"`, `"medium"`) can be stored as a difficulty without a compile-time error.
 - `ItemFormValues.difficulty` is also `string`, so the form's empty-string sentinel (`""`) is not distinguished from a valid value at the type level.
 
 **Fix:**
+
 ```ts
 // In utils/collections.ts
-export type Difficulty = typeof DIFFICULTY_OPTIONS[number]; // "Lett" | "Middels" | "Vanskelig"
+export type Difficulty = (typeof DIFFICULTY_OPTIONS)[number]; // "Lett" | "Middels" | "Vanskelig"
 
 // Update Item type
 difficulty: Difficulty | null;
@@ -209,6 +213,7 @@ The `|| null` guard in `handleSave` already handles the empty-string → `null` 
 **Where:** `src/screens/CollectionDetailScreen.tsx` — 547 lines, 10 `useState` hooks
 
 **Problem:** The screen manages three distinct concerns in a single file:
+
 1. The items list (fetch, display, pull-to-refresh, error state)
 2. The item action sheet modal (edit, delete, loan, return triggers)
 3. The loan registration modal (borrower name input, `is_public` toggle, submit)
@@ -216,6 +221,7 @@ The `|| null` guard in `handleSave` already handles the empty-string → `null` 
 With 10 state variables (`items`, `loading`, `refreshing`, `fetchError`, `selectedItem`, `actionLoading`, `loanItem`, `loanModalVisible`, `borrowerName`, `loanIsPublic`), the component is already at the edge of readable complexity. Adding sessions (Phase 3) or wishlist integration would push it further.
 
 **Fix (when appropriate):** Extract two child components:
+
 - `ItemActionSheet` — receives `selectedItem`, `onEdit`, `onDelete`, `onLoan`, `onReturn`, `onClose`
 - `LoanModal` — receives `item`, `visible`, `onSubmit`, `onClose`
 
@@ -283,15 +289,15 @@ This plan is designed to run **alongside feature development** — nothing here 
 
 ### Phase A — Quick wins ✅ Complete
 
-| ID    | Action                                                               | Status  |
-| ----- | -------------------------------------------------------------------- | ------- |
-| TD-01 | Add `ItemStatus` union type; update `Item` and all callers           | ✅ Done  |
-| TD-04 | Remove `as unknown as`; explicit row mapping                         | ✅ Done  |
-| TD-07 | Add stable `id` fields to mock data; use as keys                     | ✅ Done  |
-| TD-08 | Fix `useFocusEffect` dependency arrays                               | ✅ Done  |
-| TD-10 | Replace hardcoded dev name with generic placeholder                  | ✅ Done  |
-| TD-11 | Add roadmap comment to WishlistScreen                                | ✅ Done  |
-| TD-13 | Port AppNavigator modal to NativeWind classes                        | ✅ Done  |
+| ID    | Action                                                     | Status  |
+| ----- | ---------------------------------------------------------- | ------- |
+| TD-01 | Add `ItemStatus` union type; update `Item` and all callers | ✅ Done |
+| TD-04 | Remove `as unknown as`; explicit row mapping               | ✅ Done |
+| TD-07 | Add stable `id` fields to mock data; use as keys           | ✅ Done |
+| TD-08 | Fix `useFocusEffect` dependency arrays                     | ✅ Done |
+| TD-10 | Replace hardcoded dev name with generic placeholder        | ✅ Done |
+| TD-11 | Add roadmap comment to WishlistScreen                      | ✅ Done |
+| TD-13 | Port AppNavigator modal to NativeWind classes              | ✅ Done |
 
 ---
 
@@ -299,9 +305,9 @@ This plan is designed to run **alongside feature development** — nothing here 
 
 | ID    | Action                                                              | Status  |
 | ----- | ------------------------------------------------------------------- | ------- |
-| TD-02 | Extract shared `ItemForm` component; delete duplication             | ✅ Done  |
-| TD-06 | Add error state + user-facing message to `fetchData` / `fetchItems` | ✅ Done  |
-| TD-09 | Remove duplicate auth subscription from `ProfilContext`             | ✅ Done  |
+| TD-02 | Extract shared `ItemForm` component; delete duplication             | ✅ Done |
+| TD-06 | Add error state + user-facing message to `fetchData` / `fetchItems` | ✅ Done |
+| TD-09 | Remove duplicate auth subscription from `ProfilContext`             | ✅ Done |
 
 ---
 
@@ -309,14 +315,14 @@ This plan is designed to run **alongside feature development** — nothing here 
 
 These require backend work or are critical once real users are involved:
 
-| ID    | Action                                                                               |
-| ----- | ------------------------------------------------------------------------------------ |
-| TD-03 | Implement Postgres RPC (or trigger) to make loan/return atomic                       |
-| TD-05 | Add Jest; write unit tests for utilities and auth token parsing                      |
+| ID    | Action                                                                                      |
+| ----- | ------------------------------------------------------------------------------------------- |
+| TD-03 | Implement Postgres RPC (or trigger) to make loan/return atomic                              |
+| TD-05 | Add Jest; write unit tests for utilities and auth token parsing                             |
 | TD-15 | Add placeholder alerts for "session"/"loan" in global modal (15 min); full wiring in Fase 3 |
-| TD-16 | Add `Difficulty` union type; update `Item.difficulty` and `ItemFormValues.difficulty` |
-| TD-19 | Add `id` fields to `MOCK_FRIENDS`; use as list keys                                  |
-| TD-18 | ~~Add Fase 3 roadmap comment to `LoansScreen`~~ → slettet, se beslutning            |
+| TD-16 | Add `Difficulty` union type; update `Item.difficulty` and `ItemFormValues.difficulty`       |
+| TD-19 | Add `id` fields to `MOCK_FRIENDS`; use as list keys                                         |
+| TD-18 | ~~Add Fase 3 roadmap comment to `LoansScreen`~~ → slettet, se beslutning                    |
 
 ---
 
@@ -324,11 +330,11 @@ These require backend work or are critical once real users are involved:
 
 Defer until there are noticeably more screens or a test-suite is in place:
 
-| ID    | Action                                                                         |
-| ----- | ------------------------------------------------------------------------------ |
-| TD-12 | Extract a `services/` layer for Supabase queries                               |
-| TD-17 | Extract `ItemActionSheet` and `LoanModal` from `CollectionDetailScreen`        |
-| TD-14 | Properly type the SecureStore adapter                                          |
+| ID    | Action                                                                  |
+| ----- | ----------------------------------------------------------------------- |
+| TD-12 | Extract a `services/` layer for Supabase queries                        |
+| TD-17 | Extract `ItemActionSheet` and `LoanModal` from `CollectionDetailScreen` |
+| TD-14 | Properly type the SecureStore adapter                                   |
 
 ---
 

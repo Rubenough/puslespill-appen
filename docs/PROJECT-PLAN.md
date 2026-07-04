@@ -25,12 +25,14 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 Goal: never regress the fixes from pass 2; make the codebase safe to change.
 
 ### 1.1 Tooling & CI
-- [x] Add scripts to `package.json`: `"typecheck": "tsc --noEmit"`, `"test": "jest"`, `"test:ci"`.
-- [x] GitHub Actions workflow (`.github/workflows/ci.yml`): on push/PR to `main` run `typecheck` + `test:ci`, npm cache.
-- [ ] Add ESLint: `npx expo lint` (creates `eslint.config.js` with `eslint-config-expo`). Fix warnings, add `lint` step to CI.
-- [ ] Add Prettier + `eslint-config-prettier`; add `format` npm script.
+
+- [x] Add scripts to `package.json`: `typecheck`, `test`, `test:ci`, `lint`, `format`, `format:check`.
+- [x] GitHub Actions workflow (`.github/workflows/ci.yml`): on push/PR to `main` run `typecheck` + `lint` + `format:check` + `test:ci`, npm cache.
+- [x] Add ESLint (flat config, `eslint-config-expo` + `eslint-config-prettier`). `react-hooks/set-state-in-effect` set to warn (removed by the Phase 4 React Query migration).
+- [x] Add Prettier (`.prettierrc`, `.prettierignore`); codebase formatted.
 
 ### 1.2 Testing (resolves TD-05)
+
 - [x] Add `jest-expo` preset + `jest` + `@testing-library/react-native`.
 - [x] Unit tests for pure utils (highest ROI): `utils/date.ts`, `utils/initials.ts`, `PuzzleProgressIcon.progressToFilled`.
 - [ ] Add tests for `utils/collections.ts`.
@@ -39,6 +41,7 @@ Goal: never regress the fixes from pass 2; make the codebase safe to change.
 - [ ] Later: E2E smoke test with **Maestro** (login → add item → start session → update progress).
 
 ### 1.3 Typed Supabase (kills the `as any` casts)
+
 - [ ] Generate types: `supabase gen types typescript --project-id <id> > src/lib/database.types.ts`.
 - [ ] Type the client: `createClient<Database>(...)`. Remove `as any` / `as unknown as` in `FeedScreen`, `SessionDetailScreen`, `ProfileScreen`.
 - [ ] Commit a short `npm run gen:types` script and document regeneration on schema change.
@@ -52,11 +55,13 @@ Goal: never regress the fixes from pass 2; make the codebase safe to change.
 Goal: make multi-row operations atomic and correct. Requires Supabase dashboard access.
 
 ### 2.1 Atomic writes (resolves TD-03 + delete race)
+
 - [ ] `register_loan(item_id, borrower_name, is_public)` RPC — inserts loan; item status handled by the existing `trg_sync_item_status` trigger. Confirm trigger covers both loan + return.
 - [ ] `delete_session(session_id)` RPC (or `ON DELETE CASCADE` FKs on `session_images` / `session_participants` → `sessions`) so the client does one call. After confirmed deletion, client removes storage objects (already the pattern).
 - [ ] Replace client-side multi-step deletes/inserts with the RPCs; keep the storage-cleanup step.
 
 ### 2.2 RLS audit (before opening the feed to friends)
+
 - [ ] Verify every table's policies: `loans` owner-only read/write; `sessions`/`items`/`session_images` readable per the intended social scope (self + mutual friends only, not the whole world).
 - [ ] Confirm `borrower_name` can never be selected by non-owners even when `is_public = true` (privacy invariant from CLAUDE.md).
 - [ ] Add a `friendships` table + policies to support mutual-friend visibility (see Phase 3).
@@ -68,19 +73,23 @@ Goal: make multi-row operations atomic and correct. Requires Supabase dashboard 
 ## Phase 3 — Feature completion
 
 ### 3.1 Friends (replace last mock)
+
 - [ ] `friendships` table (`user_a`, `user_b`, `status`) + RLS; friend requests (send/accept/decline).
 - [ ] `FriendsScreen`: real list, search users, pending requests. Stable IDs as keys (finish TD-19).
 - [ ] Feed scoping: sessions/items visible only from confirmed friends (drives the RLS in 2.2).
 
 ### 3.2 Loans ↔ friends
+
 - [ ] Borrower picker in the loan modal: pick a friend (`borrower_user_id`) or type a free name (`borrower_name` fallback). Schema already supports both.
 - [ ] Optional: notify borrower when they're recorded as having borrowed an item.
 
 ### 3.3 Wishlist (was a stub, now planned properly)
+
 - [ ] `wishlist` table (`user_id`, `title`, `type`, `brand`, `note`, `created_at`) + RLS.
 - [ ] Screen + navigation entry; "flytt til samling" action that creates an `items` row and removes the wishlist row (via RPC for atomicity).
 
 ### 3.4 Feed depth
+
 - [ ] Pagination / infinite scroll (currently capped at 14 days + fixed limits).
 - [ ] Pull-to-refresh on `FeedScreen` (consistency with other screens).
 
@@ -91,17 +100,21 @@ Goal: make multi-row operations atomic and correct. Requires Supabase dashboard 
 ## Phase 4 — Performance, media & data layer
 
 ### 4.1 Adopt TanStack Query (React Query)
+
 Replaces the hand-rolled `useFocusEffect` + `useState(loading/error)` pattern repeated in every screen. Gives caching, dedup, retry, background refetch, and removes most boilerplate + the "refetch on every focus" cost.
+
 - [ ] Add `@tanstack/react-query`; wrap app in `QueryClientProvider`.
 - [ ] Create query hooks (`useItems`, `useCollectionItems`, `useSessionDetail`, `useFeed`, `useLoans`) in `src/queries/` — this also satisfies the `services/` layer (TD-12).
 - [ ] Mutations (`useStartSession`, `useUpdateProgress`, `useRegisterLoan`, …) with optimistic updates + `invalidateQueries`.
 
 ### 4.2 Images
+
 - [ ] Switch `Image` → **`expo-image`** for caching, placeholders, and better memory behaviour.
 - [ ] Compress/resize before upload with `expo-image-manipulator` (e.g. max 1600px, ~0.7 quality) to cut upload size and memory from base64.
 - [ ] Add a lightweight loading/blur placeholder for hero + thumbnails.
 
 ### 4.3 Realtime (optional)
+
 - [ ] Supabase realtime subscription for active sessions / feed to replace focus-refetch where it improves UX.
 
 **Exit criteria:** one consistent data-fetching pattern; images cached and compressed.

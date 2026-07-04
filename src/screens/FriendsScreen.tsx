@@ -81,9 +81,7 @@ export default function FriendsScreen() {
             accessibilityRole="button"
             accessibilityLabel={[
               friend.name,
-              friend.mutualItems > 0
-                ? `${friend.mutualItems} felles i samlingen`
-                : null,
+              friend.mutualItems > 0 ? `${friend.mutualItems} felles i samlingen` : null,
               `Aktiv ${friend.lastActive}`,
             ]
               .filter(Boolean)

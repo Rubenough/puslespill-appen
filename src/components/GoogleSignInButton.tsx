@@ -5,10 +5,7 @@ import { TouchableOpacity, Text, View, ActivityIndicator } from "react-native";
 function GoogleLogo() {
   // Forenklet Google G i riktige farger
   return (
-    <View
-      accessible={false}
-      className="w-5 h-5 items-center justify-center mr-3"
-    >
+    <View accessible={false} className="w-5 h-5 items-center justify-center mr-3">
       <Text style={{ fontSize: 16, fontWeight: "bold", color: "#4285F4" }}>G</Text>
     </View>
   );

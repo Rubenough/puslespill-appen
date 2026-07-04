@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
-  StatusBar,
   useColorScheme,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -80,9 +79,7 @@ export default function SessionDetailScreen() {
   const [images, setImages] = useState<SessionImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [fullscreenImage, setFullscreenImage] = useState<SessionImage | null>(
-    null,
-  );
+  const [fullscreenImage, setFullscreenImage] = useState<SessionImage | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [progressSheetVisible, setProgressSheetVisible] = useState(false);
@@ -103,8 +100,7 @@ export default function SessionDetailScreen() {
         .order("captured_at", { ascending: false }),
     ]);
 
-    if (sessionRes.data)
-      setSession(sessionRes.data as unknown as SessionDetail);
+    if (sessionRes.data) setSession(sessionRes.data as unknown as SessionDetail);
     if (imagesRes.data) setImages(imagesRes.data as SessionImage[]);
     setLoading(false);
   }, [sessionId]);
@@ -115,7 +111,11 @@ export default function SessionDetailScreen() {
     }, [fetchData]),
   );
 
-  async function handleProgressSelect(pct: number, imageUri: string | null, note: string | null) {
+  async function handleProgressSelect(
+    pct: number,
+    imageUri: string | null,
+    note: string | null,
+  ) {
     setProgressSheetVisible(false);
     setUpdating(true);
 
@@ -232,14 +232,16 @@ export default function SessionDetailScreen() {
               .from("session_images")
               .delete()
               .eq("session_id", sessionId);
-            if (imgError) throw new Error(`Kunne ikke slette bilder: ${imgError.message}`);
+            if (imgError)
+              throw new Error(`Kunne ikke slette bilder: ${imgError.message}`);
 
             // Slett session_participants-rader
             const { error: partError } = await supabase
               .from("session_participants")
               .delete()
               .eq("session_id", sessionId);
-            if (partError) throw new Error(`Kunne ikke slette deltakere: ${partError.message}`);
+            if (partError)
+              throw new Error(`Kunne ikke slette deltakere: ${partError.message}`);
 
             // Slett selve økten — bruk .select() for å verifisere at raden faktisk ble slettet
             const { data: deleted, error } = await supabase
@@ -317,12 +319,7 @@ export default function SessionDetailScreen() {
           accessibilityLabel="Tilbake"
           className="mr-3"
         >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color="#78716C"
-            accessible={false}
-          />
+          <Ionicons name="arrow-back" size={24} color="#78716C" accessible={false} />
         </TouchableOpacity>
         <Text
           className="text-content dark:text-content-dark text-lg font-semibold flex-1"
@@ -390,12 +387,21 @@ export default function SessionDetailScreen() {
             session.item.title,
             metaSubtitle,
             showProgress ? `${session.progress_pct} prosent` : null,
-          ].filter(Boolean).join(", ")}
+          ]
+            .filter(Boolean)
+            .join(", ")}
           className="mx-4 mt-4 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-3 flex-row items-center"
         >
           {showCoverInMeta ? (
             <TouchableOpacity
-              onPress={() => setFullscreenImage({ id: "cover", image_url: coverUrl!, captured_at: session.started_at, note: null })}
+              onPress={() =>
+                setFullscreenImage({
+                  id: "cover",
+                  image_url: coverUrl!,
+                  captured_at: session.started_at,
+                  note: null,
+                })
+              }
               accessibilityRole="button"
               accessibilityLabel="Vis bilde av boksen i fullskjerm"
               className="mr-3"
@@ -418,7 +424,10 @@ export default function SessionDetailScreen() {
             </View>
           )}
           <View className="flex-1">
-            <Text className="text-content dark:text-content-dark font-medium" numberOfLines={1}>
+            <Text
+              className="text-content dark:text-content-dark font-medium"
+              numberOfLines={1}
+            >
               {session.item.title}
             </Text>
             {metaSubtitle ? (
@@ -548,9 +557,7 @@ export default function SessionDetailScreen() {
             {updating ? (
               <ActivityIndicator size="small" color="white" />
             ) : (
-              <Text className="text-white text-base font-semibold">
-                Oppdater
-              </Text>
+              <Text className="text-white text-base font-semibold">Oppdater</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -597,7 +604,12 @@ export default function SessionDetailScreen() {
               accessibilityLabel="Rediger deltakere og notat"
               className="flex-row items-center px-4 py-4 border-b border-border dark:border-border-dark"
             >
-              <Ionicons name="pencil-outline" size={22} color="#1D9E75" accessible={false} />
+              <Ionicons
+                name="pencil-outline"
+                size={22}
+                color="#1D9E75"
+                accessible={false}
+              />
               <Text className="text-content dark:text-content-dark text-base ml-3">
                 Rediger deltakere og notat
               </Text>
@@ -614,7 +626,12 @@ export default function SessionDetailScreen() {
               {deleting ? (
                 <ActivityIndicator size="small" color="#EF4444" />
               ) : (
-                <Ionicons name="trash-outline" size={22} color="#EF4444" accessible={false} />
+                <Ionicons
+                  name="trash-outline"
+                  size={22}
+                  color="#EF4444"
+                  accessible={false}
+                />
               )}
               <Text className="text-red-500 text-base ml-3">Slett økt</Text>
             </TouchableOpacity>

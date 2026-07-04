@@ -13,12 +13,12 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "./RootNavigator";
-
-type IoniconsName = ComponentProps<typeof Ionicons>["name"];
 import FeedScreen from "../screens/FeedScreen";
 import CollectionsStack from "./CollectionsStack";
 import FriendsScreen from "../screens/FriendsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+
+type IoniconsName = ComponentProps<typeof Ionicons>["name"];
 
 const colors = {
   surface: { light: "#FFFFFF", dark: "#292524" },

@@ -25,9 +25,7 @@ function getActionText(props: Props): string {
     case "added":
       return `la til i samlingen · ${props.timeLabel}`;
     case "started": {
-      const withStr = props.withUsers?.length
-        ? ` med ${props.withUsers.join(", ")}`
-        : "";
+      const withStr = props.withUsers?.length ? ` med ${props.withUsers.join(", ")}` : "";
       return `startet en økt${withStr} · ${props.timeLabel}`;
     }
     case "completed":

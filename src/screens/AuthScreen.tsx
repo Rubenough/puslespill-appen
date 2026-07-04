@@ -35,10 +35,7 @@ export default function AuthScreen() {
         return;
       }
 
-      const result = await WebBrowser.openAuthSessionAsync(
-        data.url,
-        redirectUri,
-      );
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
 
       if (result.type === "cancel") {
         // Brukeren lukket nettleseren selv — ikke vis feil
@@ -58,10 +55,7 @@ export default function AuthScreen() {
       const refresh_token = params.get("refresh_token");
 
       if (!access_token || !refresh_token) {
-        Alert.alert(
-          "Innlogging feilet",
-          "Ugyldig innloggingsrespons. Prøv igjen.",
-        );
+        Alert.alert("Innlogging feilet", "Ugyldig innloggingsrespons. Prøv igjen.");
         return;
       }
 
@@ -71,10 +65,7 @@ export default function AuthScreen() {
       });
 
       if (sessionError) {
-        Alert.alert(
-          "Innlogging feilet",
-          "Kunne ikke opprette sesjon. Prøv igjen.",
-        );
+        Alert.alert("Innlogging feilet", "Kunne ikke opprette sesjon. Prøv igjen.");
       }
     } catch (err) {
       console.error("OAuth-feil:", err);
