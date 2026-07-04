@@ -58,7 +58,7 @@ Phase A and B debt has been resolved. A second sweep after the EditItem / ItemFo
 | 12  | TD-10 | Developer name hardcoded in ProfileScreen mock                     | Code          | 1      | 2    | 1      | **15**    | ✅ Resolved              |
 | 13  | TD-11 | WishlistScreen exists but is not wired into navigation             | Documentation | 1      | 2    | 1      | **15**    | 🗑️ Deleted (see banner)  |
 | 14  | TD-17 | `CollectionDetailScreen` is a god component (547 lines, 10 states) | Code          | 3      | 2    | 3      | **15**    | 🆕 Phase D               |
-| 15  | TD-19 | FriendsScreen uses `friend.name` as list key                       | Code          | 1      | 2    | 1      | **15**    | 🆕 Phase C               |
+| 15  | TD-19 | FriendsScreen uses `friend.name` as list key                       | Code          | 1      | 2    | 1      | **15**    | ✅ Resolved (Phase 1)    |
 | 16  | TD-12 | No data/repository layer — Supabase calls inline in screens        | Architecture  | 3      | 3    | 4      | **12**    | ⏳ Phase D               |
 | 17  | TD-13 | AppNavigator bottom-sheet modal uses inline styles                 | Code          | 2      | 1    | 2      | **12**    | ✅ Resolved              |
 | 18  | TD-18 | LoansScreen missing roadmap comment                                | Documentation | 1      | 1    | 1      | **10**    | ✅ Resolved              |
@@ -233,15 +233,9 @@ The screen itself becomes ~150 lines responsible only for data fetching and coor
 
 ---
 
-### TD-19 — FriendsScreen uses `friend.name` as list key _(Score: 15)_ 🆕 Phase C
+### TD-19 — FriendsScreen uses `friend.name` as list key _(Score: 15)_ ✅
 
-**Where:** `src/screens/FriendsScreen.tsx:74`
-
-**Problem:** The mock friends list uses `key={friend.name}` instead of a stable ID. The pattern was fixed in `FeedScreen` (TD-07) but not applied here. While friend names in this mock are unique, the pattern should be corrected before the screen is wired to real data — otherwise the ID-less pattern may carry over into real data fetching.
-
-**Fix:** Add `id` fields to `MOCK_FRIENDS` and use `key={friend.id}`.
-
-**Effort:** ~5 min.
+**Resolved 2026-07-04 (Phase 1).** `FriendsScreen` was rewritten with real data (invite codes + `friendships`); the list now keys on the stable `friendshipId`. `MOCK_FRIENDS` is gone.
 
 ---
 

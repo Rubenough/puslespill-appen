@@ -16,9 +16,9 @@ A product review found a gap between the **concept** (friends share/borrow physi
 
 ### The concept spine (new priority order)
 
-1. **Friends graph** — real following/requests, and lock the feed to friends (also closes a live privacy hole: the feed currently reads _all_ users).
-2. **Browse a friend's collection** — today there is _no_ way to see what a friend owns; this is arguably the #1 concept feature and is entirely absent.
-3. **Borrow-request loop** — request → approve → handoff → return. Turns the current single-sided loan _notebook_ into a shared _library_.
+1. ✅ **Friends graph** — mutual friendships via invite codes (`friendships` + RPCs), real `FriendsScreen`. _Still open:_ lock reads to friends (Phase 1 Step 4) to close the "feed reads all users" hole.
+2. ✅ **Browse a friend's collection** — `FriendCollectionScreen` delivers "alle kan se hva andre eier."
+3. **Borrow-request loop** — request → approve → handoff → return. Turns the current single-sided loan _notebook_ into a shared _library_. ← **next**
 
 Activity logging (sessions) gets **unified across categories** later, with puzzle-% demoted to an optional attribute so board games stop being second-class.
 

@@ -27,13 +27,13 @@ Appen lanseres med to samlingstyper: **puslespill** og **brettspill**. Med mulig
 
 ### Bottom tab-bar
 
-| Fane      | Innhold                                               |
-| --------- | ----------------------------------------------------- |
-| Feed      | Aktivitetsstrøm fra venner + aktive økter du er med i |
-| Samlinger | Dine samlingstyper + utlånt nå                        |
-| + (modal) | Legg til i samlingen / Start ny økt                   |
-| Venner    | Liste over venner du følger, søk etter nye            |
-| Profil    | Profil, statistikk og innstillinger                   |
+| Fane      | Innhold                                                          |
+| --------- | ---------------------------------------------------------------- |
+| Feed      | Aktivitetsstrøm fra venner + aktive økter du er med i            |
+| Samlinger | Dine samlingstyper + utlånt nå                                   |
+| + (modal) | Legg til i samlingen / Start ny økt                              |
+| Venner    | Venneliste (gjensidige venner) + invitasjonskode for å koble seg |
+| Profil    | Profil, statistikk og innstillinger                              |
 
 Utlånsoversikt lever som en seksjon ("UTLÅNT NÅ") inne i Samlinger-skjermen — ikke som egen tab.
 
@@ -108,7 +108,8 @@ Vennenes egne separate økter vises i Feed som `started`-hendelse, ikke i aktive
 | CollectionDetailScreen | Ferdig — ekte data, handlingsark med alle lånefunksjoner                                                                                                                                                 |
 | AddItemScreen          | Ferdig — insert til Supabase                                                                                                                                                                             |
 | EditItemScreen         | Ferdig — forhåndsutfylt update til Supabase                                                                                                                                                              |
-| FriendsScreen          | Mock-data — kobles til Supabase i Fase 5                                                                                                                                                                 |
+| FriendsScreen          | Ekte data — invitasjonskode (`get_my_invite_code`), innløsning (`accept_invite`), gjensidige venner fra `friendships`                                                                                    |
+| FriendCollectionScreen | Ekte data — skrivebeskyttet visning av en venns samling                                                                                                                                                  |
 | ProfileScreen          | Hybrid — avatar/navn + utlånshistorikk ekte, statistikk mock                                                                                                                                             |
 | NewSessionScreen       | Ferdig — modal med gjenstand, deltakere, fullført-toggle, bilde ("Bilde av boksen" for puslespill) og notat                                                                                              |
 | SessionDetailScreen    | Ferdig — hero (siste fremgang eller cover), metadata-kort med cover-thumbnail + progresjon, "Oppdater"-knapp (bilde + progresjon + notat i én flyt), ···-meny (rediger/slett), blur-modal for fullskjerm |
@@ -124,7 +125,7 @@ Liste over kategorier, hver rad: ikon, navn, antall stk, utlånt-indikator. Unde
 
 ### Venner
 
-Søkefelt øverst. Liste over venner du følger: avatar, navn, antall felles i samlingen, sist aktiv. Trykk på en person åpner profilen deres.
+Modellen er **gjensidige venner** (ikke følging) og oppdagelse skjer **kun via invitasjonskode** (ingen åpen brukerkatalog). Skjermen viser din egen invitasjonskode med delingsknapp, et felt for å løse inn en venns kode (`accept_invite`), og listen over aksepterte venner. Trykk på en venn åpner en skrivebeskyttet visning av samlingen deres (`FriendCollectionScreen`).
 
 ### Ny økt-flyt
 
@@ -299,8 +300,8 @@ Toppsektion med app-ikon og tagline. To knapper: "Fortsett med Google" og "Forts
 
 **Fase 5 — Venner og profil**
 
-- [ ] Koble FriendsScreen til ekte data (følger, søk)
-- [ ] Vis vennens profil og samling
+- [x] Koble FriendsScreen til ekte data — gjensidige venner via invitasjonskoder (`friendships`, `accept_invite`)
+- [x] Vis venns profil og samling (`FriendCollectionScreen`)
 - [ ] Koble ProfileScreen fullt ut (statistikk, innstillinger)
 - [ ] Ønskeliste — legg til og se egne ønsker
 - [ ] "Be om å låne"-knapp når noen i gjengen eier gjenstanden
@@ -325,12 +326,13 @@ puslespill-appen/
 │   │   └── CollectionsStack.tsx      # Stack: CollectionsList → CollectionDetail
 │   ├── screens/
 │   │   ├── AuthScreen.tsx            # Innlogging med Google
-│   │   ├── FeedScreen.tsx            # Aktive egne økter (ekte) + feed (mock)
+│   │   ├── FeedScreen.tsx            # Aktive egne økter + feed (begge ekte)
 │   │   ├── CollectionsScreen.tsx     # Samlingstyper + utlånt nå med retur-flyt (ekte data)
 │   │   ├── CollectionDetailScreen.tsx # Gjenstander + handlingsark (ekte data)
 │   │   ├── AddItemScreen.tsx         # Legg til gjenstand
 │   │   ├── EditItemScreen.tsx        # Rediger gjenstand
-│   │   ├── FriendsScreen.tsx         # Venneliste og søk (mock)
+│   │   ├── FriendsScreen.tsx         # Invitasjonskode + innløsning + ekte venneliste
+│   │   ├── FriendCollectionScreen.tsx # Skrivebeskyttet visning av en venns samling
 │   │   ├── ProfileScreen.tsx         # Profil, statistikk og logg ut
 │   │   ├── NewSessionScreen.tsx      # Ny økt-modal (ekte data, cover til Supabase Storage)
 │   │   ├── SessionDetailScreen.tsx   # Økt-detaljer, cover+progresjon i metadata, "Oppdater"-flyt, blur-modal
