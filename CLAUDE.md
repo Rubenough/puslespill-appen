@@ -25,7 +25,15 @@ npx expo start --android
 npx expo start --web
 ```
 
-No test runner is configured yet.
+Quality gates:
+```bash
+npm run typecheck   # tsc --noEmit
+npm test            # jest (jest-expo preset)
+npm run test:ci     # jest --ci --runInBand (used by CI)
+```
+CI (`.github/workflows/ci.yml`) runs typecheck + tests on every push/PR to `main`.
+Tests live in `__tests__/` folders next to the code; start with pure utils. Do not
+add a new test *framework* — extend the existing jest setup.
 
 ## Project Structure
 ```
