@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      friendships: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          status: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          status?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friendships_addressee_id_fkey"
+            columns: ["addressee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       items: {
         Row: {
           brand: string | null
@@ -112,6 +151,7 @@ export type Database = {
           full_name: string | null
           id: string
           initials: string | null
+          invite_code: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -119,6 +159,7 @@ export type Database = {
           full_name?: string | null
           id: string
           initials?: string | null
+          invite_code?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -126,6 +167,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           initials?: string | null
+          invite_code?: string | null
         }
         Relationships: []
       }
@@ -247,7 +289,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      accept_invite: {
+        Args: { p_code: string }
+        Returns: {
+          avatar_url: string
+          friend_id: string
+          full_name: string
+        }[]
+      }
+      are_friends: { Args: { a: string; b: string }; Returns: boolean }
+      gen_invite_code: { Args: never; Returns: string }
+      get_my_invite_code: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

@@ -63,12 +63,13 @@ src/
 │   ├── CollectionDetailScreen.tsx  # Items in a collection, loan/return actions (real Supabase)
 │   ├── AddItemScreen.tsx           # Add puzzle/board game form (real Supabase insert)
 │   ├── ProfileScreen.tsx           # User profile + sign-out (real Supabase profile)
-│   ├── FriendsScreen.tsx           # Friends list (mock data)
+│   ├── FriendsScreen.tsx           # Invite code + redeem + real friends list
+│   ├── FriendCollectionScreen.tsx  # Read-only view of a friend's collection
 │   ├── NewSessionScreen.tsx        # Start session: item → participants → box photo (puzzle) / image → notes
 │   ├── SessionDetailScreen.tsx     # View session: hero (latest progress or cover), metadata with cover thumbnail + progress icon, "Oppdater" flow, blur fullscreen modal
 │   └── EditSessionScreen.tsx       # Edit session participants + notes (modal)
 ├── navigation/
-│   ├── RootNavigator.tsx       # Stack: Tabs + AddItem + EditItem + NewSession + SessionDetail + EditSession
+│   ├── RootNavigator.tsx       # Stack: Tabs + AddItem + EditItem + NewSession + SessionDetail + EditSession + FriendCollection
 │   ├── AppNavigator.tsx        # Bottom tab navigator (5 tabs)
 │   └── CollectionsStack.tsx    # Stack: CollectionsList → CollectionDetail
 ├── context/
@@ -205,7 +206,8 @@ Loans are **private by default** (`is_public = false`). Borrower identity must n
 | CollectionDetailScreen | Real — `items` + `loans`, pull-to-refresh + focus-refresh, loan/return actions                                                                                                                                                      |
 | AddItemScreen          | Real — inserts to `items`                                                                                                                                                                                                           |
 | ProfileScreen          | Real — profile from Supabase, loan history from `loans` (error+retry)                                                                                                                                                               |
-| FriendsScreen          | Mock — `MOCK_FRIENDS` (only remaining mock screen)                                                                                                                                                                                  |
+| FriendsScreen          | Real — invite code (`get_my_invite_code`), redeem (`accept_invite`), accepted friends from `friendships`                                                                                                                            |
+| FriendCollectionScreen | Real — read-only view of a friend's `items` (pushed from FriendsScreen)                                                                                                                                                             |
 | NewSessionScreen       | Real — inserts to `sessions` + `session_participants`, uploads to `session-images` bucket                                                                                                                                           |
 | SessionDetailScreen    | Real — reads `sessions` (incl. `image_url` cover) + `session_images` + `items` metadata, progress icon in metadata card, "Oppdater" flow (image + progress + note via ProgressSheet), ··· menu (edit/delete), blur fullscreen modal |
 | EditSessionScreen      | Real — updates `sessions.guest_names` + `sessions.notes`                                                                                                                                                                            |

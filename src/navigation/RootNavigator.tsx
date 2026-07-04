@@ -6,6 +6,7 @@ import EditItemScreen from "../screens/EditItemScreen";
 import NewSessionScreen from "../screens/NewSessionScreen";
 import SessionDetailScreen from "../screens/SessionDetailScreen";
 import EditSessionScreen from "../screens/EditSessionScreen";
+import FriendCollectionScreen from "../screens/FriendCollectionScreen";
 import { type ItemType, type Item } from "../utils/collections";
 
 export type RootStackParamList = {
@@ -15,6 +16,7 @@ export type RootStackParamList = {
   NewSession: { itemId?: string };
   SessionDetail: { sessionId: string };
   EditSession: { sessionId: string; guestNames: string[]; notes: string | null };
+  FriendCollection: { friendId: string; friendName: string; avatarUrl: string | null };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -44,6 +46,7 @@ export default function RootNavigator() {
         component={EditSessionScreen}
         options={{ presentation: "modal" }}
       />
+      <Stack.Screen name="FriendCollection" component={FriendCollectionScreen} />
     </Stack.Navigator>
   );
 }
