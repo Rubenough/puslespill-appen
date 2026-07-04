@@ -2,7 +2,7 @@
 
 Sosial mobilapp for vennegjenger som pusler sammen. Del samlinger, hold styr på utlån, og følg hverandres puslespilløkter.
 
-> **Status:** Kjernefunksjonalitet på plass: samlinger, utlån, fremgangssporing, feed og Google-autentisering via Supabase. Venne-seksjonen er foreløpig mock data, reell kobling mellom brukere er neste steg. Jobber mot offentlig beta.
+> **Status:** Kjernefunksjonalitet på plass: samlinger, utlån, fremgangssporing, feed, venner (invitasjonskoder + venners samlinger) og Google-autentisering via Supabase. Alle skjermer bruker nå ekte data. Neste steg: låneforespørsler mellom venner. Jobber mot offentlig beta.
 
 <p align="center">
   <img src="docs/screenshots/01-feed.png" width="240" alt="Feed med aktive økter og social aktivitet" />
@@ -23,7 +23,7 @@ React Native med Expo (SDK 55), TypeScript i strict mode, NativeWind for Tailwin
 
 ## Arkitektur
 
-Tab-basert navigasjon med fem ankerpunkter: Feed, Samlinger, en sentral `+`-knapp, Venner og Profil. `+`-knappen åpner en modal med kontekstavhengige handlinger (legg til i samling, start ny økt, registrer utlån) heller enn å navigere til en egen fane. Valget reduserer dybden i navigasjonstreet for hyppige handlinger.
+Tab-basert navigasjon med fem ankerpunkter: Feed, Samlinger, en sentral `+`-knapp, Venner og Profil. `+`-knappen åpner en modal med kontekstavhengige handlinger (legg til i samling, start ny økt) heller enn å navigere til en egen fane. Valget reduserer dybden i navigasjonstreet for hyppige handlinger. Utlån registreres på gjenstandsnivå der konteksten er naturlig.
 
 ```
 src/
@@ -35,7 +35,7 @@ src/
 └── lib/            Supabase-klient
 ```
 
-Full prosjektdokumentasjon, konsept, wireframes og fremdrift ligger i [puslespill-app.md](./puslespill-app.md). Kjent teknisk gjeld er dokumentert i [tech-debt.md](./tech-debt.md).
+Full prosjektdokumentasjon, konsept, wireframes og fremdrift ligger i [puslespill-app.md](./puslespill-app.md). Veikart mot 1.0 ligger i [docs/PROJECT-PLAN.md](./docs/PROJECT-PLAN.md), og kjent teknisk gjeld i [tech-debt.md](./tech-debt.md).
 
 ## Lokal utvikling
 
