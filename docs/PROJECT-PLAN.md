@@ -1,169 +1,154 @@
-# Puslespill-appen — Completion Plan
+# Fordriv — Completion Plan (social-first re-sequence)
 
-**Created:** 2026-07-04
-**Owner:** @rubenough
-**Purpose:** A phased, actionable roadmap to take the app from "working prototype with real Supabase data" to a shippable 1.0, following current best practices for the Expo SDK 55 / React Native 0.83 / React 19 / Supabase stack.
+**Created:** 2026-07-04 · **Re-sequenced:** 2026-07-04 · **Owner:** @rubenough
+**Working name:** _Fordriv_ (conceptual, not final).
+**Purpose:** Take the app from "well-built puzzle/loan tracker" to the product it's actually meant to be — a **social lending library for a closed friend group** — following current best practices for the Expo SDK 55 / RN 0.83 / React 19 / Supabase stack.
 
 Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ---
 
-## 0. Snapshot (where we are)
+## Why this was re-sequenced
 
-**Done:** Auth (Google OAuth + SecureStore), collections CRUD, loans (loan/return, private-by-default), sessions (create/update/progress/complete/delete with photos), real activity feed, profile with loan history, dark mode, thorough accessibility, root error boundary.
+A product review found a gap between the **concept** (friends share/borrow physical things; "alle kan se hva andre eier, låne og bytte") and the **build** (deep, polished _puzzle-progress_ logging; the social core is mock or missing). The target users are explicitly _"ikke hardcore statistikk-fokuserte"_, yet the deepest feature is a progress tracker.
 
-**Fixed in review pass 2 (2026-07-04):** missing `@expo/vector-icons` dep, stuck loading flags, orphaned uploads, delete ordering, `player_count` corruption, silent fetch errors, shared `date.ts` / `sessionImages.ts` helpers, dead-code removal. See `tech-debt.md` banner.
+**Decision:** freeze feature-polish on solo activity logging and build the **concept spine first** — friends → see each other's collections → borrow between each other. Everything else re-orders behind that.
 
-**Still mock:** `FriendsScreen` only.
+### The concept spine (new priority order)
 
-**Biggest gaps to 1.0:** no automated tests, no linter/CI, non-atomic multi-row writes, no Supabase-generated types, public image bucket, Friends/social not real, no error monitoring, store-readiness (permissions, assets, policy).
+1. **Friends graph** — real following/requests, and lock the feed to friends (also closes a live privacy hole: the feed currently reads _all_ users).
+2. **Browse a friend's collection** — today there is _no_ way to see what a friend owns; this is arguably the #1 concept feature and is entirely absent.
+3. **Borrow-request loop** — request → approve → handoff → return. Turns the current single-sided loan _notebook_ into a shared _library_.
 
----
+Activity logging (sessions) gets **unified across categories** later, with puzzle-% demoted to an optional attribute so board games stop being second-class.
 
-## Phase 1 — Foundation: quality gates & correctness
+### Old → new phase mapping
 
-Goal: never regress the fixes from pass 2; make the codebase safe to change.
-
-### 1.1 Tooling & CI
-
-- [x] Add scripts to `package.json`: `typecheck`, `test`, `test:ci`, `lint`, `format`, `format:check`.
-- [x] GitHub Actions workflow (`.github/workflows/ci.yml`): on push/PR to `main` run `typecheck` + `lint` + `format:check` + `test:ci`, npm cache.
-- [x] Add ESLint (flat config, `eslint-config-expo` + `eslint-config-prettier`). `react-hooks/set-state-in-effect` set to warn (removed by the Phase 4 React Query migration).
-- [x] Add Prettier (`.prettierrc`, `.prettierignore`); codebase formatted.
-
-### 1.2 Testing (resolves TD-05)
-
-- [x] Add `jest-expo` preset + `jest` + `@testing-library/react-native`.
-- [x] Unit tests for pure utils (highest ROI): `utils/date.ts`, `utils/initials.ts`, `PuzzleProgressIcon.progressToFilled`.
-- [ ] Add tests for `utils/collections.ts`.
-- [ ] Test the OAuth hash-parsing logic in `AuthScreen` in isolation (extract the parse into a pure function first).
-- [ ] Component tests for `ItemForm` (validation, numeric sanitisation) and `FeedCard` (action-text branches) — using `@testing-library/react-native`.
-- [ ] Later: E2E smoke test with **Maestro** (login → add item → start session → update progress).
-
-### 1.3 Typed Supabase (kills the `as any` casts)
-
-- [ ] Generate types: `supabase gen types typescript --project-id <id> > src/lib/database.types.ts`.
-- [ ] Type the client: `createClient<Database>(...)`. Remove `as any` / `as unknown as` in `FeedScreen`, `SessionDetailScreen`, `ProfileScreen`.
-- [ ] Commit a short `npm run gen:types` script and document regeneration on schema change.
-
-**Exit criteria:** CI green (typecheck + lint + tests) on every PR; no `as any` in data mapping.
+| Old plan                                                            | Now                                                                                                |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Phase 1 (tooling/tests/types)                                       | **Track 0** (continuous hygiene) — CI/lint/tests done; types + more tests remain                   |
+| Phase 2.1 (atomic writes)                                           | **Track 0** — loan/return already atomic via `trg_sync_item_status`; only `delete_session` remains |
+| Phase 2.2 (RLS audit) + Phase 3.1 (friends) + storage policy        | **Phase 1 — Social foundation** (merged; they're one unit)                                         |
+| Phase 3.2 (loans↔friends) + 3.3 (wishlist) + Phase 4 loan reminders | **Phase 2 — The lending loop**                                                                     |
+| Phase 4 (React Query + images) + session model                      | **Phase 3 — Activity unification**                                                                 |
+| Phase 6 (release) + Apple sign-in + Sentry + privacy policy         | **Phase 4 — Release readiness**                                                                    |
 
 ---
 
-## Phase 2 — Data integrity (backend)
+## Track 0 — Continuous hygiene (runs alongside every phase)
 
-Goal: make multi-row operations atomic and correct. Requires Supabase dashboard access.
+Not a blocking phase; keep these green/moving as you build.
 
-### 2.1 Atomic writes (resolves TD-03 + delete race)
-
-- [ ] `register_loan(item_id, borrower_name, is_public)` RPC — inserts loan; item status handled by the existing `trg_sync_item_status` trigger. Confirm trigger covers both loan + return.
-- [ ] `delete_session(session_id)` RPC (or `ON DELETE CASCADE` FKs on `session_images` / `session_participants` → `sessions`) so the client does one call. After confirmed deletion, client removes storage objects (already the pattern).
-- [ ] Replace client-side multi-step deletes/inserts with the RPCs; keep the storage-cleanup step.
-
-### 2.2 RLS audit (before opening the feed to friends)
-
-- [ ] Verify every table's policies: `loans` owner-only read/write; `sessions`/`items`/`session_images` readable per the intended social scope (self + mutual friends only, not the whole world).
-- [ ] Confirm `borrower_name` can never be selected by non-owners even when `is_public = true` (privacy invariant from CLAUDE.md).
-- [ ] Add a `friendships` table + policies to support mutual-friend visibility (see Phase 3).
-- [ ] **Storage RLS for `session-images`** (from Phase 5): tighten the interim "any authenticated user" `SELECT` policy to friend-scoped, so `createSignedUrl` only succeeds for photos the requester is allowed to see.
-
-**Exit criteria:** loan/return/delete are single round-trips; RLS reviewed with a written policy matrix.
+- [x] CI (typecheck + lint + format + tests) on push/PR to `main`.
+- [x] ESLint (flat, `eslint-config-expo`) + Prettier.
+- [x] Jest (`jest-expo`) + tests for `date`, `initials`, `progressToFilled`, `toStoragePath`.
+- [x] Loan/return atomic via `trg_sync_item_status` trigger (one client write).
+- [x] Session images: private bucket + signed URLs (GDPR).
+- [ ] **Supabase-generated types** (`src/lib/database.types.ts`) → type the client, delete the `as any` / `as unknown as` casts in `FeedScreen` / `SessionDetailScreen` / `ProfileScreen`. _(High leverage; do early — every phase below adds queries.)_
+- [ ] `delete_session(session_id)` RPC or `ON DELETE CASCADE` on `session_images` / `session_participants` → single-call delete; keep storage cleanup after.
+- [ ] More tests as logic lands: `collections.ts`, `AuthScreen` token-parse (extract to a pure fn first), friend-graph helpers.
+- [ ] npm-audit findings: all are Expo **dev-tooling** transitive deps (not shipped) — resolve at the next SDK bump, don't `--force`.
 
 ---
 
-## Phase 3 — Feature completion
+## Phase 1 — Social foundation 🏗️ (the keystone)
 
-### 3.1 Friends (replace last mock)
+**Goal:** the friend group becomes real, and the whole app narrows from "all users" to "my friends." This unblocks everything social and closes the current privacy hole.
 
-- [ ] `friendships` table (`user_a`, `user_b`, `status`) + RLS; friend requests (send/accept/decline).
-- [ ] `FriendsScreen`: real list, search users, pending requests. Stable IDs as keys (finish TD-19).
-- [ ] Feed scoping: sessions/items visible only from confirmed friends (drives the RLS in 2.2).
+### 1.1 Friend graph (backend)
 
-### 3.2 Loans ↔ friends
+- [ ] `friendships` table (`requester_id`, `addressee_id`, `status` = pending/accepted, `created_at`) + RLS (each side can see rows they're part of).
+- [ ] Helper view/RPC `are_friends(a, b)` for reuse in other policies.
 
-- [ ] Borrower picker in the loan modal: pick a friend (`borrower_user_id`) or type a free name (`borrower_name` fallback). Schema already supports both.
-- [ ] Optional: notify borrower when they're recorded as having borrowed an item.
+### 1.2 Friends UI (replace the last mock)
 
-### 3.3 Wishlist (was a stub, now planned properly)
+- [ ] `FriendsScreen`: real accepted list, **user search**, send request, incoming/outgoing requests (accept/decline). Stable IDs as keys (closes old TD-19).
+- [ ] View a friend's **profile + their collection** (read-only) — delivers "alle kan se hva andre eier."
 
-- [ ] `wishlist` table (`user_id`, `title`, `type`, `brand`, `note`, `created_at`) + RLS.
-- [ ] Screen + navigation entry; "flytt til samling" action that creates an `items` row and removes the wishlist row (via RPC for atomicity).
+### 1.3 Lock everything to the friend graph (RLS audit)
 
-### 3.4 Feed depth
+- [ ] Replace the interim "all authenticated users" reads on `sessions` / `items` / `session_images` with **friend-scoped** policies (self + accepted friends). _This is the privacy fix, not just a feature._
+- [ ] Feed query: drop the implicit all-users behavior; show self + friends only.
+- [ ] Tighten the **storage `SELECT` policy** on `session-images` from "any authenticated" to friend-scoped (path owner is self or a friend).
+- [ ] Re-confirm the loan invariant: `borrower_name` never selectable by non-owners even when `is_public = true`.
+- [ ] Write the policy matrix down (table × role × operation) in `docs/`.
 
-- [ ] Pagination / infinite scroll (currently capped at 14 days + fixed limits).
-- [ ] Pull-to-refresh on `FeedScreen` (consistency with other screens).
-
-**Exit criteria:** no mock data anywhere; social graph enforced by RLS.
-
----
-
-## Phase 4 — Performance, media & data layer
-
-### 4.1 Adopt TanStack Query (React Query)
-
-Replaces the hand-rolled `useFocusEffect` + `useState(loading/error)` pattern repeated in every screen. Gives caching, dedup, retry, background refetch, and removes most boilerplate + the "refetch on every focus" cost.
-
-- [ ] Add `@tanstack/react-query`; wrap app in `QueryClientProvider`.
-- [ ] Create query hooks (`useItems`, `useCollectionItems`, `useSessionDetail`, `useFeed`, `useLoans`) in `src/queries/` — this also satisfies the `services/` layer (TD-12).
-- [ ] Mutations (`useStartSession`, `useUpdateProgress`, `useRegisterLoan`, …) with optimistic updates + `invalidateQueries`.
-
-### 4.2 Images
-
-- [ ] Switch `Image` → **`expo-image`** for caching, placeholders, and better memory behaviour.
-- [ ] Compress/resize before upload with `expo-image-manipulator` (e.g. max 1600px, ~0.7 quality) to cut upload size and memory from base64.
-- [ ] Add a lightweight loading/blur placeholder for hero + thumbnails.
-
-### 4.3 Realtime (optional)
-
-- [ ] Supabase realtime subscription for active sessions / feed to replace focus-refetch where it improves UX.
-
-**Exit criteria:** one consistent data-fetching pattern; images cached and compressed.
+**Exit criteria:** a user only ever sees their own + friends' data; no path to a stranger's item, session, or photo; Friends is fully real.
 
 ---
 
-## Phase 5 — Security, privacy & observability
+## Phase 2 — The lending loop 📚 (make it a library, not a notebook)
 
-- [~] **Image bucket → private + signed URLs (GDPR):** photos can contain identifiable people (personal data). Decision: make `session-images` **private** and serve via short-lived `createSignedUrl`, so leaked/old links expire and erasure (Art. 17) is enforceable. Client code lands first (works on public or private buckets); then flip the bucket to private + add a storage `SELECT` policy. **Depends on Phase 2:** tighten that storage policy to friend-scoped in the RLS audit.
-- [x] **Remove `android.permission.RECORD_AUDIO`** from `app.json` — no audio feature; would trip store review / look like a privacy risk. Set `android.permissions` to `[]` (plugins add only camera/photos).
-- [x] Confirm `.env` only contains the **anon** key + URL (both `EXPO_PUBLIC_`, bundled/public). Verified — no service-role key. Never add it to the app.
-- [ ] Add **Sentry** (`@sentry/react-native` via Expo config plugin) for crash/error reporting; wire the `ErrorBoundary` to report.
-- [ ] Draft a privacy policy (Google/Apple require one for an app handling accounts + photos) and link it in-app + store listings.
+**Goal:** turn one-sided loan logging into a real friend-to-friend borrow flow — the concept's payoff.
 
-**Exit criteria:** storage access model decided & documented; no unjustified permissions; crashes reported.
+### 2.1 Borrow requests
+
+- [ ] `borrow_requests` (or extend `loans`): request → owner approves/declines → active loan → return. States + RLS (owner and requester see their own).
+- [ ] From a friend's collection item: **"Be om å låne"** when status = Tilgjengelig.
+- [ ] Owner approval turns it into a `loans` row (reuse the existing trigger for status sync); borrower recorded via `borrower_user_id` (friend) with `borrower_name` fallback for non-app people.
+
+### 2.2 Notifications (the nudge channel)
+
+- [ ] Expo Notifications: push-token registration + storage; server-side sends (Supabase Edge Function or scheduled job).
+- [ ] Triggers: incoming borrow request, request approved/declined, "added you to a session," optional **loan reminder after X weeks**.
+
+### 2.3 Serve puzzles' natural lifecycle
+
+- [ ] Add a **swap / give-away** status (`Byttet` / `Gitt bort`) alongside Utlånt/Tilgjengelig. Puzzles are usually _passed on_ once done, not lent — the concept says "bytte," but only lend/return exists today.
+
+### 2.4 Wishlist
+
+- [ ] `wishlist` table + RLS; screen + nav entry.
+- [ ] "Flytt til samling" (atomic via RPC), and **"Be om å låne"** surfaced when a friend already owns a wished item.
+
+**Exit criteria:** a friend can discover an item, request it, get notified through the flow, and it's tracked to return — without the owner typing a name by hand.
 
 ---
 
-## Phase 6 — Release
+## Phase 3 — Activity unification & data layer ⚙️
 
-- [ ] Fill store metadata: descriptions (nb-NO), screenshots (reuse `docs/screenshots/`), keywords, category.
-- [ ] Verify `app.json`: version, `bundleIdentifier`/`package` (`no.rubenvareide.puslespill` ✓), icons, splash.
-- [ ] `eas build --profile preview` → internal test on real devices (iOS TestFlight + Android internal).
-- [ ] OTA update sanity check (`expo-updates` is configured with `appVersion` runtime policy + production channel).
-- [ ] `eas build --profile production` + `eas submit` to App Store / Play Store.
-- [ ] Post-launch: monitor Sentry; set up `eas update` flow for JS-only fixes.
+**Goal:** fix the puzzle-shaped "session" model so board games (and future books/films) are first-class, and pay down the data-fetching boilerplate at the same time.
+
+### 3.1 Unify the activity model
+
+- [ ] Make **"logg en økt"** uniform: item + participants + optional photo + optional note, for _any_ category. Board games become first-class (play logged, people, optional "who won").
+- [ ] **Demote puzzle %** to an _optional_ attribute of a puzzle session, not the spine of the feature. Keep `ProgressSheet` / `PuzzleProgressIcon` as a puzzle-only enhancement.
+- [ ] Verify the model generalizes to books/films (progress-like) before adding those categories.
+
+### 3.2 Adopt TanStack Query (React Query)
+
+- [ ] Replace the repeated `useFocusEffect` + `useState(loading/error)` pattern (also removes the `react-hooks/set-state-in-effect` warnings) with query hooks in `src/queries/` — doubles as the `services/` layer.
+- [ ] Mutations with optimistic updates + `invalidateQueries` (start session, update progress, register/approve loan, friend request).
+
+### 3.3 Images & feed depth
+
+- [ ] `Image` → **`expo-image`** (caching, placeholders, memory); compress with `expo-image-manipulator` before upload.
+- [ ] Feed pagination / infinite scroll + pull-to-refresh (currently 14-day window, no refresh control).
+
+**Exit criteria:** one data-fetching pattern; sessions category-neutral; images cached/compressed.
 
 ---
 
-## Best-practices checklist (stack-specific, ongoing)
+## Phase 4 — Release readiness 🚀
 
-- **Native deps:** always add with `npx expo install <pkg>` so versions stay SDK-pinned (this is exactly why `@expo/vector-icons` broke).
-- **No `StyleSheet`:** keep using NativeWind classes (inline styles only for values Tailwind can't express or props passed to RN Navigation).
-- **React Navigation, not Expo Router** — intentional; don't migrate.
-- **Strict TypeScript stays on**; no new `any`. Use Supabase-generated types.
-- **Every interactive element** keeps `accessibilityRole` + `accessibilityLabel` (the app's a11y is a strength — maintain it).
-- **Async handlers** that toggle a loading flag use `try/catch/finally`.
-- **Data fetches** surface errors with retry, never a silent empty state.
-- **Storage** goes through `utils/sessionImages.ts`; **dates** through `utils/date.ts`.
-- **Schema changes** in the Supabase dashboard → immediately regenerate `database.types.ts`.
+- [ ] **Apple Sign-In** — required by App Store guideline 4.8 since Google sign-in is offered. **Launch gate**, not optional.
+- [ ] Onboarding screen (concept intro + sign-in).
+- [ ] **Sentry** (`@sentry/react-native` config plugin); wire `ErrorBoundary` to report.
+- [ ] **Privacy policy** (accounts + photos of people → GDPR; stores require it). Link in-app + store listings.
+- [ ] Store metadata (nb-NO), screenshots (reuse `docs/screenshots/`), category, keywords.
+- [ ] `eas build --profile preview` → TestFlight + Android internal → `production` + `eas submit`.
+- [ ] Decide/confirm the final **app name** (Fordriv is a placeholder) before store submission — rename `app.json` `name`/`slug`; bundle IDs can stay.
+
+**Exit criteria:** passes store review; crashes reported; policy published.
 
 ---
 
 ## Suggested sequencing
 
-1. **Phase 1** (tooling/tests/types) — do first; everything else is safer after.
-2. **Phase 2** (atomic writes + RLS) — before inviting real users.
-3. **Phase 5 security quick wins** (RECORD_AUDIO, bucket decision) — cheap, do alongside Phase 2.
-4. **Phase 3** (friends/wishlist) — the remaining product surface.
-5. **Phase 4** (React Query + images) — can run in parallel with Phase 3.
-6. **Phase 6** (release) — once 1–5 are green.
+1. **Track 0 quick wins now** — generated types + `delete_session` (small; unblock later work).
+2. **Phase 1 (Social foundation)** — the keystone, and the privacy fix. Everything social waits on it.
+3. **Phase 2 (Lending loop)** — the concept's payoff; needs the friend graph from Phase 1.
+4. **Phase 3 (Activity unification + React Query)** — can overlap the tail of Phase 2; touches many screens, so land the friend/loan work first.
+5. **Phase 4 (Release)** — Apple Sign-In is the hard gate; the rest is polish + store ops.
+
+**North star:** stop building "a beautiful puzzle-progress app that also tracks loans," and finish "the social lending library for a friend group" it set out to be.
