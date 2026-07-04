@@ -27,10 +27,7 @@ import { RootStackParamList } from "../navigation/RootNavigator";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 
-type CollectionDetailRouteProp = RouteProp<
-  CollectionsStackParamList,
-  "CollectionDetail"
->;
+type CollectionDetailRouteProp = RouteProp<CollectionsStackParamList, "CollectionDetail">;
 type RootNavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function CollectionDetailScreen() {
@@ -54,24 +51,27 @@ export default function CollectionDetailScreen() {
   const [loanIsPublic, setLoanIsPublic] = useState(false);
 
   // Refetch when screen comes back into focus (e.g. after adding or editing an item)
-  const fetchItems = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    const { data, error } = await supabase
-      .from("items")
-      .select("id, title, brand, piece_count, player_count, difficulty, status")
-      .eq("owner_id", user!.id)
-      .eq("type", type)
-      .order("created_at", { ascending: false });
+  const fetchItems = useCallback(
+    async (isRefresh = false) => {
+      if (isRefresh) setRefreshing(true);
+      const { data, error } = await supabase
+        .from("items")
+        .select("id, title, brand, piece_count, player_count, difficulty, status")
+        .eq("owner_id", user!.id)
+        .eq("type", type)
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      setFetchError(error.message);
-    } else {
-      setItems(data ?? []);
-      setFetchError(null);
-    }
-    setLoading(false);
-    setRefreshing(false);
-  }, [user, type]);
+      if (error) {
+        setFetchError(error.message);
+      } else {
+        setItems(data ?? []);
+        setFetchError(null);
+      }
+      setLoading(false);
+      setRefreshing(false);
+    },
+    [user, type],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -112,9 +112,7 @@ export default function CollectionDetailScreen() {
     }
 
     setItems((prev) =>
-      prev.map((i) =>
-        i.id === loanItem.id ? { ...i, status: "Utlånt" } : i,
-      ),
+      prev.map((i) => (i.id === loanItem.id ? { ...i, status: "Utlånt" } : i)),
     );
     setLoanModalVisible(false);
   }
@@ -150,10 +148,7 @@ export default function CollectionDetailScreen() {
         text: "Slett",
         style: "destructive",
         onPress: async () => {
-          const { error } = await supabase
-            .from("items")
-            .delete()
-            .eq("id", item.id);
+          const { error } = await supabase.from("items").delete().eq("id", item.id);
           if (error) {
             Alert.alert("Noe gikk galt", error.message);
             return;
@@ -201,10 +196,7 @@ export default function CollectionDetailScreen() {
         className="flex-1 bg-surface-secondary dark:bg-surface-dark-secondary"
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => fetchItems(true)}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={() => fetchItems(true)} />
         }
       >
         <View
@@ -266,11 +258,7 @@ export default function CollectionDetailScreen() {
                   }`}
                 >
                   <View className="w-10 h-10 rounded-xl bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-4">
-                    <Ionicons
-                      name={ITEM_ICONS[type]}
-                      size={20}
-                      color="#1D9E75"
-                    />
+                    <Ionicons name={ITEM_ICONS[type]} size={20} color="#1D9E75" />
                   </View>
                   <View className="flex-1">
                     <Text className="text-content dark:text-content-dark font-medium">
@@ -289,7 +277,12 @@ export default function CollectionDetailScreen() {
                       </Text>
                     </View>
                   )}
-                  <Ionicons name="chevron-forward" size={16} color="#A8A29E" accessible={false} />
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color="#A8A29E"
+                    accessible={false}
+                  />
                 </TouchableOpacity>
               );
             })}
@@ -331,9 +324,7 @@ export default function CollectionDetailScreen() {
                 {ITEM_LABELS[type]}
               </Text>
             </View>
-            {actionLoading && (
-              <ActivityIndicator size="small" color="#1D9E75" />
-            )}
+            {actionLoading && <ActivityIndicator size="small" color="#1D9E75" />}
           </View>
 
           <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl overflow-hidden mb-3">

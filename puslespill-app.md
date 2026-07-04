@@ -31,7 +31,7 @@ Appen lanseres med to samlingstyper: **puslespill** og **brettspill**. Med mulig
 | --------- | ----------------------------------------------------- |
 | Feed      | Aktivitetsstrøm fra venner + aktive økter du er med i |
 | Samlinger | Dine samlingstyper + utlånt nå                        |
-| + (modal) | Legg til i samlingen / Start ny økt |
+| + (modal) | Legg til i samlingen / Start ny økt                   |
 | Venner    | Liste over venner du følger, søk etter nye            |
 | Profil    | Profil, statistikk og innstillinger                   |
 
@@ -100,19 +100,19 @@ Vennenes egne separate økter vises i Feed som `started`-hendelse, ikke i aktive
 
 ## Skjermstatus
 
-| Skjerm                  | Status                                                                             |
-| ----------------------- | ---------------------------------------------------------------------------------- |
-| AuthScreen              | Ferdig — Google OAuth med feilhåndtering                                                        |
-| FeedScreen              | Ekte data — aktive egne økter + feed fra alle brukeres sessions/items + egne offentlige lån       |
-| CollectionsScreen       | Ferdig — ekte data, "UTLÅNT NÅ" tappbar med registrer-retur-flyt                               |
-| CollectionDetailScreen  | Ferdig — ekte data, handlingsark med alle lånefunksjoner                                        |
-| AddItemScreen           | Ferdig — insert til Supabase                                                                    |
-| EditItemScreen          | Ferdig — forhåndsutfylt update til Supabase                                                     |
-| FriendsScreen           | Mock-data — kobles til Supabase i Fase 5                                                        |
-| ProfileScreen           | Hybrid — avatar/navn + utlånshistorikk ekte, statistikk mock                                   |
-| NewSessionScreen        | Ferdig — modal med gjenstand, deltakere, fullført-toggle, bilde ("Bilde av boksen" for puslespill) og notat |
-| SessionDetailScreen     | Ferdig — hero (siste fremgang eller cover), metadata-kort med cover-thumbnail + progresjon, "Oppdater"-knapp (bilde + progresjon + notat i én flyt), ···-meny (rediger/slett), blur-modal for fullskjerm |
-| EditSessionScreen       | Ferdig — rediger deltakere og notat (modal)                                                     |
+| Skjerm                 | Status                                                                                                                                                                                                   |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AuthScreen             | Ferdig — Google OAuth med feilhåndtering                                                                                                                                                                 |
+| FeedScreen             | Ekte data — aktive egne økter + feed fra alle brukeres sessions/items + egne offentlige lån                                                                                                              |
+| CollectionsScreen      | Ferdig — ekte data, "UTLÅNT NÅ" tappbar med registrer-retur-flyt                                                                                                                                         |
+| CollectionDetailScreen | Ferdig — ekte data, handlingsark med alle lånefunksjoner                                                                                                                                                 |
+| AddItemScreen          | Ferdig — insert til Supabase                                                                                                                                                                             |
+| EditItemScreen         | Ferdig — forhåndsutfylt update til Supabase                                                                                                                                                              |
+| FriendsScreen          | Mock-data — kobles til Supabase i Fase 5                                                                                                                                                                 |
+| ProfileScreen          | Hybrid — avatar/navn + utlånshistorikk ekte, statistikk mock                                                                                                                                             |
+| NewSessionScreen       | Ferdig — modal med gjenstand, deltakere, fullført-toggle, bilde ("Bilde av boksen" for puslespill) og notat                                                                                              |
+| SessionDetailScreen    | Ferdig — hero (siste fremgang eller cover), metadata-kort med cover-thumbnail + progresjon, "Oppdater"-knapp (bilde + progresjon + notat i én flyt), ···-meny (rediger/slett), blur-modal for fullskjerm |
+| EditSessionScreen      | Ferdig — rediger deltakere og notat (modal)                                                                                                                                                              |
 
 ---
 

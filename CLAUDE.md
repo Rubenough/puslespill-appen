@@ -1,11 +1,13 @@
 # Puslespill-appen — Claude Instructions
 
 ## Project Overview
+
 A React Native / Expo mobile app for managing puzzle and board game collections, loans, and a social feed. Backend: Supabase (PostgreSQL + Auth).
 
 **Planning docs:** roadmap to 1.0 in `docs/PROJECT-PLAN.md`; historical debt register + review log in `tech-debt.md`.
 
 ## Tech Stack
+
 - **React Native 0.83.2** + **Expo 55**
 - **TypeScript** (strict mode)
 - **NativeWind 4** + **Tailwind CSS 3** for styling
@@ -17,6 +19,7 @@ A React Native / Expo mobile app for managing puzzle and board game collections,
 - **@expo/vector-icons** — Ionicons (install via `npx expo install @expo/vector-icons`, keep SDK-pinned)
 
 ## Commands
+
 ```bash
 npx expo start                # Start dev server
 npx expo start --localhost    # Use for iOS Simulator (avoids LAN IP timeout)
@@ -26,16 +29,22 @@ npx expo start --web
 ```
 
 Quality gates:
+
 ```bash
-npm run typecheck   # tsc --noEmit
-npm test            # jest (jest-expo preset)
-npm run test:ci     # jest --ci --runInBand (used by CI)
+npm run typecheck     # tsc --noEmit
+npm run lint          # eslint (flat config: eslint-config-expo + prettier)
+npm run format        # prettier --write .
+npm run format:check  # prettier --check . (used by CI)
+npm test              # jest (jest-expo preset)
+npm run test:ci       # jest --ci --runInBand (used by CI)
 ```
-CI (`.github/workflows/ci.yml`) runs typecheck + tests on every push/PR to `main`.
+
+CI (`.github/workflows/ci.yml`) runs typecheck + lint + format:check + tests on every push/PR to `main`.
 Tests live in `__tests__/` folders next to the code; start with pure utils. Do not
-add a new test *framework* — extend the existing jest setup.
+add a new test _framework_ — extend the existing jest setup.
 
 ## Project Structure
+
 ```
 src/
 ├── components/
@@ -76,12 +85,15 @@ App.tsx                         # Entry point — wraps AuthProvider, routes on 
 ```
 
 ## Naming & Language Conventions
+
 - **Functions, constants, variables, types: English**
 - **UI text (labels, placeholders, headings): Norwegian**
 - **Code comments: Norwegian is fine**
 
 ## Design System
+
 The visual language is documented in `wireframes/design-system.html` (open in a browser). It contains:
+
 - All color tokens (light + dark), with WCAG AA contrast table
 - Avatar palette (deterministic 6-color from `utils/initials.ts`)
 - Typography scale, radius tokens, layout rhythm
@@ -90,6 +102,7 @@ The visual language is documented in `wireframes/design-system.html` (open in a 
 Consult this file when adding new UI — all new components should follow the same tokens and patterns.
 
 ## Styling
+
 - Use NativeWind (Tailwind class names) for all styling
 - Custom theme colors in `tailwind.config.js`: `surface`, `border`, `content`, `accent` (green)
 - Dark mode via `useColorScheme()` — manual theme objects used in AppNavigator
@@ -98,6 +111,7 @@ Consult this file when adding new UI — all new components should follow the sa
 ## Architecture Notes
 
 ### Auth flow
+
 - `AuthProvider` (in `AuthContext.tsx`) manages session via `onAuthStateChange`
 - `App.tsx` renders `AppContent` inside `AuthProvider` — uses `useAuth()` to route between `AuthScreen` and `AppNavigator`
 - `SplashScreen` stays visible until `loading` is false (prevents white flash)
@@ -105,22 +119,27 @@ Consult this file when adding new UI — all new components should follow the sa
 - `makeRedirectUri()` from `expo-auth-session` generates the correct redirect URI dynamically
 
 ### Session storage
+
 - `ExpoSecureStoreAdapter` in `supabase.ts` — uses `expo-secure-store` (Keychain on iOS, Keystore on Android)
 - Session tokens larger than 2048 bytes are automatically chunked across multiple SecureStore keys
 
 ### Image storage (`session-images` bucket)
+
 - Use `utils/sessionImages.ts` — never call `supabase.storage` inline. It exposes `uploadSessionImage(path, uri)` (reads the file, uploads, returns public URL, throws on error), `removeSessionImages(paths)` (best-effort cleanup), and `storagePathFromUrl(url)`.
 - **Upload-then-insert ordering:** upload the image first, then insert/update the DB row. Track the uploaded path outside the `try`; if a later step fails, remove the orphaned file. Once a DB row references the file, set the tracked path to `null` so it is not deleted on a subsequent failure.
 - All async handlers that flip a loading flag (`saving`/`updating`/`deleting`) must use `try/catch/finally` — reset the flag in `finally`, alert in `catch`. Never leave a flag set on a thrown exception.
 
 ### Data-fetch error handling
+
 - Every screen that fetches data surfaces errors: capture the `error` field (or `try/catch` around helpers that throw) and render an inline "Kunne ikke laste …" message with a "Prøv igjen" retry button instead of a misleading empty state. See `CollectionsScreen`, `FeedScreen` (`SectionError`), `ProfileScreen`, `NewSessionScreen`.
 
 ### Contexts
+
 - `useAuth()` — returns `{ session, user, isLoggedIn, loading }`
 - `useProfil()` — returns `{ profil, loading, error, retry }` from `profiles` table (only mounted when logged in)
 
 ### Navigation
+
 ```
 RootNavigator (Stack)
 ├── Tabs (AppNavigator — BottomTab)
@@ -137,6 +156,7 @@ RootNavigator (Stack)
 ├── SessionDetail (Push) → SessionDetailScreen
 └── EditSession (Modal) → EditSessionScreen
 ```
+
 - Auth state in `App.tsx` routes to `AuthScreen` or `RootNavigator`
 - React Navigation is used (not Expo Router) — `Stack.Protected` does not apply
 - The center (+) tab button opens an action modal with two options: add item, start session
@@ -144,7 +164,9 @@ RootNavigator (Stack)
 - "Legg til i samlingen" → type selection alert → navigates to `AddItemScreen` with type param
 
 ### Database
+
 Supabase tables in use:
+
 - `profiles` — user profile (id, full_name, avatar_url)
 - `items` — puzzle/board game collection (id, owner_id, type, title, brand, piece_count, player_count, difficulty, status, created_at)
 - `loans` — loan records (id, item_id, owner_id, borrower_user_id [nullable], borrower_name, loaned_at, returned_at [null = active loan], is_public)
@@ -155,26 +177,30 @@ Supabase tables in use:
 Item types: `"puslespill"` | `"brettspill"` (defined in `utils/collections.ts` as `ItemType`)
 
 ### Privacy: loans
+
 Loans are **private by default** (`is_public = false`). Borrower identity must never leak to users who are not the owner.
+
 - RLS: only `owner_id = auth.uid()` can read/write their own loans
-- `is_public = true` means the loan *activity* (not borrower name) can be shown to mutual friends in the feed — e.g. "Ruben lånte ut et puslespill" without naming who
+- `is_public = true` means the loan _activity_ (not borrower name) can be shown to mutual friends in the feed — e.g. "Ruben lånte ut et puslespill" without naming who
 - Borrower name is only ever shown to the item owner, never to other users — even if `is_public = true`
 - `borrower_user_id` is for future friend-picker integration; `borrower_name` is always stored as a display fallback (including for non-app users)
 
 ### Data status per screen
-| Screen | Data source |
-|--------|-------------|
-| FeedScreen | Real — active sessions (`sessions` + `session_images`) + feed (`sessions`/`items`/`loans` last 14 days, profiles joined), per-section error+retry |
-| CollectionsScreen | Real — `items` + `loans`, UTLÅNT NÅ with return action |
-| CollectionDetailScreen | Real — `items` + `loans`, pull-to-refresh + focus-refresh, loan/return actions |
-| AddItemScreen | Real — inserts to `items` |
-| ProfileScreen | Real — profile from Supabase, loan history from `loans` (error+retry) |
-| FriendsScreen | Mock — `MOCK_FRIENDS` (only remaining mock screen) |
-| NewSessionScreen | Real — inserts to `sessions` + `session_participants`, uploads to `session-images` bucket |
-| SessionDetailScreen | Real — reads `sessions` (incl. `image_url` cover) + `session_images` + `items` metadata, progress icon in metadata card, "Oppdater" flow (image + progress + note via ProgressSheet), ··· menu (edit/delete), blur fullscreen modal |
-| EditSessionScreen | Real — updates `sessions.guest_names` + `sessions.notes` |
+
+| Screen                 | Data source                                                                                                                                                                                                                         |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FeedScreen             | Real — active sessions (`sessions` + `session_images`) + feed (`sessions`/`items`/`loans` last 14 days, profiles joined), per-section error+retry                                                                                   |
+| CollectionsScreen      | Real — `items` + `loans`, UTLÅNT NÅ with return action                                                                                                                                                                              |
+| CollectionDetailScreen | Real — `items` + `loans`, pull-to-refresh + focus-refresh, loan/return actions                                                                                                                                                      |
+| AddItemScreen          | Real — inserts to `items`                                                                                                                                                                                                           |
+| ProfileScreen          | Real — profile from Supabase, loan history from `loans` (error+retry)                                                                                                                                                               |
+| FriendsScreen          | Mock — `MOCK_FRIENDS` (only remaining mock screen)                                                                                                                                                                                  |
+| NewSessionScreen       | Real — inserts to `sessions` + `session_participants`, uploads to `session-images` bucket                                                                                                                                           |
+| SessionDetailScreen    | Real — reads `sessions` (incl. `image_url` cover) + `session_images` + `items` metadata, progress icon in metadata card, "Oppdater" flow (image + progress + note via ProgressSheet), ··· menu (edit/delete), blur fullscreen modal |
+| EditSessionScreen      | Real — updates `sessions.guest_names` + `sessions.notes`                                                                                                                                                                            |
 
 ### Supabase credentials
+
 In `.env`: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`
 
 ## Accessibility (WCAG AA)
@@ -184,6 +210,7 @@ All new and modified UI must follow these rules. The codebase has already been a
 ### Required props by element type
 
 **Every `TouchableOpacity` and `Pressable` (interactive):**
+
 ```tsx
 <TouchableOpacity
   accessibilityRole="button"
@@ -194,6 +221,7 @@ All new and modified UI must follow these rules. The codebase has already been a
 ```
 
 **Modal backdrop `Pressable` (dismiss overlay):**
+
 ```tsx
 <Pressable
   accessibilityRole="button"
@@ -203,6 +231,7 @@ All new and modified UI must follow these rules. The codebase has already been a
 ```
 
 **Every `TextInput`:**
+
 ```tsx
 <TextInput
   accessibilityLabel="Field name (valgfritt)"  // matches visible label
@@ -211,6 +240,7 @@ All new and modified UI must follow these rules. The codebase has already been a
 ```
 
 **`Switch` components:**
+
 ```tsx
 <Switch
   accessibilityLabel="What this toggle controls"
@@ -220,6 +250,7 @@ All new and modified UI must follow these rules. The codebase has already been a
 ```
 
 **Selection/toggle buttons (e.g. difficulty picker):**
+
 ```tsx
 <TouchableOpacity
   accessibilityRole="button"
@@ -230,11 +261,13 @@ All new and modified UI must follow these rules. The codebase has already been a
 ```
 
 **Section headers (all-caps labels like "SAMLINGER", "FEED"):**
+
 ```tsx
 <Text accessibilityRole="header" ...>SAMLINGER</Text>
 ```
 
 **List rows (tappable items in a list):**
+
 ```tsx
 <TouchableOpacity
   accessibilityRole="button"
@@ -245,6 +278,7 @@ All new and modified UI must follow these rules. The codebase has already been a
 ```
 
 **Cards that group multiple pieces of info (FeedCard, ActiveSessionCard):**
+
 ```tsx
 <View
   accessible
@@ -254,6 +288,7 @@ All new and modified UI must follow these rules. The codebase has already been a
 ```
 
 **Decorative icons and images (no semantic meaning):**
+
 ```tsx
 <Ionicons ... accessible={false} />
 <Image ... accessible={false} />
@@ -261,22 +296,27 @@ All new and modified UI must follow these rules. The codebase has already been a
 ```
 
 ### `UserAvatar` is always decorative
+
 `UserAvatar` renders with `accessible={false}` — the accessible name lives on the parent element (list row, card, etc.).
 
 ### Color contrast
+
 Custom theme colors in `tailwind.config.js` are pre-validated at WCAG AA:
+
 - Accent green `#1D9E75` on white: 4.6:1 ✓
 - Accent green `#34D399` on `stone-800`: 7.2:1 ✓
 - Do not add new color combinations without verifying contrast (use a contrast checker)
 - `#78716C` (stone-500) on dark surfaces fails — avoid using it as text or icon color in dark mode
 
 ### What to avoid
+
 - Do not add interactive elements (TouchableOpacity, Pressable, Button) without `accessibilityRole` and `accessibilityLabel`
 - Do not add TextInput fields without `accessibilityLabel`
 - Do not add section header labels without `accessibilityRole="header"`
 - Do not mark elements as `accessible={false}` unless they are purely decorative
 
 ## What to Avoid
+
 - Do not add a test framework unless explicitly asked
 - Do not use `StyleSheet` from React Native — use NativeWind classes instead
 - Do not over-engineer; keep components simple and focused
