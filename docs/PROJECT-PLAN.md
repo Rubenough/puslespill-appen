@@ -65,6 +65,7 @@ Goal: make multi-row operations atomic and correct. Requires Supabase dashboard 
 - [ ] Verify every table's policies: `loans` owner-only read/write; `sessions`/`items`/`session_images` readable per the intended social scope (self + mutual friends only, not the whole world).
 - [ ] Confirm `borrower_name` can never be selected by non-owners even when `is_public = true` (privacy invariant from CLAUDE.md).
 - [ ] Add a `friendships` table + policies to support mutual-friend visibility (see Phase 3).
+- [ ] **Storage RLS for `session-images`** (from Phase 5): tighten the interim "any authenticated user" `SELECT` policy to friend-scoped, so `createSignedUrl` only succeeds for photos the requester is allowed to see.
 
 **Exit criteria:** loan/return/delete are single round-trips; RLS reviewed with a written policy matrix.
 
@@ -123,9 +124,9 @@ Replaces the hand-rolled `useFocusEffect` + `useState(loading/error)` pattern re
 
 ## Phase 5 — Security, privacy & observability
 
-- [ ] **Image bucket decision:** `session-images` is currently **public** with predictable paths — anyone with a URL can view any photo. Either (a) make it private + serve via `createSignedUrl`, or (b) consciously accept public and document it. Pick one and record it in CLAUDE.md.
-- [ ] **Remove `android.permission.RECORD_AUDIO`** from `app.json` — the app has no audio feature; this will trip store review and looks like a privacy risk. (Camera/photos permissions are justified and already declared.)
-- [ ] Confirm `.env` only ever contains the **anon** key + URL (both `EXPO_PUBLIC_`, i.e. bundled/public). Never put the service-role key in the app.
+- [~] **Image bucket → private + signed URLs (GDPR):** photos can contain identifiable people (personal data). Decision: make `session-images` **private** and serve via short-lived `createSignedUrl`, so leaked/old links expire and erasure (Art. 17) is enforceable. Client code lands first (works on public or private buckets); then flip the bucket to private + add a storage `SELECT` policy. **Depends on Phase 2:** tighten that storage policy to friend-scoped in the RLS audit.
+- [x] **Remove `android.permission.RECORD_AUDIO`** from `app.json` — no audio feature; would trip store review / look like a privacy risk. Set `android.permissions` to `[]` (plugins add only camera/photos).
+- [x] Confirm `.env` only contains the **anon** key + URL (both `EXPO_PUBLIC_`, bundled/public). Verified — no service-role key. Never add it to the app.
 - [ ] Add **Sentry** (`@sentry/react-native` via Expo config plugin) for crash/error reporting; wire the `ErrorBoundary` to report.
 - [ ] Draft a privacy policy (Google/Apple require one for an app handling accounts + photos) and link it in-app + store listings.
 
