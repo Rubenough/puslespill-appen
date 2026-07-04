@@ -1,53 +1,145 @@
-import React from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import React, { useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  Share,
+  Alert,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../context/AuthContext";
+import { RootStackParamList } from "../navigation/RootNavigator";
 import UserAvatar from "../components/UserAvatar";
 
-const MOCK_FRIENDS = [
-  {
-    id: "friend-1",
-    name: "Turid Nielsen",
-    avatarUrl: null,
-    mutualItems: 3,
-    lastActive: "i dag",
-  },
-  {
-    id: "friend-2",
-    name: "Ole Moen",
-    avatarUrl: null,
-    mutualItems: 1,
-    lastActive: "i går",
-  },
-  {
-    id: "friend-3",
-    name: "Petter Moe",
-    avatarUrl: null,
-    mutualItems: 5,
-    lastActive: "3 dager siden",
-  },
-  {
-    id: "friend-4",
-    name: "Maria Dahl",
-    avatarUrl: null,
-    mutualItems: 0,
-    lastActive: "1 uke siden",
-  },
-  {
-    id: "friend-5",
-    name: "Lars Berg",
-    avatarUrl: null,
-    mutualItems: 2,
-    lastActive: "2 uker siden",
-  },
-];
+type NavProp = NativeStackNavigationProp<RootStackParamList>;
+
+type Friend = {
+  friendshipId: string;
+  id: string;
+  name: string | null;
+  avatarUrl: string | null;
+};
 
 export default function FriendsScreen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NavProp>();
+  const { user } = useAuth();
+
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
+
+  const [redeemInput, setRedeemInput] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    if (!user) return;
+
+    const [codeRes, friendshipsRes] = await Promise.all([
+      supabase.rpc("get_my_invite_code"),
+      supabase
+        .from("friendships")
+        .select("id, requester_id, addressee_id")
+        .eq("status", "accepted"),
+    ]);
+
+    if (codeRes.data) setInviteCode(codeRes.data);
+
+    if (friendshipsRes.error) {
+      setFetchError(true);
+      setLoading(false);
+      return;
+    }
+
+    const rows = friendshipsRes.data ?? [];
+    // Motparten i hvert vennskap er den som ikke er meg.
+    const friendIdByFriendship = new Map<string, string>();
+    for (const row of rows) {
+      const otherId = row.requester_id === user.id ? row.addressee_id : row.requester_id;
+      friendIdByFriendship.set(row.id, otherId);
+    }
+
+    const otherIds = [...new Set(friendIdByFriendship.values())];
+    let profilesById = new Map<
+      string,
+      { full_name: string | null; avatar_url: string | null }
+    >();
+    if (otherIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .in("id", otherIds);
+      profilesById = new Map((profiles ?? []).map((p) => [p.id, p]));
+    }
+
+    const list: Friend[] = [];
+    for (const [friendshipId, friendId] of friendIdByFriendship) {
+      const profile = profilesById.get(friendId);
+      list.push({
+        friendshipId,
+        id: friendId,
+        name: profile?.full_name ?? "Ukjent",
+        avatarUrl: profile?.avatar_url ?? null,
+      });
+    }
+    list.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", "nb"));
+
+    setFriends(list);
+    setFetchError(false);
+    setLoading(false);
+  }, [user]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData]),
+  );
+
+  async function shareInvite() {
+    if (!inviteCode) return;
+    // TODO(deep-link): når puslespill://join?code= håndteres, legg til lenken her.
+    await Share.share({
+      message: `Legg meg til som venn i appen med koden: ${inviteCode}`,
+    });
+  }
+
+  async function handleRedeem() {
+    const code = redeemInput.trim().toUpperCase();
+    if (!code) return;
+
+    setRedeeming(true);
+    const { data, error } = await supabase.rpc("accept_invite", { p_code: code });
+    setRedeeming(false);
+
+    if (error) {
+      Alert.alert("Kunne ikke legge til venn", error.message);
+      return;
+    }
+
+    const friend = data?.[0];
+    setRedeemInput("");
+    Alert.alert(
+      "Lagt til",
+      friend?.full_name
+        ? `Du og ${friend.full_name} er nå venner.`
+        : "Dere er nå venner.",
+    );
+    fetchData();
+  }
 
   return (
     <ScrollView
       className="flex-1 bg-surface-secondary dark:bg-surface-dark-secondary"
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
     >
       <Text
         className="text-content dark:text-content-dark text-2xl font-medium px-4 pb-6"
@@ -56,56 +148,147 @@ export default function FriendsScreen() {
         Venner
       </Text>
 
-      {/* Søk — placeholder */}
-      <TouchableOpacity
-        accessibilityRole="button"
-        accessibilityLabel="Finn venner"
-        accessibilityHint="Søk etter venner"
-        className="mx-4 mb-6 flex-row items-center gap-3 bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-xl px-4 py-3"
-      >
-        <Text className="text-content-secondary dark:text-content-secondary-dark flex-1">
-          Finn venner ...
-        </Text>
-      </TouchableOpacity>
-
+      {/* Min invitasjon */}
       <Text
         accessibilityRole="header"
         className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3"
       >
-        FØLGER
+        MIN INVITASJON
       </Text>
-      <View className="mx-4 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden">
-        {MOCK_FRIENDS.map((friend, i) => (
-          <TouchableOpacity
-            key={friend.id}
-            accessibilityRole="button"
-            accessibilityLabel={[
-              friend.name,
-              friend.mutualItems > 0 ? `${friend.mutualItems} felles i samlingen` : null,
-              `Aktiv ${friend.lastActive}`,
-            ]
-              .filter(Boolean)
-              .join(", ")}
-            className={`flex-row items-center px-4 py-3 ${
-              i < MOCK_FRIENDS.length - 1
-                ? "border-b border-border dark:border-border-dark"
-                : ""
-            }`}
+      <View className="mx-4 mb-6 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-4">
+        <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mb-2">
+          Del koden din så noen kan legge deg til som venn.
+        </Text>
+        <View className="flex-row items-center justify-between">
+          <Text
+            accessibilityLabel={
+              inviteCode ? `Din invitasjonskode er ${inviteCode}` : "Laster kode"
+            }
+            className="text-content dark:text-content-dark text-2xl font-semibold tracking-[4px]"
           >
-            <UserAvatar name={friend.name} avatarUrl={friend.avatarUrl} size={44} />
-            <View className="flex-1 ml-3">
-              <Text className="text-content dark:text-content-dark font-medium">
+            {inviteCode ?? "········"}
+          </Text>
+          <TouchableOpacity
+            onPress={shareInvite}
+            disabled={!inviteCode}
+            accessibilityRole="button"
+            accessibilityLabel="Del invitasjon"
+            accessibilityState={{ disabled: !inviteCode }}
+            className="flex-row items-center gap-1.5 bg-accent dark:bg-accent-dark rounded-xl px-4 py-2.5"
+          >
+            <Ionicons name="share-outline" size={16} color="white" accessible={false} />
+            <Text className="text-white font-semibold text-sm">Del</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Legg til venn */}
+      <Text
+        accessibilityRole="header"
+        className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3"
+      >
+        LEGG TIL VENN
+      </Text>
+      <View className="mx-4 mb-6 flex-row gap-2">
+        <View className="flex-1 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-3">
+          <TextInput
+            className="text-content dark:text-content-dark text-base tracking-[2px]"
+            placeholder="Skriv inn kode"
+            placeholderTextColor="#A8A29E"
+            value={redeemInput}
+            onChangeText={setRedeemInput}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            returnKeyType="done"
+            onSubmitEditing={handleRedeem}
+            accessibilityLabel="Invitasjonskode"
+          />
+        </View>
+        <TouchableOpacity
+          onPress={handleRedeem}
+          disabled={redeeming || !redeemInput.trim()}
+          accessibilityRole="button"
+          accessibilityLabel="Legg til venn"
+          accessibilityState={{ disabled: redeeming || !redeemInput.trim() }}
+          className={`rounded-2xl px-5 items-center justify-center ${
+            redeemInput.trim()
+              ? "bg-accent dark:bg-accent-dark"
+              : "bg-border dark:bg-border-dark"
+          }`}
+        >
+          {redeeming ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Text className="text-white font-semibold">Legg til</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Venneliste */}
+      <Text
+        accessibilityRole="header"
+        className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3"
+      >
+        VENNER{friends.length > 0 ? ` · ${friends.length}` : ""}
+      </Text>
+
+      {loading ? (
+        <ActivityIndicator color="#1D9E75" style={{ marginVertical: 24 }} />
+      ) : fetchError ? (
+        <View className="mx-4 mb-8 bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-2xl p-4 items-center">
+          <Text className="text-content dark:text-content-dark text-sm text-center mb-3">
+            Kunne ikke laste venner.
+          </Text>
+          <TouchableOpacity
+            onPress={() => fetchData()}
+            accessibilityRole="button"
+            accessibilityLabel="Prøv igjen"
+            className="bg-accent dark:bg-accent-dark rounded-xl px-5 py-2"
+          >
+            <Text className="text-white font-semibold text-sm">Prøv igjen</Text>
+          </TouchableOpacity>
+        </View>
+      ) : friends.length === 0 ? (
+        <View className="mx-4 mb-8 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark p-6 items-center">
+          <Text className="text-content-secondary dark:text-content-secondary-dark text-sm text-center">
+            Ingen venner ennå. Del koden din eller skriv inn en venns kode.
+          </Text>
+        </View>
+      ) : (
+        <View className="mx-4 mb-8 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden">
+          {friends.map((friend, i) => (
+            <TouchableOpacity
+              key={friend.friendshipId}
+              onPress={() =>
+                navigation.navigate("FriendCollection", {
+                  friendId: friend.id,
+                  friendName: friend.name ?? "Ukjent",
+                  avatarUrl: friend.avatarUrl,
+                })
+              }
+              accessibilityRole="button"
+              accessibilityLabel={friend.name ?? "Ukjent"}
+              accessibilityHint="Trykk for å se samlingen"
+              className={`flex-row items-center px-4 py-3 ${
+                i < friends.length - 1
+                  ? "border-b border-border dark:border-border-dark"
+                  : ""
+              }`}
+            >
+              <UserAvatar name={friend.name} avatarUrl={friend.avatarUrl} size={44} />
+              <Text className="flex-1 ml-3 text-content dark:text-content-dark font-medium">
                 {friend.name}
               </Text>
-              <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-0.5">
-                {friend.mutualItems > 0
-                  ? `${friend.mutualItems} felles i samlingen · ${friend.lastActive}`
-                  : `Aktiv ${friend.lastActive}`}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color="#A8A29E"
+                accessible={false}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
     </ScrollView>
   );
 }

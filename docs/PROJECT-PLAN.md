@@ -63,8 +63,9 @@ Not a blocking phase; keep these green/moving as you build.
 
 ### 1.2 Friends UI (replace the last mock)
 
-- [ ] `FriendsScreen`: real accepted list, **user search**, send request, incoming/outgoing requests (accept/decline). Stable IDs as keys (closes old TD-19).
-- [ ] View a friend's **profile + their collection** (read-only) — delivers "alle kan se hva andre eier."
+- [x] `FriendsScreen`: real invite code (share) + redeem-by-code (`accept_invite`) + accepted friends list. Stable IDs as keys (closes old TD-19).
+- [x] View a friend's **profile + their collection** (read-only, `FriendCollectionScreen`) — delivers "alle kan se hva andre eier."
+- [ ] Deep-link handling for `puslespill://join?code=…` (`expo-linking`) so shared links auto-open + prefill the code. (Manual code entry works today.)
 
 ### 1.3 Lock everything to the friend graph (RLS audit)
 
