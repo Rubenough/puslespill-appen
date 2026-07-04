@@ -31,7 +31,9 @@ export default function EditSessionScreen() {
 
   function addGuestName() {
     const trimmed = nameInput.trim();
-    if (!trimmed || guestNames.includes(trimmed)) return;
+    if (!trimmed || guestNames.some((n) => n.toLowerCase() === trimmed.toLowerCase())) {
+      return;
+    }
     setGuestNames((prev) => [...prev, trimmed]);
     setNameInput("");
   }

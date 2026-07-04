@@ -28,8 +28,12 @@ import { ITEM_ICONS, type ItemType, type Difficulty } from "../utils/collections
 import { RootStackParamList } from "../navigation/RootNavigator";
 import PuzzleProgressIcon, { progressToFilled } from "../components/PuzzleProgressIcon";
 import ProgressSheet from "../components/ProgressSheet";
-import * as FileSystem from "expo-file-system/legacy";
-import { decode } from "base64-arraybuffer";
+import {
+  uploadSessionImage,
+  removeSessionImages,
+  storagePathFromUrl,
+} from "../utils/sessionImages";
+import { getDayNumber, formatShortDate } from "../utils/date";
 
 type SessionDetailRouteProp = RouteProp<RootStackParamList, "SessionDetail">;
 type SessionDetailNavProp = NativeStackNavigationProp<
@@ -62,18 +66,6 @@ type SessionDetail = {
     difficulty: Difficulty | null;
   };
 };
-
-function getDayNumber(startedAt: string): number {
-  const diffMs = Date.now() - new Date(startedAt).getTime();
-  return Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-}
-
-function formatDate(isoString: string): string {
-  return new Date(isoString).toLocaleDateString("nb-NO", {
-    day: "numeric",
-    month: "short",
-  });
-}
 
 export default function SessionDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -127,69 +119,58 @@ export default function SessionDetailScreen() {
     setProgressSheetVisible(false);
     setUpdating(true);
 
-    // Last opp bilde hvis valgt
-    let imageId: string | null = null;
-    if (imageUri) {
-      const fileName = `${user!.id}/${sessionId}/${Date.now()}.jpg`;
-      const base64 = await FileSystem.readAsStringAsync(imageUri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+    // Lagringssti holdes utenfor try slik at vi kan rydde opp foreldreløst bilde ved feil.
+    let uploadedPath: string | null = null;
+    try {
+      // Last opp bilde hvis valgt
+      let imageId: string | null = null;
+      if (imageUri) {
+        uploadedPath = `${user!.id}/${sessionId}/${Date.now()}.jpg`;
+        const publicUrl = await uploadSessionImage(uploadedPath, imageUri);
 
-      const { error: uploadError } = await supabase.storage
-        .from("session-images")
-        .upload(fileName, decode(base64), { contentType: "image/jpeg" });
+        const { data: insertData, error: insertError } = await supabase
+          .from("session_images")
+          .insert({ session_id: sessionId, image_url: publicUrl, note })
+          .select("id")
+          .single();
 
-      if (uploadError) {
-        setUpdating(false);
-        Alert.alert("Noe gikk galt", "Kunne ikke laste opp bildet.");
-        return;
+        if (insertError) throw insertError;
+        imageId = insertData.id;
+        // Raden peker nå på filen — ikke rydd den bort om et senere steg feiler.
+        uploadedPath = null;
       }
 
-      const { data: urlData } = supabase.storage
-        .from("session-images")
-        .getPublicUrl(fileName);
-
-      const { data: insertData, error: insertError } = await supabase
-        .from("session_images")
-        .insert({ session_id: sessionId, image_url: urlData.publicUrl, note })
-        .select("id")
-        .single();
-
-      if (insertError) {
-        setUpdating(false);
-        Alert.alert("Noe gikk galt", insertError.message);
-        return;
+      // Oppdater session
+      const isCompletion = pct === 100;
+      const updateData: Record<string, unknown> = { progress_pct: pct };
+      if (isCompletion) {
+        updateData.completed_at = new Date().toISOString();
       }
-      imageId = insertData.id;
-    }
+      // Lagre notat på økten hvis det ikke er knyttet til et bilde
+      if (note && !imageId) {
+        updateData.notes = note;
+      }
 
-    // Oppdater session
-    const isCompletion = pct === 100;
-    const updateData: Record<string, unknown> = { progress_pct: pct };
-    if (isCompletion) {
-      updateData.completed_at = new Date().toISOString();
-    }
-    // Lagre notat på økten hvis det ikke er knyttet til et bilde
-    if (note && !imageId) {
-      updateData.notes = note;
-    }
+      const { error } = await supabase
+        .from("sessions")
+        .update(updateData)
+        .eq("id", sessionId);
 
-    const { error } = await supabase
-      .from("sessions")
-      .update(updateData)
-      .eq("id", sessionId);
+      if (error) throw error;
 
-    setUpdating(false);
-
-    if (error) {
-      Alert.alert("Noe gikk galt", error.message);
-      return;
-    }
-
-    if (isCompletion) {
-      navigation.goBack();
-    } else {
-      await fetchData();
+      if (isCompletion) {
+        navigation.goBack();
+      } else {
+        await fetchData();
+      }
+    } catch (err) {
+      if (uploadedPath) await removeSessionImages([uploadedPath]).catch(() => {});
+      Alert.alert(
+        "Noe gikk galt",
+        err instanceof Error ? err.message : "Kunne ikke oppdatere økten.",
+      );
+    } finally {
+      setUpdating(false);
     }
   }
 
@@ -235,58 +216,55 @@ export default function SessionDetailScreen() {
         onPress: async () => {
           setDeleting(true);
 
-          // Slett fremgangsbilder fra storage
-          const storagePaths: string[] = images
-            .map((img) => img.image_url.split("/session-images/")[1])
-            .filter(Boolean);
-          // Slett cover-bilde fra storage
-          if (session?.image_url) {
-            const coverPath = session.image_url.split("/session-images/")[1];
-            if (coverPath) storagePaths.push(coverPath);
-          }
-          if (storagePaths.length > 0) {
-            await supabase.storage.from("session-images").remove(storagePaths);
-          }
+          // Merk: uten transaksjon er dette ikke atomært. Vi sletter DB-radene før
+          // filene, og fjerner filer fra storage KUN etter at selve økt-raden er
+          // bekreftet slettet — slik at en feilet sletting aldri etterlater en
+          // levende økt uten bildene sine. Se PROJECT-PLAN.md for en `delete_session`
+          // RPC / ON DELETE CASCADE som løser atomisiteten skikkelig.
+          const storagePaths: string[] = [
+            ...images.map((img) => storagePathFromUrl(img.image_url)),
+            storagePathFromUrl(session?.image_url ?? null),
+          ].filter((p): p is string => !!p);
 
-          // Slett session_images-rader
-          const { error: imgError } = await supabase
-            .from("session_images")
-            .delete()
-            .eq("session_id", sessionId);
-          if (imgError) {
+          try {
+            // Slett session_images-rader
+            const { error: imgError } = await supabase
+              .from("session_images")
+              .delete()
+              .eq("session_id", sessionId);
+            if (imgError) throw new Error(`Kunne ikke slette bilder: ${imgError.message}`);
+
+            // Slett session_participants-rader
+            const { error: partError } = await supabase
+              .from("session_participants")
+              .delete()
+              .eq("session_id", sessionId);
+            if (partError) throw new Error(`Kunne ikke slette deltakere: ${partError.message}`);
+
+            // Slett selve økten — bruk .select() for å verifisere at raden faktisk ble slettet
+            const { data: deleted, error } = await supabase
+              .from("sessions")
+              .delete()
+              .eq("id", sessionId)
+              .select("id");
+
+            if (error) throw new Error(error.message);
+            if (!deleted || deleted.length === 0) {
+              throw new Error("Økten ble ikke slettet. Du har kanskje ikke tilgang.");
+            }
+
+            // Rydd storage først etter bekreftet sletting — best-effort.
+            await removeSessionImages(storagePaths).catch(() => {});
+
+            navigation.goBack();
+          } catch (err) {
+            Alert.alert(
+              "Noe gikk galt",
+              err instanceof Error ? err.message : "Kunne ikke slette økten.",
+            );
+          } finally {
             setDeleting(false);
-            Alert.alert("Noe gikk galt", `Kunne ikke slette bilder: ${imgError.message}`);
-            return;
           }
-
-          // Slett session_participants-rader
-          const { error: partError } = await supabase
-            .from("session_participants")
-            .delete()
-            .eq("session_id", sessionId);
-          if (partError) {
-            setDeleting(false);
-            Alert.alert("Noe gikk galt", `Kunne ikke slette deltakere: ${partError.message}`);
-            return;
-          }
-
-          // Slett selve økten — bruk .select() for å verifisere at raden faktisk ble slettet
-          const { data: deleted, error } = await supabase
-            .from("sessions")
-            .delete()
-            .eq("id", sessionId)
-            .select("id");
-
-          setDeleting(false);
-          if (error) {
-            Alert.alert("Noe gikk galt", error.message);
-            return;
-          }
-          if (!deleted || deleted.length === 0) {
-            Alert.alert("Noe gikk galt", "Økten ble ikke slettet. Du har kanskje ikke tilgang.");
-            return;
-          }
-          navigation.goBack();
         },
       },
     ]);
@@ -397,9 +375,9 @@ export default function SessionDetailScreen() {
           {/* Dag-badge */}
           <View className="absolute bottom-3 left-3 bg-black/50 rounded-full px-3 py-1">
             <Text className="text-white text-xs font-semibold">
-              Dag {dayNumber} · Startet {formatDate(session.started_at)}
+              Dag {dayNumber} · Startet {formatShortDate(session.started_at)}
               {isCompleted && session.completed_at
-                ? ` · Fullført ${formatDate(session.completed_at)}`
+                ? ` · Fullført ${formatShortDate(session.completed_at)}`
                 : ""}
             </Text>
           </View>
@@ -481,7 +459,7 @@ export default function SessionDetailScreen() {
                   key={img.id}
                   onPress={() => setFullscreenImage(img)}
                   accessibilityRole="button"
-                  accessibilityLabel={`Vis bilde fra ${formatDate(img.captured_at)}${img.note ? `, ${img.note}` : ""} i fullskjerm`}
+                  accessibilityLabel={`Vis bilde fra ${formatShortDate(img.captured_at)}${img.note ? `, ${img.note}` : ""} i fullskjerm`}
                   style={{ width: 100 }}
                 >
                   <Image
@@ -491,7 +469,7 @@ export default function SessionDetailScreen() {
                     accessible={false}
                   />
                   <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-1 text-center">
-                    {formatDate(img.captured_at)}
+                    {formatShortDate(img.captured_at)}
                   </Text>
                   {img.note ? (
                     <Text
@@ -700,7 +678,7 @@ export default function SessionDetailScreen() {
                 />
                 <View className="items-center mt-3">
                   <Text className="text-white/70 text-sm">
-                    {formatDate(fullscreenImage.captured_at)}
+                    {formatShortDate(fullscreenImage.captured_at)}
                   </Text>
                   {fullscreenImage.note ? (
                     <Text className="text-white text-sm mt-1 px-8 text-center">

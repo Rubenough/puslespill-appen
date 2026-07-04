@@ -1,9 +1,35 @@
 # Tech Debt Audit — puslespill-appen
 
 **Date:** 2026-03-27
-**Last updated:** 2026-03-27 (Phase A + B resolved; new items TD-15–TD-19 identified)
+**Last updated:** 2026-07-04 (Review pass 2 — correctness fixes applied; see banner below)
 **Scope:** Full codebase (`src/`, `App.tsx`, config files)
 **Methodology:** Manual review + priority scoring: `(Impact + Risk) × (6 − Effort)`
+
+---
+
+## Update — 2026-07-04 (Review pass 2)
+
+A second full review was run after Fase 5 (real feed). The following were **fixed in this pass**:
+
+| Item | What was wrong | Fix |
+| ---- | -------------- | --- |
+| **Missing dependency** | `@expo/vector-icons` was imported in 13 files but never declared/installed — a clean build failed. | Installed via `expo install`; declared in `package.json`. |
+| **Stuck loading flags** | `handleProgressSelect` / `handleStart` could throw in the file-read step and never reset `updating`/`saving`. | Wrapped in `try/catch/finally`; alert on catch. |
+| **Orphaned uploads** | Image uploaded before DB write; a failed write left files in the bucket. | Track path, clean up on failure; null it once a row references the file. |
+| **Delete ordering** | Storage files were deleted *before* the `sessions` row; a failed delete left a live session with no images. | Remove storage only after the row delete is verified. |
+| **`player_count` corruption** | Field placeholder `"2–5"` but stored via `parseInt` → `"2-5"` saved as `2`. | Field is now numeric (`number-pad`, digit-sanitised). |
+| **Silent fetch errors** | `FeedScreen`, `ProfileScreen`, `NewSessionScreen` swallowed query errors and showed empty states. | Error state + "Prøv igjen" retry, matching the existing pattern. |
+| **Duplicated date logic** | 4 copies of day-diff/relative-label helpers. | Extracted to `utils/date.ts`. |
+| **Duplicated storage logic** | Inline `supabase.storage` calls + fragile URL-split in 2–3 places. | Extracted to `utils/sessionImages.ts`. |
+| **Case-sensitive dedup** | Guest-name dedup allowed "Kari"/"kari". | Case-insensitive compare. |
+| **Dead code** | `CompletionModal.tsx` (unused) and `WishlistScreen.tsx` (unwired stub). | Deleted. |
+
+**Corrections to the register below (were stale):**
+- **TD-11** — `WishlistScreen` did *not* have a roadmap comment; it was an unwired stub and has now been **deleted**. The completion plan tracks a real wishlist feature in `docs/PROJECT-PLAN.md`.
+- **TD-15** — the global `+` modal has **2** items (both wired: add item → alert→AddItem; start session → NewSession), not 3 with a broken "Registrer utlån". No longer applicable.
+- References to `MOCK_FEED` / `MOCK_SESSIONS` are obsolete — `FeedScreen` is fully real.
+
+**Still open** (carried forward, see `docs/PROJECT-PLAN.md` for the plan): atomic loan/return/delete via RPC or `ON DELETE CASCADE` (TD-03 partially mitigated by the `trg_sync_item_status` trigger + verified deletes), zero test coverage (TD-05), `services/` layer (TD-12), typed SecureStore adapter (TD-14), `as any` casts in `FeedScreen`, and the public `session-images` bucket (new — see plan §Security).
 
 ---
 
@@ -23,13 +49,13 @@ Phase A and B debt has been resolved. A second sweep after the EditItem / ItemFo
 | 4   | TD-04 | `as unknown as ActiveLoan[]` cast in CollectionsScreen             | Code          | 2      | 3    | 1      | **25**    | ✅ Resolved  |
 | 5   | TD-05 | Zero test coverage                                                 | Test          | 4      | 4    | 3      | **24**    | ⏳ Phase C   |
 | 6   | TD-06 | Fetch errors silently swallowed in two screens                     | Code          | 3      | 3    | 2      | **24**    | ✅ Resolved  |
-| 7   | TD-15 | Global modal "session" and "loan" actions are silent no-ops        | Code          | 3      | 2    | 2      | **20**    | 🆕 Phase C   |
+| 7   | TD-15 | Global modal "session" and "loan" actions are silent no-ops        | Code          | 3      | 2    | 2      | **20**    | ❌ Obsolete (see banner) |
 | 8   | TD-16 | `difficulty` not typed against `DIFFICULTY_OPTIONS`                | Code          | 2      | 2    | 1      | **20**    | 🆕 Phase C   |
 | 9   | TD-07 | Array index used as `key` in FeedScreen                            | Code          | 2      | 2    | 1      | **20**    | ✅ Resolved  |
 | 10  | TD-08 | `useFocusEffect` missing dependency in two screens                 | Code          | 2      | 2    | 1      | **20**    | ✅ Resolved  |
 | 11  | TD-09 | ProfilContext adds a second `onAuthStateChange` subscription       | Architecture  | 2      | 2    | 2      | **16**    | ✅ Resolved  |
 | 12  | TD-10 | Developer name hardcoded in ProfileScreen mock                     | Code          | 1      | 2    | 1      | **15**    | ✅ Resolved  |
-| 13  | TD-11 | WishlistScreen exists but is not wired into navigation             | Documentation | 1      | 2    | 1      | **15**    | ✅ Resolved  |
+| 13  | TD-11 | WishlistScreen exists but is not wired into navigation             | Documentation | 1      | 2    | 1      | **15**    | 🗑️ Deleted (see banner) |
 | 14  | TD-17 | `CollectionDetailScreen` is a god component (547 lines, 10 states) | Code         | 3      | 2    | 3      | **15**    | 🆕 Phase D   |
 | 15  | TD-19 | FriendsScreen uses `friend.name` as list key                       | Code          | 1      | 2    | 1      | **15**    | 🆕 Phase C   |
 | 16  | TD-12 | No data/repository layer — Supabase calls inline in screens        | Architecture  | 3      | 3    | 4      | **12**    | ⏳ Phase D   |

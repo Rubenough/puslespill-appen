@@ -3,6 +3,8 @@
 ## Project Overview
 A React Native / Expo mobile app for managing puzzle and board game collections, loans, and a social feed. Backend: Supabase (PostgreSQL + Auth).
 
+**Planning docs:** roadmap to 1.0 in `docs/PROJECT-PLAN.md`; historical debt register + review log in `tech-debt.md`.
+
 ## Tech Stack
 - **React Native 0.83.2** + **Expo 55**
 - **TypeScript** (strict mode)
@@ -12,6 +14,7 @@ A React Native / Expo mobile app for managing puzzle and board game collections,
 - **expo-secure-store** — encrypted session storage
 - **expo-splash-screen** — prevents white flash during auth check
 - **expo-blur** — blur overlay for fullscreen image modal
+- **@expo/vector-icons** — Ionicons (install via `npx expo install @expo/vector-icons`, keep SDK-pinned)
 
 ## Commands
 ```bash
@@ -38,7 +41,7 @@ src/
 │   └── ProgressSheet.tsx       # Combined update flow: image picker + progress (5 steps) + note
 ├── screens/
 │   ├── AuthScreen.tsx              # Google OAuth login
-│   ├── FeedScreen.tsx              # Active sessions (real Supabase) + activity feed (mock)
+│   ├── FeedScreen.tsx              # Active sessions + activity feed (both real Supabase)
 │   ├── CollectionsScreen.tsx       # Collection types + UTLÅNT NÅ with return action (real Supabase)
 │   ├── CollectionDetailScreen.tsx  # Items in a collection, loan/return actions (real Supabase)
 │   ├── AddItemScreen.tsx           # Add puzzle/board game form (real Supabase insert)
@@ -58,7 +61,9 @@ src/
 │   └── supabase.ts             # Supabase client with ExpoSecureStoreAdapter
 └── utils/
     ├── initials.ts             # Avatar initial generation + deterministic colors
-    └── collections.ts          # ItemType, ITEM_ICONS, ITEM_LABELS
+    ├── collections.ts          # ItemType, ITEM_ICONS, ITEM_LABELS, Difficulty
+    ├── date.ts                 # Shared date helpers (getDayNumber, relative labels)
+    └── sessionImages.ts        # Shared storage helpers (upload/remove/path-parse for session-images bucket)
 App.tsx                         # Entry point — wraps AuthProvider, routes on session
 ```
 
@@ -94,6 +99,14 @@ Consult this file when adding new UI — all new components should follow the sa
 ### Session storage
 - `ExpoSecureStoreAdapter` in `supabase.ts` — uses `expo-secure-store` (Keychain on iOS, Keystore on Android)
 - Session tokens larger than 2048 bytes are automatically chunked across multiple SecureStore keys
+
+### Image storage (`session-images` bucket)
+- Use `utils/sessionImages.ts` — never call `supabase.storage` inline. It exposes `uploadSessionImage(path, uri)` (reads the file, uploads, returns public URL, throws on error), `removeSessionImages(paths)` (best-effort cleanup), and `storagePathFromUrl(url)`.
+- **Upload-then-insert ordering:** upload the image first, then insert/update the DB row. Track the uploaded path outside the `try`; if a later step fails, remove the orphaned file. Once a DB row references the file, set the tracked path to `null` so it is not deleted on a subsequent failure.
+- All async handlers that flip a loading flag (`saving`/`updating`/`deleting`) must use `try/catch/finally` — reset the flag in `finally`, alert in `catch`. Never leave a flag set on a thrown exception.
+
+### Data-fetch error handling
+- Every screen that fetches data surfaces errors: capture the `error` field (or `try/catch` around helpers that throw) and render an inline "Kunne ikke laste …" message with a "Prøv igjen" retry button instead of a misleading empty state. See `CollectionsScreen`, `FeedScreen` (`SectionError`), `ProfileScreen`, `NewSessionScreen`.
 
 ### Contexts
 - `useAuth()` — returns `{ session, user, isLoggedIn, loading }`
@@ -143,12 +156,12 @@ Loans are **private by default** (`is_public = false`). Borrower identity must n
 ### Data status per screen
 | Screen | Data source |
 |--------|-------------|
-| FeedScreen | Hybrid — active sessions real (`sessions` + `session_images`), feed mock (`MOCK_FEED`) |
+| FeedScreen | Real — active sessions (`sessions` + `session_images`) + feed (`sessions`/`items`/`loans` last 14 days, profiles joined), per-section error+retry |
 | CollectionsScreen | Real — `items` + `loans`, UTLÅNT NÅ with return action |
 | CollectionDetailScreen | Real — `items` + `loans`, pull-to-refresh + focus-refresh, loan/return actions |
 | AddItemScreen | Real — inserts to `items` |
-| ProfileScreen | Hybrid — profile from Supabase, stats are mock |
-| FriendsScreen | Mock — `MOCK_FRIENDS` |
+| ProfileScreen | Real — profile from Supabase, loan history from `loans` (error+retry) |
+| FriendsScreen | Mock — `MOCK_FRIENDS` (only remaining mock screen) |
 | NewSessionScreen | Real — inserts to `sessions` + `session_participants`, uploads to `session-images` bucket |
 | SessionDetailScreen | Real — reads `sessions` (incl. `image_url` cover) + `session_images` + `items` metadata, progress icon in metadata card, "Oppdater" flow (image + progress + note via ProgressSheet), ··· menu (edit/delete), blur fullscreen modal |
 | EditSessionScreen | Real — updates `sessions.guest_names` + `sessions.notes` |

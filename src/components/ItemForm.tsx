@@ -127,7 +127,7 @@ export default function ItemForm({
                 placeholder="f.eks. 1000"
                 placeholderTextColor="#A8A29E"
                 value={pieceCount}
-                onChangeText={setPieceCount}
+                onChangeText={(text) => setPieceCount(text.replace(/[^0-9]/g, ""))}
                 keyboardType="number-pad"
                 accessibilityLabel="Antall brikker (valgfritt)"
               />
@@ -168,16 +168,17 @@ export default function ItemForm({
         {type === "brettspill" && (
           <>
             <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2">
-              ANTALL SPILLERE (VALGFRITT)
+              MAKS ANTALL SPILLERE (VALGFRITT)
             </Text>
             <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-6">
               <TextInput
                 className="text-content dark:text-content-dark text-base"
-                placeholder="f.eks. 2–5"
+                placeholder="f.eks. 5"
                 placeholderTextColor="#A8A29E"
                 value={playerCount}
-                onChangeText={setPlayerCount}
-                accessibilityLabel="Antall spillere (valgfritt)"
+                onChangeText={(text) => setPlayerCount(text.replace(/[^0-9]/g, ""))}
+                keyboardType="number-pad"
+                accessibilityLabel="Maks antall spillere (valgfritt)"
               />
             </View>
           </>
