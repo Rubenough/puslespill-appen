@@ -101,10 +101,11 @@ export default function NewSessionScreen() {
     // Lagringssti holdes utenfor try slik at vi kan rydde opp foreldreløst bilde ved feil.
     let uploadedPath: string | null = null;
     try {
-      let imageUrl: string | null = null;
+      // Lagrer LAGRINGSSTIEN i image_url; bildet vises via signert URL ved lesing.
+      let imagePath: string | null = null;
       if (imageUri) {
         uploadedPath = `${user!.id}/${Date.now()}.jpg`;
-        imageUrl = await uploadSessionImage(uploadedPath, imageUri);
+        imagePath = await uploadSessionImage(uploadedPath, imageUri);
       }
 
       const { data: session, error: sessionError } = await supabase
@@ -114,7 +115,7 @@ export default function NewSessionScreen() {
           created_by: user!.id,
           notes: notes.trim() || null,
           guest_names: guestNames,
-          image_url: imageUrl,
+          image_url: imagePath,
           completed_at: completed ? new Date().toISOString() : null,
         })
         .select("id")

@@ -31,6 +31,7 @@ import {
   uploadSessionImage,
   removeSessionImages,
   storagePathFromUrl,
+  getSignedUrls,
 } from "../utils/sessionImages";
 import { getDayNumber, formatShortDate } from "../utils/date";
 
@@ -100,8 +101,29 @@ export default function SessionDetailScreen() {
         .order("captured_at", { ascending: false }),
     ]);
 
-    if (sessionRes.data) setSession(sessionRes.data as unknown as SessionDetail);
-    if (imagesRes.data) setImages(imagesRes.data as SessionImage[]);
+    const sessionData = sessionRes.data as unknown as SessionDetail | null;
+    const imageRows = (imagesRes.data as SessionImage[] | null) ?? [];
+
+    // Bytt lagringsstier mot kortlivde signerte URL-er for visning (cover + fremgangsbilder).
+    const signed = await getSignedUrls([
+      sessionData?.image_url ?? null,
+      ...imageRows.map((img) => img.image_url),
+    ]);
+
+    if (sessionData) {
+      setSession({
+        ...sessionData,
+        image_url: sessionData.image_url
+          ? (signed.get(sessionData.image_url) ?? null)
+          : null,
+      });
+    }
+    setImages(
+      imageRows.map((img) => ({
+        ...img,
+        image_url: signed.get(img.image_url) ?? img.image_url,
+      })),
+    );
     setLoading(false);
   }, [sessionId]);
 
@@ -126,11 +148,12 @@ export default function SessionDetailScreen() {
       let imageId: string | null = null;
       if (imageUri) {
         uploadedPath = `${user!.id}/${sessionId}/${Date.now()}.jpg`;
-        const publicUrl = await uploadSessionImage(uploadedPath, imageUri);
+        // Lagrer LAGRINGSSTIEN; bildet vises via signert URL ved neste henting.
+        const imagePath = await uploadSessionImage(uploadedPath, imageUri);
 
         const { data: insertData, error: insertError } = await supabase
           .from("session_images")
-          .insert({ session_id: sessionId, image_url: publicUrl, note })
+          .insert({ session_id: sessionId, image_url: imagePath, note })
           .select("id")
           .single();
 

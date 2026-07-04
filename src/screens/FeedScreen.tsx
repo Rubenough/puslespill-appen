@@ -16,6 +16,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { type ItemType } from "../utils/collections";
 import { getDayNumber, getRelativeDayLabel } from "../utils/date";
+import { getSignedUrls } from "../utils/sessionImages";
 
 // ─── Typer ───────────────────────────────────────────────────────────────────
 
@@ -238,7 +239,16 @@ export default function FeedScreen() {
 
     setSessionsError(!!error);
     const rows = (data as unknown as ActiveSession[]) ?? [];
-    setSessions(await attachSessionImages(rows));
+    const withImages = await attachSessionImages(rows);
+
+    // Bytt lagringsstier mot signerte URL-er for visning i øktkortene.
+    const signed = await getSignedUrls(withImages.map((s) => s.image_url));
+    setSessions(
+      withImages.map((s) => ({
+        ...s,
+        image_url: s.image_url ? (signed.get(s.image_url) ?? null) : null,
+      })),
+    );
     setLoadingSessions(false);
   }, [user]);
 

@@ -125,9 +125,16 @@ Consult this file when adding new UI — all new components should follow the sa
 
 ### Image storage (`session-images` bucket)
 
-- Use `utils/sessionImages.ts` — never call `supabase.storage` inline. It exposes `uploadSessionImage(path, uri)` (reads the file, uploads, returns public URL, throws on error), `removeSessionImages(paths)` (best-effort cleanup), and `storagePathFromUrl(url)`.
-- **Upload-then-insert ordering:** upload the image first, then insert/update the DB row. Track the uploaded path outside the `try`; if a later step fails, remove the orphaned file. Once a DB row references the file, set the tracked path to `null` so it is not deleted on a subsequent failure.
+- **Private bucket + signed URLs (GDPR).** Session photos can contain identifiable people (personal data), so the bucket is **private**; images are served via short-lived signed URLs. This keeps erasure (GDPR Art. 17) enforceable and prevents leaked/enumerated links.
+- Use `utils/sessionImages.ts` — never call `supabase.storage` inline:
+  - `uploadSessionImage(path, uri)` uploads and returns the **storage path** (this is what's stored in `sessions.image_url` / `session_images.image_url` — a path, **not** a URL). Throws on error.
+  - `getSignedUrl(value)` / `getSignedUrls(values)` — resolve a path (or a legacy full URL) to a short-lived signed URL for display. **Sign at fetch time** and put the signed URL into component state (see `FeedScreen.fetchSessions`, `SessionDetailScreen.fetchData`). Batch with `getSignedUrls` for lists.
+  - `toStoragePath(value)` normalises a path **or** a legacy public/signed URL back to a bare path (strips the `?token=…`). Used by delete cleanup. `storagePathFromUrl` is an alias.
+  - `removeSessionImages(values)` — best-effort delete; accepts paths or URLs.
+- **Legacy rows** that still hold full public URLs keep working — `toStoragePath` extracts the path, so no DB migration is required.
+- **Upload-then-insert ordering:** upload first, then insert/update the DB row. Track the uploaded path outside the `try`; if a later step fails, remove the orphaned file. Once a DB row references the file, set the tracked path to `null` so it is not deleted on a subsequent failure.
 - All async handlers that flip a loading flag (`saving`/`updating`/`deleting`) must use `try/catch/finally` — reset the flag in `finally`, alert in `catch`. Never leave a flag set on a thrown exception.
+- **Dashboard requirement:** the bucket must be **Private** with a storage `SELECT` policy for authenticated users (needed for `createSignedUrl`). Interim policy = any authenticated user; tightened to friend-scoped in the Phase 2 RLS audit (`docs/PROJECT-PLAN.md`).
 
 ### Data-fetch error handling
 
