@@ -7,7 +7,13 @@ module.exports = [
   ...expoConfig,
   eslintConfigPrettier,
   {
-    ignores: ["dist/*", "node_modules/*", ".expo/*", "babel.config.js"],
+    ignores: [
+      "dist/*",
+      "node_modules/*",
+      ".expo/*",
+      "babel.config.js",
+      "src/lib/database.types.ts",
+    ],
   },
   {
     rules: {
