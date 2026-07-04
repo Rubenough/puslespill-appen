@@ -25,16 +25,17 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 Goal: never regress the fixes from pass 2; make the codebase safe to change.
 
 ### 1.1 Tooling & CI
-- [ ] Add ESLint: `npx expo lint` (creates `eslint.config.js` with `eslint-config-expo`). Fix warnings.
-- [ ] Add Prettier + `eslint-config-prettier`; add `format` + `lint` npm scripts.
-- [ ] Add scripts to `package.json`: `"typecheck": "tsc --noEmit"`, `"lint": "expo lint"`, `"test": "jest"`.
-- [ ] GitHub Actions workflow (`.github/workflows/ci.yml`): on PR run `typecheck`, `lint`, `test`. Cache `~/.npm`.
+- [x] Add scripts to `package.json`: `"typecheck": "tsc --noEmit"`, `"test": "jest"`, `"test:ci"`.
+- [x] GitHub Actions workflow (`.github/workflows/ci.yml`): on push/PR to `main` run `typecheck` + `test:ci`, npm cache.
+- [ ] Add ESLint: `npx expo lint` (creates `eslint.config.js` with `eslint-config-expo`). Fix warnings, add `lint` step to CI.
+- [ ] Add Prettier + `eslint-config-prettier`; add `format` npm script.
 
 ### 1.2 Testing (resolves TD-05)
-- [ ] Add `jest-expo` preset + `@testing-library/react-native` + `@testing-library/jest-native`.
-- [ ] Unit tests for pure utils first (highest ROI): `utils/initials.ts`, `utils/date.ts`, `utils/collections.ts`, `PuzzleProgressIcon.progressToFilled`.
+- [x] Add `jest-expo` preset + `jest` + `@testing-library/react-native`.
+- [x] Unit tests for pure utils (highest ROI): `utils/date.ts`, `utils/initials.ts`, `PuzzleProgressIcon.progressToFilled`.
+- [ ] Add tests for `utils/collections.ts`.
 - [ ] Test the OAuth hash-parsing logic in `AuthScreen` in isolation (extract the parse into a pure function first).
-- [ ] Component tests for `ItemForm` (validation, numeric sanitisation) and `FeedCard` (action-text branches).
+- [ ] Component tests for `ItemForm` (validation, numeric sanitisation) and `FeedCard` (action-text branches) — using `@testing-library/react-native`.
 - [ ] Later: E2E smoke test with **Maestro** (login → add item → start session → update progress).
 
 ### 1.3 Typed Supabase (kills the `as any` casts)
