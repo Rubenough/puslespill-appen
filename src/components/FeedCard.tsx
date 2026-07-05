@@ -20,8 +20,10 @@ type StartedCard = BaseCard & { type: "started"; withUsers?: string[] };
 type CompletedCard = BaseCard & { type: "completed" };
 // loanedTo er kun synlig for eieren — utelates når vi viser venners lån (Fase 5)
 type LoanedCard = BaseCard & { type: "loaned"; loanedTo?: string };
+// borrowed er brukerens egen låneaktivitet — fromName er eieren de lånte fra
+type BorrowedCard = BaseCard & { type: "borrowed"; fromName?: string };
 
-type Props = AddedCard | StartedCard | CompletedCard | LoanedCard;
+type Props = AddedCard | StartedCard | CompletedCard | LoanedCard | BorrowedCard;
 
 function getActionText(props: Props, t: TFunction): string {
   switch (props.type) {
@@ -40,12 +42,18 @@ function getActionText(props: Props, t: TFunction): string {
       return props.loanedTo
         ? t("feed.loanedTo", { name: props.loanedTo, when: props.timeLabel })
         : t("feed.loaned", { when: props.timeLabel });
+    case "borrowed":
+      return t("feed.borrowedFrom", {
+        name: props.fromName ?? t("common.unknownUser"),
+        when: props.timeLabel,
+      });
   }
 }
 
 function getBadgeLabel(type: Props["type"], t: TFunction): string | null {
   if (type === "completed") return t("feed.badgeCompleted");
   if (type === "loaned") return t("feed.badgeLoaned");
+  if (type === "borrowed") return t("feed.badgeBorrowed");
   return null;
 }
 
