@@ -9,8 +9,9 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
-  useColorScheme,
 } from "react-native";
+// NativeWind-varianten følger app-styrt tema (colorScheme.set), ikke bare OS.
+import { useColorScheme } from "nativewind";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -69,7 +70,7 @@ type SessionDetail = {
 
 export default function SessionDetailScreen() {
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
+  const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
   const navigation = useNavigation<SessionDetailNavProp>();
   const route = useRoute<SessionDetailRouteProp>();

@@ -16,6 +16,7 @@ import UserAvatar from "../components/UserAvatar";
 import { type ItemType, ITEM_ICONS } from "../utils/collections";
 import { getRelativeDayOrWeekLabel } from "../utils/date";
 import { setLanguage, SUPPORTED_LANGUAGES, type AppLanguage } from "../lib/i18n";
+import { useTheme, THEME_OPTIONS } from "../context/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 
 type LoanHistoryItem = {
@@ -31,6 +32,7 @@ export default function ProfileScreen() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { profil } = useProfil();
+  const { preference, setPreference } = useTheme();
 
   const [loans, setLoans] = useState<LoanHistoryItem[]>([]);
   const [loadingLoans, setLoadingLoans] = useState(true);
@@ -182,6 +184,41 @@ export default function ProfileScreen() {
                 }`}
               >
                 {t(`language.${lang}`)}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Utseende (tema) */}
+      <Text
+        accessibilityRole="header"
+        className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pt-8 pb-3"
+      >
+        {t("theme.title")}
+      </Text>
+      <View className="mx-4 flex-row gap-3">
+        {THEME_OPTIONS.map((option) => {
+          const isSelected = preference === option;
+          return (
+            <TouchableOpacity
+              key={option}
+              onPress={() => setPreference(option)}
+              accessibilityRole="button"
+              accessibilityLabel={t(`theme.${option}`)}
+              accessibilityState={{ selected: isSelected }}
+              className={`flex-1 py-3 rounded-2xl border items-center ${
+                isSelected
+                  ? "bg-accent dark:bg-accent-dark border-accent dark:border-accent-dark"
+                  : "bg-surface dark:bg-surface-dark border-border dark:border-border-dark"
+              }`}
+            >
+              <Text
+                className={`text-sm font-medium ${
+                  isSelected ? "text-white" : "text-content dark:text-content-dark"
+                }`}
+              >
+                {t(`theme.${option}`)}
               </Text>
             </TouchableOpacity>
           );

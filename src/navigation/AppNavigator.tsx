@@ -1,13 +1,7 @@
 import React, { useState, ComponentProps } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  Pressable,
-  Alert,
-  useColorScheme,
-} from "react-native";
+import { View, Text, TouchableOpacity, Modal, Pressable, Alert } from "react-native";
+// NativeWind-varianten følger app-styrt tema (colorScheme.set), ikke bare OS.
+import { useColorScheme } from "nativewind";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -59,8 +53,8 @@ const Tab = createBottomTabNavigator();
 type RootNavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function AppNavigator() {
-  const scheme = useColorScheme();
-  const dark = scheme === "dark";
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === "dark";
   const [modalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation<RootNavProp>();
 

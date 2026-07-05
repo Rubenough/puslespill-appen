@@ -64,6 +64,12 @@
     "no": "Norsk",
     "en": "English"
   },
+  "theme": {
+    "title": "APPEARANCE",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
   "friends": {
     "title": "Friends",
     "myInvite": "MY INVITE",

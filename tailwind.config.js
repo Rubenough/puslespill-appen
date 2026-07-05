@@ -1,7 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./App.{js,jsx,ts,tsx}", "./src/**/*.{js,jsx,ts,tsx}"],
-  darkMode: "media",
+  // "class" lar NativeWind styre dark:-varianter via colorScheme.set() (manuell temabytte).
+  // Se src/context/ThemeContext.tsx.
+  darkMode: "class",
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
