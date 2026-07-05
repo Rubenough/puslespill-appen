@@ -90,9 +90,10 @@ Stand up i18n before building Phase 2 UI so new strings are keys, not hardcoded 
 
 - [x] `i18next` + `react-i18next` + `expo-localization`; `src/lib/i18n.ts`; `src/locales/{no,en}.json`; imported in `App.tsx` with persisted override.
 - [x] Language toggle in `ProfileScreen`; `ProfileScreen` migrated as the reference.
-- [ ] Make `utils/date.ts` locale-aware (relative words + `toLocaleDateString`) — its tests assert Norwegian, so update together.
-- [ ] Retrofit remaining screens one-per-PR (mechanical).
-- [ ] Author all Phase 2 UI with `t()` keys.
+- [x] `utils/date.ts` locale-aware (relative words + `toLocaleDateString`), both languages tested.
+- [x] Shared `collections`/`loans` namespaces + `collectionLabels.ts`; `CollectionsScreen` + `FriendCollectionScreen` migrated.
+- [x] **App declared Phase 2-ready** — infra + shared namespaces done. Remaining screen retrofits are mechanical and non-blocking: full checklist + pattern in [`docs/i18n-remaining.md`](./i18n-remaining.md) (hand off to another agent).
+- [ ] Author all Phase 2 UI with `t()` keys (bilingual from the start).
 
 ### 2.1 Borrow requests
 
