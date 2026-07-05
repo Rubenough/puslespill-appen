@@ -1,7 +1,7 @@
 # Dark / light mode toggle — design + plan
 
-**Branch:** `feat/dark-mode-toggle` (worktree off `main`, isolated from the in-flight
-`feat/i18n-collections` work).
+**Status:** ✅ Shipped — merged to `main` in #16. Retained as the design record; the
+"Out of scope / follow-ups" at the bottom are the remaining open items.
 
 ## Goal
 
