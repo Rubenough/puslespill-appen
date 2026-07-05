@@ -5,6 +5,14 @@
     "unknownUser": "Unknown user",
     "unknownItem": "Unknown item"
   },
+  "date": {
+    "today": "today",
+    "yesterday": "yesterday",
+    "daysAgo_one": "{{count}} day ago",
+    "daysAgo_other": "{{count}} days ago",
+    "weeksAgo_one": "1 week ago",
+    "weeksAgo_other": "{{count}} weeks ago"
+  },
   "profile": {
     "signOut": "Sign out",
     "myLoans": "MY LOANS",

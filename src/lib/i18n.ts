@@ -11,8 +11,12 @@ export const SUPPORTED_LANGUAGES: AppLanguage[] = ["no", "en"];
 
 // Norsk er standard; alt annet enn engelsk faller tilbake til norsk.
 function deviceLanguage(): AppLanguage {
-  const code = Localization.getLocales()[0]?.languageCode ?? "no";
-  return code.startsWith("en") ? "en" : "no";
+  try {
+    const code = Localization.getLocales()[0]?.languageCode ?? "no";
+    return code.startsWith("en") ? "en" : "no";
+  } catch {
+    return "no";
+  }
 }
 
 i18n.use(initReactI18next).init({
