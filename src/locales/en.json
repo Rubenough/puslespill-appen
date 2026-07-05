@@ -2,8 +2,42 @@
   "common": {
     "retry": "Try again",
     "cancel": "Cancel",
+    "back": "Back",
+    "somethingWrong": "Something went wrong",
     "unknownUser": "Unknown user",
     "unknownItem": "Unknown item"
+  },
+  "loans": {
+    "registerReturn": "Register return",
+    "returnConfirm": "Confirm that {{name}} has returned \"{{item}}\"",
+    "returnAction": "Return",
+    "loanedToA11y": "{{item}}, on loan to {{name}}, {{when}}",
+    "returnHint": "Tap to register a return",
+    "borrowerWhen": "{{name}} · {{when}}"
+  },
+  "collections": {
+    "title": "My collections",
+    "sectionCollections": "COLLECTIONS",
+    "sectionLoanedNow": "ON LOAN NOW",
+    "itemsCount_one": "{{count}} item",
+    "itemsCount_other": "{{count}} items",
+    "loanedCount": "{{count}} on loan",
+    "loaned": "On loan",
+    "available": "Available",
+    "loadError": "Could not load collections.",
+    "detailLoadError": "Could not load the collection.",
+    "nothingLoaned": "Nothing on loan right now",
+    "emptyType": "No {{type}} in the collection yet.\nUse + to add one.",
+    "friendEmpty": "{{name}} has no items in their collection yet.",
+    "collectionCount": "COLLECTION · {{count}} ITEMS",
+    "openHint": "Tap to see the collection",
+    "type": { "puslespill": "Puzzle", "brettspill": "Board game" },
+    "typePlural": { "puslespill": "puzzles", "brettspill": "board games" },
+    "difficulty": { "Lett": "Easy", "Middels": "Medium", "Vanskelig": "Hard" },
+    "pieces_one": "{{count}} piece",
+    "pieces_other": "{{count}} pieces",
+    "players_one": "{{count}} player",
+    "players_other": "{{count}} players"
   },
   "date": {
     "today": "today",

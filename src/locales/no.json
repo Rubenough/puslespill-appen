@@ -2,8 +2,42 @@
   "common": {
     "retry": "Prøv igjen",
     "cancel": "Avbryt",
+    "back": "Tilbake",
+    "somethingWrong": "Noe gikk galt",
     "unknownUser": "Ukjent bruker",
     "unknownItem": "Ukjent gjenstand"
+  },
+  "loans": {
+    "registerReturn": "Registrer retur",
+    "returnConfirm": "Bekreft at {{name}} har levert tilbake \"{{item}}\"",
+    "returnAction": "Lever tilbake",
+    "loanedToA11y": "{{item}}, utlånt til {{name}}, {{when}}",
+    "returnHint": "Trykk for å registrere retur",
+    "borrowerWhen": "{{name}} · {{when}}"
+  },
+  "collections": {
+    "title": "Mine samlinger",
+    "sectionCollections": "SAMLINGER",
+    "sectionLoanedNow": "UTLÅNT NÅ",
+    "itemsCount_one": "{{count}} stk",
+    "itemsCount_other": "{{count}} stk",
+    "loanedCount": "{{count}} utlånt",
+    "loaned": "Utlånt",
+    "available": "Tilgjengelig",
+    "loadError": "Kunne ikke laste samlinger.",
+    "detailLoadError": "Kunne ikke laste samlingen.",
+    "nothingLoaned": "Ingen ting utlånt for øyeblikket",
+    "emptyType": "Ingen {{type}} i samlingen ennå.\nBruk + for å legge til.",
+    "friendEmpty": "{{name}} har ingen gjenstander i samlingen ennå.",
+    "collectionCount": "SAMLING · {{count}} STK",
+    "openHint": "Trykk for å se samlingen",
+    "type": { "puslespill": "Puslespill", "brettspill": "Brettspill" },
+    "typePlural": { "puslespill": "puslespill", "brettspill": "brettspill" },
+    "difficulty": { "Lett": "Lett", "Middels": "Middels", "Vanskelig": "Vanskelig" },
+    "pieces_one": "{{count}} brikke",
+    "pieces_other": "{{count}} brikker",
+    "players_one": "{{count}} spiller",
+    "players_other": "{{count}} spillere"
   },
   "date": {
     "today": "i dag",

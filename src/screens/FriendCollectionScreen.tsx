@@ -15,8 +15,15 @@ import {
   useFocusEffect,
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
-import { ITEM_ICONS, ITEM_LABELS, type ItemType } from "../utils/collections";
+import { ITEM_ICONS, type ItemType } from "../utils/collections";
+import {
+  itemTypeLabel,
+  piecesLabel,
+  playersLabel,
+  difficultyLabel,
+} from "../utils/collectionLabels";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import UserAvatar from "../components/UserAvatar";
 
@@ -36,16 +43,18 @@ type FriendItem = {
 
 function subtitleFor(item: FriendItem): string | null {
   if (item.type === "puslespill" && item.piece_count) {
-    return `${item.piece_count} brikker${item.difficulty ? ` · ${item.difficulty}` : ""}`;
+    const pieces = piecesLabel(item.piece_count);
+    return item.difficulty ? `${pieces} · ${difficultyLabel(item.difficulty)}` : pieces;
   }
   if (item.type === "brettspill" && item.player_count) {
-    return `${item.player_count} spillere`;
+    return playersLabel(item.player_count);
   }
   return item.brand ?? null;
 }
 
 export default function FriendCollectionScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const navigation = useNavigation<NavProp>();
   const route = useRoute<FriendCollectionRouteProp>();
   const { friendId, friendName, avatarUrl } = route.params;
@@ -82,7 +91,7 @@ export default function FriendCollectionScreen() {
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           accessibilityRole="button"
-          accessibilityLabel="Tilbake"
+          accessibilityLabel={t("common.back")}
           className="mr-3"
         >
           <Ionicons name="chevron-back" size={24} color="#78716C" accessible={false} />
@@ -103,15 +112,15 @@ export default function FriendCollectionScreen() {
       ) : fetchError ? (
         <View className="flex-1 items-center justify-center px-8">
           <Text className="text-content dark:text-content-dark text-center mb-4">
-            Kunne ikke laste samlingen.
+            {t("collections.detailLoadError")}
           </Text>
           <TouchableOpacity
             onPress={() => fetchItems()}
             accessibilityRole="button"
-            accessibilityLabel="Prøv igjen"
+            accessibilityLabel={t("common.retry")}
             className="bg-accent dark:bg-accent-dark rounded-xl px-6 py-3"
           >
-            <Text className="text-white font-semibold">Prøv igjen</Text>
+            <Text className="text-white font-semibold">{t("common.retry")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -120,7 +129,7 @@ export default function FriendCollectionScreen() {
             accessibilityRole="header"
             className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pt-5 pb-3"
           >
-            SAMLING · {items.length} STK
+            {t("collections.collectionCount", { count: items.length })}
           </Text>
 
           {items.length === 0 ? (
@@ -132,7 +141,7 @@ export default function FriendCollectionScreen() {
                 accessible={false}
               />
               <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mt-3 text-center">
-                {friendName} har ingen gjenstander i samlingen ennå.
+                {t("collections.friendEmpty", { name: friendName })}
               </Text>
             </View>
           ) : (
@@ -144,7 +153,11 @@ export default function FriendCollectionScreen() {
                   <View
                     key={item.id}
                     accessible
-                    accessibilityLabel={[item.title, subtitle, isLoaned ? "Utlånt" : null]
+                    accessibilityLabel={[
+                      item.title,
+                      subtitle,
+                      isLoaned ? t("collections.loaned") : null,
+                    ]
                       .filter(Boolean)
                       .join(", ")}
                     className={`flex-row items-center px-4 py-4 ${
@@ -166,13 +179,13 @@ export default function FriendCollectionScreen() {
                         {item.title}
                       </Text>
                       <Text className="text-content-secondary dark:text-content-secondary-dark text-xs">
-                        {[ITEM_LABELS[item.type], subtitle].filter(Boolean).join(" · ")}
+                        {[itemTypeLabel(item.type), subtitle].filter(Boolean).join(" · ")}
                       </Text>
                     </View>
                     {isLoaned && (
                       <View className="bg-accent/10 dark:bg-accent-dark/10 px-2 py-1 rounded-full">
                         <Text className="text-accent dark:text-accent-dark text-xs font-semibold">
-                          Utlånt
+                          {t("collections.loaned")}
                         </Text>
                       </View>
                     )}

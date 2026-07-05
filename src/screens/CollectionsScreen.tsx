@@ -12,7 +12,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { type ItemType, ITEM_ICONS, ITEM_LABELS } from "../utils/collections";
+import { useTranslation } from "react-i18next";
+import { type ItemType, ITEM_ICONS } from "../utils/collections";
+import { itemTypeLabel } from "../utils/collectionLabels";
 import { CollectionsStackParamList } from "../navigation/CollectionsStack";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
@@ -33,6 +35,7 @@ type ActiveLoan = {
 
 export default function CollectionsScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const navigation = useNavigation<NavProp>();
   const { user } = useAuth();
 
@@ -102,12 +105,15 @@ export default function CollectionsScreen() {
 
   function handleReturn(loan: ActiveLoan) {
     Alert.alert(
-      "Registrer retur",
-      `Bekreft at ${loan.borrower_name} har levert tilbake "${loan.items?.title ?? "gjenstanden"}"`,
+      t("loans.registerReturn"),
+      t("loans.returnConfirm", {
+        name: loan.borrower_name,
+        item: loan.items?.title ?? t("common.unknownItem"),
+      }),
       [
-        { text: "Avbryt", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Lever tilbake",
+          text: t("loans.returnAction"),
           onPress: async () => {
             setReturningId(loan.id);
             const { error } = await supabase
@@ -116,7 +122,7 @@ export default function CollectionsScreen() {
               .eq("id", loan.id);
             setReturningId(null);
             if (error) {
-              Alert.alert("Noe gikk galt", error.message);
+              Alert.alert(t("common.somethingWrong"), error.message);
               return;
             }
             fetchData();
@@ -138,21 +144,21 @@ export default function CollectionsScreen() {
         className="text-content dark:text-content-dark text-2xl font-medium px-4 pb-6"
         style={{ paddingTop: insets.top + 16 }}
       >
-        Mine samlinger
+        {t("collections.title")}
       </Text>
 
       {fetchError && (
         <View className="mx-4 mb-6 bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-2xl p-4 items-center">
           <Text className="text-content dark:text-content-dark text-sm text-center mb-3">
-            Kunne ikke laste samlinger.
+            {t("collections.loadError")}
           </Text>
           <TouchableOpacity
             onPress={() => fetchData()}
             accessibilityRole="button"
-            accessibilityLabel="Prøv igjen"
+            accessibilityLabel={t("common.retry")}
             className="bg-accent dark:bg-accent-dark rounded-xl px-5 py-2"
           >
-            <Text className="text-white font-semibold text-sm">Prøv igjen</Text>
+            <Text className="text-white font-semibold text-sm">{t("common.retry")}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -161,7 +167,7 @@ export default function CollectionsScreen() {
         accessibilityRole="header"
         className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3"
       >
-        SAMLINGER
+        {t("collections.sectionCollections")}
       </Text>
       <View className="mx-4 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden mb-8">
         {collections.map((col, i) => (
@@ -170,13 +176,13 @@ export default function CollectionsScreen() {
             onPress={() => navigation.navigate("CollectionDetail", { type: col.type })}
             accessibilityRole="button"
             accessibilityLabel={[
-              ITEM_LABELS[col.type],
-              `${col.count} stk`,
-              col.loaned > 0 ? `${col.loaned} utlånt` : null,
+              itemTypeLabel(col.type),
+              t("collections.itemsCount", { count: col.count }),
+              col.loaned > 0 ? t("collections.loanedCount", { count: col.loaned }) : null,
             ]
               .filter(Boolean)
               .join(", ")}
-            accessibilityHint="Trykk for å se samlingen"
+            accessibilityHint={t("collections.openHint")}
             className={`flex-row items-center px-4 py-4 ${
               i < collections.length - 1
                 ? "border-b border-border dark:border-border-dark"
@@ -188,11 +194,13 @@ export default function CollectionsScreen() {
             </View>
             <View className="flex-1">
               <Text className="text-content dark:text-content-dark font-medium">
-                {ITEM_LABELS[col.type]}
+                {itemTypeLabel(col.type)}
               </Text>
               <Text className="text-content-secondary dark:text-content-secondary-dark text-xs">
-                {col.count} stk
-                {col.loaned > 0 ? ` · ${col.loaned} utlånt` : ""}
+                {t("collections.itemsCount", { count: col.count })}
+                {col.loaned > 0
+                  ? ` · ${t("collections.loanedCount", { count: col.loaned })}`
+                  : ""}
               </Text>
             </View>
             <Ionicons
@@ -209,13 +217,13 @@ export default function CollectionsScreen() {
         accessibilityRole="header"
         className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3"
       >
-        UTLÅNT NÅ
+        {t("collections.sectionLoanedNow")}
       </Text>
       <View className="mx-4 mb-8">
         {activeLoans.length === 0 ? (
           <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark p-6 items-center">
             <Text className="text-content-secondary dark:text-content-secondary-dark text-sm">
-              Ingen ting utlånt for øyeblikket
+              {t("collections.nothingLoaned")}
             </Text>
           </View>
         ) : (
@@ -231,8 +239,12 @@ export default function CollectionsScreen() {
                   onPress={() => handleReturn(loan)}
                   disabled={isReturning}
                   accessibilityRole="button"
-                  accessibilityLabel={`${loan.items?.title ?? "Ukjent gjenstand"}, utlånt til ${loan.borrower_name}, ${dateLabel}`}
-                  accessibilityHint="Trykk for å registrere retur"
+                  accessibilityLabel={t("loans.loanedToA11y", {
+                    item: loan.items?.title ?? t("common.unknownItem"),
+                    name: loan.borrower_name,
+                    when: dateLabel,
+                  })}
+                  accessibilityHint={t("loans.returnHint")}
                   accessibilityState={{ disabled: isReturning }}
                   className={`flex-row items-center px-4 py-4 ${
                     i < activeLoans.length - 1
@@ -250,10 +262,13 @@ export default function CollectionsScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className="text-content dark:text-content-dark font-medium">
-                      {loan.items?.title ?? "Ukjent gjenstand"}
+                      {loan.items?.title ?? t("common.unknownItem")}
                     </Text>
                     <Text className="text-content-secondary dark:text-content-secondary-dark text-xs">
-                      {loan.borrower_name} · {dateLabel}
+                      {t("loans.borrowerWhen", {
+                        name: loan.borrower_name,
+                        when: dateLabel,
+                      })}
                     </Text>
                   </View>
                   {isReturning ? (
