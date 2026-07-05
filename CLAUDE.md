@@ -88,7 +88,7 @@ App.tsx                         # Entry point — wraps AuthProvider, routes on 
 ## Naming & Language Conventions
 
 - **Functions, constants, variables, types: English**
-- **UI text (labels, placeholders, headings): Norwegian**
+- **UI text (labels, placeholders, headings): Norwegian** — being migrated to i18n (`t('key')`, `no.json` source of truth, English toggle planned). See [`docs/i18n-plan.md`](./docs/i18n-plan.md). New screens should use keys; existing Norwegian literals stay until their screen is migrated.
 - **Code comments: Norwegian is fine**
 
 ## Design System
