@@ -8,10 +8,12 @@ import {
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useTranslation } from "react-i18next";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import Header from "../components/Header";
 import ActiveSessionCard from "../components/ActiveSessionCard";
 import FeedCard from "../components/FeedCard";
+import i18n from "../lib/i18n";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { type ItemType } from "../utils/collections";
@@ -151,7 +153,7 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
   for (const s of (sessionsRes.data ?? []) as any[]) {
     const profile = profilesById.get(s.created_by);
     const base = {
-      userName: profile?.full_name ?? "Ukjent",
+      userName: profile?.full_name ?? i18n.t("common.unknownUser"),
       avatarUrl: profile?.avatar_url ?? null,
       itemType: s.items?.type as ItemType,
       itemTitle: s.items?.title ?? "",
@@ -182,7 +184,7 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
       id: `added-${item.id}`,
       type: "added",
       timestamp: item.created_at,
-      userName: profile?.full_name ?? "Ukjent",
+      userName: profile?.full_name ?? i18n.t("common.unknownUser"),
       avatarUrl: profile?.avatar_url ?? null,
       itemType: item.type as ItemType,
       itemTitle: item.title,
@@ -196,7 +198,7 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
       id: `loaned-${loan.id}`,
       type: "loaned",
       timestamp: loan.loaned_at,
-      userName: profile?.full_name ?? "Ukjent",
+      userName: profile?.full_name ?? i18n.t("common.unknownUser"),
       avatarUrl: profile?.avatar_url ?? null,
       itemType: loan.items?.type as ItemType,
       itemTitle: loan.items?.title ?? "",
@@ -215,6 +217,7 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
 // ─── Komponent ────────────────────────────────────────────────────────────────
 
 export default function FeedScreen() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -281,7 +284,7 @@ export default function FeedScreen() {
           accessibilityRole="header"
           className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pt-5 pb-3"
         >
-          AKTIVE ØKTER
+          {t("feed.activeSessions")}
         </Text>
         {loadingSessions ? (
           <ActivityIndicator
@@ -292,7 +295,7 @@ export default function FeedScreen() {
           <SectionError onRetry={fetchSessions} />
         ) : sessions.length === 0 ? (
           <Text className="text-content-secondary dark:text-content-secondary-dark text-sm px-4 pb-4">
-            Ingen aktive økter
+            {t("feed.noActiveSessions")}
           </Text>
         ) : (
           <ScrollView
@@ -319,7 +322,7 @@ export default function FeedScreen() {
           accessibilityRole="header"
           className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pt-5 pb-3"
         >
-          FEED
+          {t("feed.feed")}
         </Text>
         {loadingFeed ? (
           <ActivityIndicator color="#1D9E75" style={{ marginVertical: 24 }} />
@@ -327,7 +330,7 @@ export default function FeedScreen() {
           <SectionError onRetry={fetchFeed} />
         ) : feedItems.length === 0 ? (
           <Text className="text-content-secondary dark:text-content-secondary-dark text-sm px-4 pb-4">
-            Ingen aktivitet de siste 14 dagene
+            {t("feed.noActivity")}
           </Text>
         ) : (
           <View className="pt-2 pb-4">
@@ -352,18 +355,19 @@ export default function FeedScreen() {
 }
 
 function SectionError({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslation();
   return (
     <View className="mx-4 mb-4 bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-2xl p-4 items-center">
       <Text className="text-content dark:text-content-dark text-sm text-center mb-3">
-        Kunne ikke laste innhold.
+        {t("feed.loadError")}
       </Text>
       <TouchableOpacity
         onPress={onRetry}
         accessibilityRole="button"
-        accessibilityLabel="Prøv igjen"
+        accessibilityLabel={t("common.retry")}
         className="bg-accent dark:bg-accent-dark rounded-xl px-5 py-2"
       >
-        <Text className="text-white font-semibold text-sm">Prøv igjen</Text>
+        <Text className="text-white font-semibold text-sm">{t("common.retry")}</Text>
       </TouchableOpacity>
     </View>
   );

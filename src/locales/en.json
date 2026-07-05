@@ -116,5 +116,26 @@
     "addedNamed": "You and {{name}} are now friends.",
     "addedUnnamed": "You are now friends.",
     "shareMessage": "Add me as a friend in the app with the code: {{code}}"
+  },
+  "feed": {
+    "activeSessions": "ACTIVE SESSIONS",
+    "feed": "FEED",
+    "noActiveSessions": "No active sessions",
+    "noActivity": "No activity in the last 14 days",
+    "loadError": "Could not load content.",
+    "added": "added to the collection · {{when}}",
+    "startedWith": "started a session with {{users}} · {{when}}",
+    "started": "started a session · {{when}}",
+    "completed": "completed · {{when}}",
+    "loanedTo": "lent to {{name}} · {{when}}",
+    "loaned": "lent out · {{when}}",
+    "badgeCompleted": "Done",
+    "badgeLoaned": "On loan",
+    "cardA11y": "{{user}} {{action}}: {{title}}",
+    "ownSession": "Your session",
+    "imagePlaceholder": "Image",
+    "dayProgress": "Day {{day}} · {{when}}",
+    "sessionCardA11y": "{{owner}}: {{title}}, day {{day}}, {{when}}",
+    "sessionCardHint": "Tap to see session details"
   }
 }

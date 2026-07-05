@@ -1,8 +1,11 @@
 import React from "react";
 import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import UserAvatar from "./UserAvatar";
-import { type ItemType, ITEM_ICONS, ITEM_LABELS } from "../utils/collections";
+import { type ItemType, ITEM_ICONS } from "../utils/collections";
+import { itemTypeLabel } from "../utils/collectionLabels";
 
 type BaseCard = {
   userName: string;
@@ -20,37 +23,46 @@ type LoanedCard = BaseCard & { type: "loaned"; loanedTo?: string };
 
 type Props = AddedCard | StartedCard | CompletedCard | LoanedCard;
 
-function getActionText(props: Props): string {
+function getActionText(props: Props, t: TFunction): string {
   switch (props.type) {
     case "added":
-      return `la til i samlingen · ${props.timeLabel}`;
-    case "started": {
-      const withStr = props.withUsers?.length ? ` med ${props.withUsers.join(", ")}` : "";
-      return `startet en økt${withStr} · ${props.timeLabel}`;
-    }
+      return t("feed.added", { when: props.timeLabel });
+    case "started":
+      return props.withUsers?.length
+        ? t("feed.startedWith", {
+            users: props.withUsers.join(", "),
+            when: props.timeLabel,
+          })
+        : t("feed.started", { when: props.timeLabel });
     case "completed":
-      return `fullførte · ${props.timeLabel}`;
+      return t("feed.completed", { when: props.timeLabel });
     case "loaned":
       return props.loanedTo
-        ? `lånte ut til ${props.loanedTo} · ${props.timeLabel}`
-        : `lånte ut · ${props.timeLabel}`;
+        ? t("feed.loanedTo", { name: props.loanedTo, when: props.timeLabel })
+        : t("feed.loaned", { when: props.timeLabel });
   }
 }
 
-function getBadgeLabel(type: Props["type"]): string | null {
-  if (type === "completed") return "Ferdig";
-  if (type === "loaned") return "Utlånt";
+function getBadgeLabel(type: Props["type"], t: TFunction): string | null {
+  if (type === "completed") return t("feed.badgeCompleted");
+  if (type === "loaned") return t("feed.badgeLoaned");
   return null;
 }
 
 export default function FeedCard(props: Props) {
+  const { t } = useTranslation();
   const { userName, avatarUrl, itemType, itemTitle } = props;
-  const badge = getBadgeLabel(props.type);
+  const actionText = getActionText(props, t);
+  const badge = getBadgeLabel(props.type, t);
 
   return (
     <View
       accessible
-      accessibilityLabel={`${userName} ${getActionText(props)}: ${itemTitle}`}
+      accessibilityLabel={t("feed.cardA11y", {
+        user: userName,
+        action: actionText,
+        title: itemTitle,
+      })}
       className="bg-surface dark:bg-surface-dark rounded-2xl mx-4 mb-3 overflow-hidden border border-border dark:border-border-dark"
     >
       {/* Topprad */}
@@ -65,7 +77,7 @@ export default function FeedCard(props: Props) {
               className="text-content-secondary dark:text-content-secondary-dark text-xs"
               numberOfLines={1}
             >
-              {getActionText(props)}
+              {actionText}
             </Text>
           </View>
         </View>
@@ -91,7 +103,7 @@ export default function FeedCard(props: Props) {
             {itemTitle}
           </Text>
           <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-0.5">
-            {ITEM_LABELS[itemType]}
+            {itemTypeLabel(itemType)}
           </Text>
         </View>
       </View>
