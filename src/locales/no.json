@@ -92,7 +92,8 @@
     "cancel": "Avbryt",
     "wantsToBorrow": "vil låne",
     "youAskedFor": "Du spurte om å låne",
-    "loadError": "Kunne ikke laste forespørsler."
+    "loadError": "Kunne ikke laste forespørsler.",
+    "badgeA11y": "{{count}} nye forespørsler"
   },
   "friends": {
     "title": "Venner",
@@ -129,8 +130,10 @@
     "completed": "fullførte · {{when}}",
     "loanedTo": "lånte ut til {{name}} · {{when}}",
     "loaned": "lånte ut · {{when}}",
+    "borrowedFrom": "lånte fra {{name}} · {{when}}",
     "badgeCompleted": "Ferdig",
     "badgeLoaned": "Utlånt",
+    "badgeBorrowed": "Lånt",
     "cardA11y": "{{user}} {{action}}: {{title}}",
     "ownSession": "Din økt",
     "imagePlaceholder": "Bilde",

@@ -92,7 +92,8 @@
     "cancel": "Cancel",
     "wantsToBorrow": "wants to borrow",
     "youAskedFor": "You asked to borrow",
-    "loadError": "Could not load requests."
+    "loadError": "Could not load requests.",
+    "badgeA11y": "{{count}} new requests"
   },
   "friends": {
     "title": "Friends",
@@ -129,8 +130,10 @@
     "completed": "completed · {{when}}",
     "loanedTo": "lent to {{name}} · {{when}}",
     "loaned": "lent out · {{when}}",
+    "borrowedFrom": "borrowed from {{name}} · {{when}}",
     "badgeCompleted": "Done",
     "badgeLoaned": "On loan",
+    "badgeBorrowed": "Borrowed",
     "cardA11y": "{{user}} {{action}}: {{title}}",
     "ownSession": "Your session",
     "imagePlaceholder": "Image",
