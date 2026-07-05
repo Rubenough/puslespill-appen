@@ -246,5 +246,31 @@
   },
   "editSession": {
     "title": "Rediger økt"
+  },
+  "itemForm": {
+    "close": "Lukk",
+    "missingTitleTitle": "Mangler tittel",
+    "missingTitleBody": "Fyll inn tittel for gjenstanden.",
+    "titleLabel": "TITTEL",
+    "titlePlaceholderPuzzle": "f.eks. Kinkaku-ji",
+    "titlePlaceholderBoardGame": "f.eks. Wingspan",
+    "titleA11y": "Tittel",
+    "brandLabel": "MERKE (VALGFRITT)",
+    "brandPlaceholderPuzzle": "f.eks. Ravensburger",
+    "brandPlaceholderBoardGame": "f.eks. Stonemaier Games",
+    "brandA11y": "Merke (valgfritt)",
+    "pieceCountLabel": "ANTALL BRIKKER (VALGFRITT)",
+    "pieceCountPlaceholder": "f.eks. 1000",
+    "pieceCountA11y": "Antall brikker (valgfritt)",
+    "difficultyHeader": "VANSKELIGHETSGRAD (VALGFRITT)",
+    "playerCountLabel": "MAKS ANTALL SPILLERE (VALGFRITT)",
+    "playerCountPlaceholder": "f.eks. 5",
+    "playerCountA11y": "Maks antall spillere (valgfritt)",
+    "addHeader": "Legg til {{type}}",
+    "editHeader": "Rediger {{type}}",
+    "save": "Lagre",
+    "saveChanges": "Lagre endringer",
+    "saveA11y": "Lagre {{type}}",
+    "saveChangesA11y": "Lagre endringer for {{type}}"
   }
 }
