@@ -272,5 +272,30 @@
     "saveChanges": "Save changes",
     "saveA11y": "Save {{type}}",
     "saveChangesA11y": "Save changes for {{type}}"
+  },
+  "auth": {
+    "title": "Puslespill",
+    "tagline": "For you who puzzle with friends",
+    "signInFailed": "Sign-in failed",
+    "startFailed": "Could not start Google sign-in. Check your network connection.",
+    "noResponse": "No valid response from the browser. Try again.",
+    "invalidResponse": "Invalid sign-in response. Try again.",
+    "sessionFailed": "Could not create a session. Try again.",
+    "unexpectedError": "Unexpected error",
+    "unexpectedErrorBody": "Something went wrong. Try again."
+  },
+  "nav": {
+    "tabFeed": "Feed",
+    "tabCollections": "Collections",
+    "tabFriends": "Friends",
+    "tabProfile": "Profile",
+    "tabNewSession": "New session",
+    "closeMenu": "Close menu",
+    "modalTitle": "What would you like to do?",
+    "addTitle": "Add to the collection",
+    "addSubtitle": "Puzzle, board game ...",
+    "sessionTitle": "Start a new session",
+    "sessionSubtitle": "Log an activity",
+    "selectType": "Choose type"
   }
 }
