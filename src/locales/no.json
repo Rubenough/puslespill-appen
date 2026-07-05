@@ -272,5 +272,30 @@
     "saveChanges": "Lagre endringer",
     "saveA11y": "Lagre {{type}}",
     "saveChangesA11y": "Lagre endringer for {{type}}"
+  },
+  "auth": {
+    "title": "Puslespill",
+    "tagline": "For deg som pusler med venner",
+    "signInFailed": "Innlogging feilet",
+    "startFailed": "Kunne ikke starte Google-innlogging. Sjekk nettverkstilkoblingen.",
+    "noResponse": "Ingen gyldig respons fra nettleseren. Prøv igjen.",
+    "invalidResponse": "Ugyldig innloggingsrespons. Prøv igjen.",
+    "sessionFailed": "Kunne ikke opprette sesjon. Prøv igjen.",
+    "unexpectedError": "Uventet feil",
+    "unexpectedErrorBody": "Noe gikk galt. Prøv igjen."
+  },
+  "nav": {
+    "tabFeed": "Feed",
+    "tabCollections": "Samlinger",
+    "tabFriends": "Venner",
+    "tabProfile": "Profil",
+    "tabNewSession": "Ny økt",
+    "closeMenu": "Lukk meny",
+    "modalTitle": "Hva vil du gjøre?",
+    "addTitle": "Legg til i samlingen",
+    "addSubtitle": "Puslespill, brettspill ...",
+    "sessionTitle": "Start ny økt",
+    "sessionSubtitle": "Logg en aktivitet",
+    "selectType": "Velg type"
   }
 }

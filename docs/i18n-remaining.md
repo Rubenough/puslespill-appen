@@ -1,5 +1,15 @@
 # i18n retrofit — remaining work (handoff)
 
+> **✅ COMPLETE (2026-07-06).** All screens below have been migrated across five stacked PRs:
+> Feed cluster, CollectionDetail, session cluster (SessionDetail/ProgressSheet/New/EditSession),
+> ItemForm cluster (ItemForm/Add/EditItem), and AuthScreen + nav. Every user-facing string —
+> visible text, placeholders, `accessibilityLabel`/`accessibilityHint`, and `Alert` copy — now
+> resolves through `t()` with matching `no.json` (source of truth) + `en.json` entries.
+>
+> **Intentional deferrals (unchanged):** server RPC error messages (see below), `utils/date.ts`
+> locale-aware follow-up, and the `Header` app-title `"Fordriv"` (a brand name, left untranslated).
+> The rest of this doc is kept as the record of what was done.
+
 The i18n **foundation is complete and proven**; what's left is mechanical: move the remaining screens' hardcoded Norwegian strings into `t()` keys. This doc is a self-contained handoff so another agent can finish it without extra context.
 
 ## Done (reference implementations to copy)

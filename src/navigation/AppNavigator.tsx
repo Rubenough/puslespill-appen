@@ -6,6 +6,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { RootStackParamList } from "./RootNavigator";
 import FeedScreen from "../screens/FeedScreen";
 import CollectionsStack from "./CollectionsStack";
@@ -25,20 +26,20 @@ const colors = {
 
 const MODAL_ITEMS: {
   icon: IoniconsName;
-  title: string;
-  subtitle: string;
+  titleKey: string;
+  subtitleKey: string;
   action: string;
 }[] = [
   {
     icon: "add-circle-outline",
-    title: "Legg til i samlingen",
-    subtitle: "Puslespill, brettspill ...",
+    titleKey: "nav.addTitle",
+    subtitleKey: "nav.addSubtitle",
     action: "add",
   },
   {
     icon: "time-outline",
-    title: "Start ny økt",
-    subtitle: "Logg en aktivitet",
+    titleKey: "nav.sessionTitle",
+    subtitleKey: "nav.sessionSubtitle",
     action: "session",
   },
 ];
@@ -53,6 +54,7 @@ const Tab = createBottomTabNavigator();
 type RootNavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function AppNavigator() {
+  const { t } = useTranslation();
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === "dark";
   const [modalVisible, setModalVisible] = useState(false);
@@ -61,16 +63,16 @@ export default function AppNavigator() {
   function handleModalAction(action: string) {
     setModalVisible(false);
     if (action === "add") {
-      Alert.alert("Legg til i samlingen", "Velg type", [
+      Alert.alert(t("nav.addTitle"), t("nav.selectType"), [
         {
-          text: "Puslespill",
+          text: t("collections.type.puslespill"),
           onPress: () => navigation.navigate("AddItem", { type: "puslespill" }),
         },
         {
-          text: "Brettspill",
+          text: t("collections.type.brettspill"),
           onPress: () => navigation.navigate("AddItem", { type: "brettspill" }),
         },
-        { text: "Avbryt", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
       ]);
     } else if (action === "session") {
       navigation.navigate("NewSession", {});
@@ -103,6 +105,7 @@ export default function AppNavigator() {
           name="Feed"
           component={FeedScreen}
           options={{
+            tabBarLabel: t("nav.tabFeed"),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="grid-outline" size={size} color={color} />
             ),
@@ -112,6 +115,7 @@ export default function AppNavigator() {
           name="Samlinger"
           component={CollectionsStack}
           options={{
+            tabBarLabel: t("nav.tabCollections"),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="menu-outline" size={size} color={color} />
             ),
@@ -121,7 +125,7 @@ export default function AppNavigator() {
           name="NyOkt"
           component={PlaceholderScreen}
           options={{
-            tabBarLabel: "Ny økt",
+            tabBarLabel: t("nav.tabNewSession"),
             tabBarButton: () => (
               <TouchableOpacity
                 onPress={() => setModalVisible(true)}
@@ -132,7 +136,7 @@ export default function AppNavigator() {
                   transform: [{ translateY: -4 }],
                 }}
                 accessibilityRole="button"
-                accessibilityLabel="Ny økt"
+                accessibilityLabel={t("nav.tabNewSession")}
               >
                 <View
                   style={{
@@ -154,6 +158,7 @@ export default function AppNavigator() {
           name="Venner"
           component={FriendsScreen}
           options={{
+            tabBarLabel: t("nav.tabFriends"),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="people-outline" size={size} color={color} />
             ),
@@ -163,6 +168,7 @@ export default function AppNavigator() {
           name="Profil"
           component={ProfileScreen}
           options={{
+            tabBarLabel: t("nav.tabProfile"),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="person-outline" size={size} color={color} />
             ),
@@ -181,22 +187,22 @@ export default function AppNavigator() {
           className="flex-1 bg-black/50"
           onPress={() => setModalVisible(false)}
           accessibilityRole="button"
-          accessibilityLabel="Lukk meny"
+          accessibilityLabel={t("nav.closeMenu")}
         />
         <View className="absolute bottom-0 left-0 right-0 bg-surface dark:bg-surface-dark rounded-t-[20px] p-6 pb-12">
           {/* Drag handle */}
           <View className="w-9 h-1 rounded-full bg-border dark:bg-border-dark self-center mb-5" />
           <Text className="text-content dark:text-content-dark text-lg font-semibold mb-4">
-            Hva vil du gjøre?
+            {t("nav.modalTitle")}
           </Text>
 
           {MODAL_ITEMS.map((item) => (
             <TouchableOpacity
-              key={item.title}
+              key={item.action}
               onPress={() => handleModalAction(item.action)}
               accessibilityRole="button"
-              accessibilityLabel={item.title}
-              accessibilityHint={item.subtitle}
+              accessibilityLabel={t(item.titleKey)}
+              accessibilityHint={t(item.subtitleKey)}
               className="flex-row items-center bg-surface-secondary dark:bg-surface-dark-secondary rounded-xl p-4 mb-2.5"
             >
               <View className="w-10 h-10 rounded-[10px] bg-surface dark:bg-surface-dark items-center justify-center mr-3.5">
@@ -204,10 +210,10 @@ export default function AppNavigator() {
               </View>
               <View className="flex-1">
                 <Text className="text-content dark:text-content-dark font-semibold text-base">
-                  {item.title}
+                  {t(item.titleKey)}
                 </Text>
                 <Text className="text-content-secondary dark:text-content-secondary-dark text-sm">
-                  {item.subtitle}
+                  {t(item.subtitleKey)}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={c.inactive} />
