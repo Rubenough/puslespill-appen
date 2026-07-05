@@ -96,8 +96,8 @@ async function attachSessionImages(sessions: ActiveSession[]): Promise<ActiveSes
 
 // Henter feed-hendelser fra tre parallelle queries og returnerer dem sortert nyest først.
 // Profiler hentes i ett separat kall for å unngå avhengighet av FK-konfigurasjon.
-// Fase 5: sessions og items vises fra alle brukere når RLS-policyene er åpnet.
-// Lån vises kun for egne (owner_id = userId) — RLS blokkerer andres.
+// RLS er venneskopet: sessions/items returnerer kun egne + venners rader — vi
+// filtrerer derfor ikke på bruker her. Lån vises kun for egne (owner_id = userId).
 async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
   const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
