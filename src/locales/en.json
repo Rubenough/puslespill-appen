@@ -137,5 +137,28 @@
     "dayProgress": "Day {{day}} · {{when}}",
     "sessionCardA11y": "{{owner}}: {{title}}, day {{day}}, {{when}}",
     "sessionCardHint": "Tap to see session details"
+  },
+  "collectionDetail": {
+    "backA11y": "Back to collections",
+    "rowHint": "Tap for actions",
+    "closeActions": "Close actions",
+    "closeLoanModal": "Close loan modal",
+    "startSession": "Start session",
+    "unavailable": "Unavailable",
+    "registerLoan": "Register loan",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteTitle": "Delete {{title}}?",
+    "deleteBody": "This cannot be undone.",
+    "missingNameTitle": "Missing name",
+    "missingNameBody": "Fill in who you're lending to.",
+    "loanWhoPrompt": "Who are you lending to?",
+    "nameLabel": "NAME",
+    "namePlaceholder": "e.g. Kari Nordmann",
+    "nameFieldA11y": "Borrower name",
+    "visibleToFriends": "Visible to mutual friends",
+    "visibleToFriendsDesc": "Shows that you've lent it out — not to whom",
+    "visibleToFriendsHint": "Shows that you've lent it out, but not to whom",
+    "lendOut": "Lend out"
   }
 }
