@@ -49,6 +49,7 @@ Not a blocking phase; keep these green/moving as you build.
 - [ ] `delete_session(session_id)` RPC or `ON DELETE CASCADE` on `session_images` / `session_participants` → single-call delete; keep storage cleanup after.
 - [x] More tests as logic lands — `collections`, `AuthScreen` token-parse (extracted to pure `parseOAuthRedirect`). (Ongoing for future logic.)
 - [ ] npm-audit findings: all are Expo **dev-tooling** transitive deps (not shipped) — resolve at the next SDK bump, don't `--force`.
+- [ ] Optional DB dedupe — redundant RLS policies tagged in [`docs/db-cleanup.md`](./db-cleanup.md) (harmless; run whenever).
 
 ---
 
@@ -81,13 +82,22 @@ Not a blocking phase; keep these green/moving as you build.
 
 ## Phase 2 — The lending loop 📚 (make it a library, not a notebook)
 
-**Goal:** turn one-sided loan logging into a real friend-to-friend borrow flow — the concept's payoff.
+**Goal:** turn one-sided loan logging into a real friend-to-friend borrow flow — the concept's payoff. **Full design + SQL in [`docs/phase2-borrow-loop.md`](./phase2-borrow-loop.md).**
+
+### 2.0 i18n foundation (prerequisite — do first)
+
+Stand up i18n before building Phase 2 UI so new strings are keys, not hardcoded Norwegian to retrofit. **Plan in [`docs/i18n-plan.md`](./i18n-plan.md).**
+
+- [ ] `i18next` + `react-i18next` + `expo-localization`; `src/lib/i18n.ts`; `src/locales/{no,en}.json`; wrap `App.tsx`.
+- [ ] Make `utils/date.ts` locale-aware (relative words + `toLocaleDateString`).
+- [ ] Author all Phase 2 UI with `t()` keys.
+- [ ] Retrofit existing screens one-per-PR (mechanical); add ProfileScreen language toggle once primary flows are translated.
 
 ### 2.1 Borrow requests
 
-- [ ] `borrow_requests` (or extend `loans`): request → owner approves/declines → active loan → return. States + RLS (owner and requester see their own).
-- [ ] From a friend's collection item: **"Be om å låne"** when status = Tilgjengelig.
-- [ ] Owner approval turns it into a `loans` row (reuse the existing trigger for status sync); borrower recorded via `borrower_user_id` (friend) with `borrower_name` fallback for non-app people.
+- [ ] `borrow_requests` table + RLS + security-definer RPCs (`request_to_borrow`, `approve_request`, `decline_request`, `cancel_request`). Approve creates a `loans` row (existing `trg_sync_item_status` flips status); borrower = friend via `borrower_user_id`, `borrower_name` fallback.
+- [ ] `FriendCollectionScreen`: tappable items → **"Be om å låne"** (available) / "Forespurt" + cancel (pending) / "Utlånt" (disabled).
+- [ ] New `RequestsScreen` from the Header **bell**: incoming (approve/decline) + outgoing (cancel), optional unread badge.
 
 ### 2.2 Notifications (the nudge channel)
 
