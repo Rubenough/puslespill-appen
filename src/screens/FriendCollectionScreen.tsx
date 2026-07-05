@@ -66,7 +66,8 @@ export default function FriendCollectionScreen() {
   const { user } = useAuth();
 
   const [items, setItems] = useState<FriendItem[]>([]);
-  const [pendingItemIds, setPendingItemIds] = useState<Set<string>>(new Set());
+  // item_id → id på den ventende forespørselen, slik at vi kan avbryte den herfra.
+  const [pendingByItem, setPendingByItem] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
 
@@ -83,7 +84,7 @@ export default function FriendCollectionScreen() {
         .order("created_at", { ascending: false }),
       supabase
         .from("borrow_requests")
-        .select("item_id")
+        .select("id, item_id")
         .eq("requester_id", user!.id)
         .eq("owner_id", friendId)
         .eq("status", "pending"),
@@ -91,7 +92,7 @@ export default function FriendCollectionScreen() {
 
     setFetchError(!!itemsRes.error);
     setItems((itemsRes.data ?? []) as FriendItem[]);
-    setPendingItemIds(new Set((requestsRes.data ?? []).map((r) => r.item_id)));
+    setPendingByItem(new Map((requestsRes.data ?? []).map((r) => [r.item_id, r.id])));
     setLoading(false);
   }, [friendId, user]);
 
@@ -113,14 +114,36 @@ export default function FriendCollectionScreen() {
       Alert.alert(t("borrow.failed"), error.message);
       return;
     }
-    setPendingItemIds((prev) => new Set(prev).add(selectedItem.id));
+    // Vi kjenner ikke forespørsels-id-en før neste henting; refetch for korrekt state.
     setSelectedItem(null);
     setMessage("");
+    await fetchItems();
     Alert.alert(t("borrow.sent"), t("borrow.sentBody"));
   }
 
+  async function handleCancelRequest() {
+    if (!selectedItem) return;
+    const requestId = pendingByItem.get(selectedItem.id);
+    if (!requestId) return;
+    setSubmitting(true);
+    const { error } = await supabase.rpc("cancel_request", {
+      p_request_id: requestId,
+    });
+    setSubmitting(false);
+    if (error) {
+      Alert.alert(t("common.somethingWrong"), error.message);
+      return;
+    }
+    setPendingByItem((prev) => {
+      const next = new Map(prev);
+      next.delete(selectedItem.id);
+      return next;
+    });
+    setSelectedItem(null);
+  }
+
   const selectedLoaned = selectedItem?.status === "Utlånt";
-  const selectedPending = selectedItem ? pendingItemIds.has(selectedItem.id) : false;
+  const selectedPending = selectedItem ? pendingByItem.has(selectedItem.id) : false;
 
   return (
     <View className="flex-1 bg-surface-secondary dark:bg-surface-dark-secondary">
@@ -190,7 +213,7 @@ export default function FriendCollectionScreen() {
               {items.map((item, i) => {
                 const subtitle = subtitleFor(item);
                 const isLoaned = item.status === "Utlånt";
-                const isPending = pendingItemIds.has(item.id);
+                const isPending = pendingByItem.has(item.id);
                 const badge = isLoaned
                   ? t("collections.loaned")
                   : isPending
@@ -290,11 +313,29 @@ export default function FriendCollectionScreen() {
               </Text>
             </View>
           ) : selectedPending ? (
-            <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center mb-2">
-              <Text className="text-content-secondary dark:text-content-secondary-dark font-medium">
-                {t("borrow.requested")}
-              </Text>
-            </View>
+            <>
+              <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center mb-3">
+                <Text className="text-content-secondary dark:text-content-secondary-dark font-medium">
+                  {t("borrow.requested")}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={handleCancelRequest}
+                disabled={submitting}
+                accessibilityRole="button"
+                accessibilityLabel={t("borrow.cancelRequest")}
+                accessibilityState={{ disabled: submitting }}
+                className="border border-border dark:border-border-dark rounded-2xl py-4 items-center mb-2"
+              >
+                {submitting ? (
+                  <ActivityIndicator size="small" color="#1D9E75" />
+                ) : (
+                  <Text className="text-content dark:text-content-dark font-semibold text-base">
+                    {t("borrow.cancelRequest")}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </>
           ) : (
             <>
               <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-4">
