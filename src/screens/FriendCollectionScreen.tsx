@@ -5,6 +5,10 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Modal,
+  Pressable,
+  TextInput,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -17,6 +21,7 @@ import {
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "../context/AuthContext";
 import { ITEM_ICONS, type ItemType } from "../utils/collections";
 import {
   itemTypeLabel,
@@ -58,28 +63,64 @@ export default function FriendCollectionScreen() {
   const navigation = useNavigation<NavProp>();
   const route = useRoute<FriendCollectionRouteProp>();
   const { friendId, friendName, avatarUrl } = route.params;
+  const { user } = useAuth();
 
   const [items, setItems] = useState<FriendItem[]>([]);
+  const [pendingItemIds, setPendingItemIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
 
-  const fetchItems = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("items")
-      .select("id, title, brand, piece_count, player_count, difficulty, status, type")
-      .eq("owner_id", friendId)
-      .order("created_at", { ascending: false });
+  const [selectedItem, setSelectedItem] = useState<FriendItem | null>(null);
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-    setFetchError(!!error);
-    setItems((data ?? []) as FriendItem[]);
+  const fetchItems = useCallback(async () => {
+    const [itemsRes, requestsRes] = await Promise.all([
+      supabase
+        .from("items")
+        .select("id, title, brand, piece_count, player_count, difficulty, status, type")
+        .eq("owner_id", friendId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("borrow_requests")
+        .select("item_id")
+        .eq("requester_id", user!.id)
+        .eq("owner_id", friendId)
+        .eq("status", "pending"),
+    ]);
+
+    setFetchError(!!itemsRes.error);
+    setItems((itemsRes.data ?? []) as FriendItem[]);
+    setPendingItemIds(new Set((requestsRes.data ?? []).map((r) => r.item_id)));
     setLoading(false);
-  }, [friendId]);
+  }, [friendId, user]);
 
   useFocusEffect(
     useCallback(() => {
       fetchItems();
     }, [fetchItems]),
   );
+
+  async function handleRequest() {
+    if (!selectedItem) return;
+    setSubmitting(true);
+    const { error } = await supabase.rpc("request_to_borrow", {
+      p_item_id: selectedItem.id,
+      p_message: message.trim() || undefined,
+    });
+    setSubmitting(false);
+    if (error) {
+      Alert.alert(t("borrow.failed"), error.message);
+      return;
+    }
+    setPendingItemIds((prev) => new Set(prev).add(selectedItem.id));
+    setSelectedItem(null);
+    setMessage("");
+    Alert.alert(t("borrow.sent"), t("borrow.sentBody"));
+  }
+
+  const selectedLoaned = selectedItem?.status === "Utlånt";
+  const selectedPending = selectedItem ? pendingItemIds.has(selectedItem.id) : false;
 
   return (
     <View className="flex-1 bg-surface-secondary dark:bg-surface-dark-secondary">
@@ -149,17 +190,24 @@ export default function FriendCollectionScreen() {
               {items.map((item, i) => {
                 const subtitle = subtitleFor(item);
                 const isLoaned = item.status === "Utlånt";
+                const isPending = pendingItemIds.has(item.id);
+                const badge = isLoaned
+                  ? t("collections.loaned")
+                  : isPending
+                    ? t("borrow.requested")
+                    : null;
                 return (
-                  <View
+                  <TouchableOpacity
                     key={item.id}
-                    accessible
-                    accessibilityLabel={[
-                      item.title,
-                      subtitle,
-                      isLoaned ? t("collections.loaned") : null,
-                    ]
+                    onPress={() => {
+                      setMessage("");
+                      setSelectedItem(item);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={[item.title, subtitle, badge]
                       .filter(Boolean)
                       .join(", ")}
+                    accessibilityHint={t("borrow.ask")}
                     className={`flex-row items-center px-4 py-4 ${
                       i < items.length - 1
                         ? "border-b border-border dark:border-border-dark"
@@ -182,20 +230,117 @@ export default function FriendCollectionScreen() {
                         {[itemTypeLabel(item.type), subtitle].filter(Boolean).join(" · ")}
                       </Text>
                     </View>
-                    {isLoaned && (
-                      <View className="bg-accent/10 dark:bg-accent-dark/10 px-2 py-1 rounded-full">
-                        <Text className="text-accent dark:text-accent-dark text-xs font-semibold">
-                          {t("collections.loaned")}
+                    {badge && (
+                      <View
+                        className={`px-2 py-1 rounded-full ${
+                          isLoaned
+                            ? "bg-accent/10 dark:bg-accent-dark/10"
+                            : "bg-surface-secondary dark:bg-surface-dark-secondary"
+                        }`}
+                      >
+                        <Text
+                          className={`text-xs font-semibold ${
+                            isLoaned
+                              ? "text-accent dark:text-accent-dark"
+                              : "text-content-secondary dark:text-content-secondary-dark"
+                          }`}
+                        >
+                          {badge}
                         </Text>
                       </View>
                     )}
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
             </View>
           )}
         </ScrollView>
       )}
+
+      {/* Låneforespørsel-modal */}
+      <Modal
+        visible={selectedItem !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedItem(null)}
+      >
+        <Pressable
+          className="flex-1 bg-black/40"
+          onPress={() => setSelectedItem(null)}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.cancel")}
+        />
+        <View
+          className="bg-surface dark:bg-surface-dark rounded-t-3xl px-4 pt-2"
+          style={{ paddingBottom: insets.bottom + 16 }}
+        >
+          <View className="w-10 h-1 bg-border dark:bg-border-dark rounded-full self-center mb-4" />
+
+          <Text className="text-content dark:text-content-dark text-lg font-semibold mb-1 px-1">
+            {selectedItem?.title}
+          </Text>
+          <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mb-4 px-1">
+            {selectedItem ? itemTypeLabel(selectedItem.type) : ""}
+          </Text>
+
+          {selectedLoaned ? (
+            <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center mb-2">
+              <Text className="text-content-secondary dark:text-content-secondary-dark font-medium">
+                {t("borrow.unavailable")}
+              </Text>
+            </View>
+          ) : selectedPending ? (
+            <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center mb-2">
+              <Text className="text-content-secondary dark:text-content-secondary-dark font-medium">
+                {t("borrow.requested")}
+              </Text>
+            </View>
+          ) : (
+            <>
+              <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-4">
+                <TextInput
+                  className="text-content dark:text-content-dark text-base"
+                  placeholder={t("borrow.messagePlaceholder")}
+                  placeholderTextColor="#A8A29E"
+                  value={message}
+                  onChangeText={setMessage}
+                  multiline
+                  numberOfLines={2}
+                  textAlignVertical="top"
+                  accessibilityLabel={t("borrow.messagePlaceholder")}
+                />
+              </View>
+              <TouchableOpacity
+                onPress={handleRequest}
+                disabled={submitting}
+                accessibilityRole="button"
+                accessibilityLabel={t("borrow.ask")}
+                accessibilityState={{ disabled: submitting }}
+                className="bg-accent dark:bg-accent-dark rounded-2xl py-4 items-center mb-2"
+              >
+                {submitting ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text className="text-white font-semibold text-base">
+                    {t("borrow.send")}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
+
+          <TouchableOpacity
+            onPress={() => setSelectedItem(null)}
+            accessibilityRole="button"
+            accessibilityLabel={t("common.cancel")}
+            className="py-3 items-center"
+          >
+            <Text className="text-content-secondary dark:text-content-secondary-dark text-sm">
+              {t("common.cancel")}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }

@@ -70,6 +70,30 @@
     "light": "Lyst",
     "dark": "Mørkt"
   },
+  "borrow": {
+    "ask": "Be om å låne",
+    "askTitle": "Be om å låne",
+    "requested": "Forespurt",
+    "cancelRequest": "Avbryt forespørsel",
+    "unavailable": "Utlånt",
+    "messagePlaceholder": "Legg til en melding … (valgfritt)",
+    "send": "Send forespørsel",
+    "sent": "Forespørsel sendt",
+    "sentBody": "Eieren får beskjed når appen støtter varsler.",
+    "failed": "Kunne ikke sende forespørsel"
+  },
+  "requests": {
+    "title": "Forespørsler",
+    "incoming": "INNKOMMENDE",
+    "outgoing": "UTGÅENDE",
+    "empty": "Ingen forespørsler",
+    "approve": "Godkjenn",
+    "decline": "Avslå",
+    "cancel": "Avbryt",
+    "wantsToBorrow": "vil låne",
+    "youAskedFor": "Du spurte om å låne",
+    "loadError": "Kunne ikke laste forespørsler."
+  },
   "friends": {
     "title": "Venner",
     "myInvite": "MIN INVITASJON",

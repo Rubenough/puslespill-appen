@@ -97,9 +97,11 @@ Stand up i18n before building Phase 2 UI so new strings are keys, not hardcoded 
 
 ### 2.1 Borrow requests
 
-- [ ] `borrow_requests` table + RLS + security-definer RPCs (`request_to_borrow`, `approve_request`, `decline_request`, `cancel_request`). Approve creates a `loans` row (existing `trg_sync_item_status` flips status); borrower = friend via `borrower_user_id`, `borrower_name` fallback.
-- [ ] `FriendCollectionScreen`: tappable items → **"Be om å låne"** (available) / "Forespurt" + cancel (pending) / "Utlånt" (disabled).
-- [ ] New `RequestsScreen` from the Header **bell**: incoming (approve/decline) + outgoing (cancel), optional unread badge.
+- [x] `borrow_requests` table + RLS + security-definer RPCs (`request_to_borrow`, `approve_request`, `decline_request`, `cancel_request`). Approve creates a `loans` row (existing `trg_sync_item_status` flips status); borrower = friend via `borrower_user_id`, `borrower_name` fallback.
+- [x] `FriendCollectionScreen`: tappable items → modal with **"Be om å låne"** (available) / "Forespurt" (pending) / "Utlånt". Bilingual from the start.
+- [x] New `RequestsScreen` from the Header **bell**: incoming (approve/decline) + outgoing (cancel).
+- [ ] Optional: unread badge on the bell (count of incoming pending).
+- [ ] Cancel a pending request from `FriendCollectionScreen` too (currently only in `RequestsScreen`).
 
 ### 2.2 Notifications (the nudge channel)
 

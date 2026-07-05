@@ -70,6 +70,30 @@
     "light": "Light",
     "dark": "Dark"
   },
+  "borrow": {
+    "ask": "Ask to borrow",
+    "askTitle": "Ask to borrow",
+    "requested": "Requested",
+    "cancelRequest": "Cancel request",
+    "unavailable": "On loan",
+    "messagePlaceholder": "Add a message … (optional)",
+    "send": "Send request",
+    "sent": "Request sent",
+    "sentBody": "The owner will be notified once the app supports notifications.",
+    "failed": "Could not send request"
+  },
+  "requests": {
+    "title": "Requests",
+    "incoming": "INCOMING",
+    "outgoing": "OUTGOING",
+    "empty": "No requests",
+    "approve": "Approve",
+    "decline": "Decline",
+    "cancel": "Cancel",
+    "wantsToBorrow": "wants to borrow",
+    "youAskedFor": "You asked to borrow",
+    "loadError": "Could not load requests."
+  },
   "friends": {
     "title": "Friends",
     "myInvite": "MY INVITE",
