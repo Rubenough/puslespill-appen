@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { RootStackParamList } from "../navigation/RootNavigator";
@@ -30,6 +31,7 @@ type Friend = {
 export default function FriendsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const { user } = useAuth();
 
   const [inviteCode, setInviteCode] = useState<string | null>(null);
@@ -86,7 +88,7 @@ export default function FriendsScreen() {
       list.push({
         friendshipId,
         id: friendId,
-        name: profile?.full_name ?? "Ukjent",
+        name: profile?.full_name ?? null,
         avatarUrl: profile?.avatar_url ?? null,
       });
     }
@@ -107,7 +109,7 @@ export default function FriendsScreen() {
     if (!inviteCode) return;
     // TODO(deep-link): når puslespill://join?code= håndteres, legg til lenken her.
     await Share.share({
-      message: `Legg meg til som venn i appen med koden: ${inviteCode}`,
+      message: t("friends.shareMessage", { code: inviteCode }),
     });
   }
 
@@ -120,17 +122,17 @@ export default function FriendsScreen() {
     setRedeeming(false);
 
     if (error) {
-      Alert.alert("Kunne ikke legge til venn", error.message);
+      Alert.alert(t("friends.addFailed"), error.message);
       return;
     }
 
     const friend = data?.[0];
     setRedeemInput("");
     Alert.alert(
-      "Lagt til",
+      t("friends.added"),
       friend?.full_name
-        ? `Du og ${friend.full_name} er nå venner.`
-        : "Dere er nå venner.",
+        ? t("friends.addedNamed", { name: friend.full_name })
+        : t("friends.addedUnnamed"),
     );
     fetchData();
   }
@@ -145,7 +147,7 @@ export default function FriendsScreen() {
         className="text-content dark:text-content-dark text-2xl font-medium px-4 pb-6"
         style={{ paddingTop: insets.top + 16 }}
       >
-        Venner
+        {t("friends.title")}
       </Text>
 
       {/* Min invitasjon */}
@@ -153,16 +155,18 @@ export default function FriendsScreen() {
         accessibilityRole="header"
         className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3"
       >
-        MIN INVITASJON
+        {t("friends.myInvite")}
       </Text>
       <View className="mx-4 mb-6 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-4">
         <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mb-2">
-          Del koden din så noen kan legge deg til som venn.
+          {t("friends.shareHint")}
         </Text>
         <View className="flex-row items-center justify-between">
           <Text
             accessibilityLabel={
-              inviteCode ? `Din invitasjonskode er ${inviteCode}` : "Laster kode"
+              inviteCode
+                ? t("friends.codeA11y", { code: inviteCode })
+                : t("friends.codeLoading")
             }
             className="text-content dark:text-content-dark text-2xl font-semibold tracking-[4px]"
           >
@@ -172,12 +176,12 @@ export default function FriendsScreen() {
             onPress={shareInvite}
             disabled={!inviteCode}
             accessibilityRole="button"
-            accessibilityLabel="Del invitasjon"
+            accessibilityLabel={t("friends.shareA11y")}
             accessibilityState={{ disabled: !inviteCode }}
             className="flex-row items-center gap-1.5 bg-accent dark:bg-accent-dark rounded-xl px-4 py-2.5"
           >
             <Ionicons name="share-outline" size={16} color="white" accessible={false} />
-            <Text className="text-white font-semibold text-sm">Del</Text>
+            <Text className="text-white font-semibold text-sm">{t("friends.share")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -187,13 +191,13 @@ export default function FriendsScreen() {
         accessibilityRole="header"
         className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3"
       >
-        LEGG TIL VENN
+        {t("friends.addFriend")}
       </Text>
       <View className="mx-4 mb-6 flex-row gap-2">
         <View className="flex-1 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-3">
           <TextInput
             className="text-content dark:text-content-dark text-base tracking-[2px]"
-            placeholder="Skriv inn kode"
+            placeholder={t("friends.enterCode")}
             placeholderTextColor="#A8A29E"
             value={redeemInput}
             onChangeText={setRedeemInput}
@@ -201,14 +205,14 @@ export default function FriendsScreen() {
             autoCorrect={false}
             returnKeyType="done"
             onSubmitEditing={handleRedeem}
-            accessibilityLabel="Invitasjonskode"
+            accessibilityLabel={t("friends.codeField")}
           />
         </View>
         <TouchableOpacity
           onPress={handleRedeem}
           disabled={redeeming || !redeemInput.trim()}
           accessibilityRole="button"
-          accessibilityLabel="Legg til venn"
+          accessibilityLabel={t("friends.addA11y")}
           accessibilityState={{ disabled: redeeming || !redeemInput.trim() }}
           className={`rounded-2xl px-5 items-center justify-center ${
             redeemInput.trim()
@@ -219,7 +223,7 @@ export default function FriendsScreen() {
           {redeeming ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
-            <Text className="text-white font-semibold">Legg til</Text>
+            <Text className="text-white font-semibold">{t("friends.add")}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -229,7 +233,8 @@ export default function FriendsScreen() {
         accessibilityRole="header"
         className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3"
       >
-        VENNER{friends.length > 0 ? ` · ${friends.length}` : ""}
+        {t("friends.listHeader")}
+        {friends.length > 0 ? ` · ${friends.length}` : ""}
       </Text>
 
       {loading ? (
@@ -237,21 +242,21 @@ export default function FriendsScreen() {
       ) : fetchError ? (
         <View className="mx-4 mb-8 bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-2xl p-4 items-center">
           <Text className="text-content dark:text-content-dark text-sm text-center mb-3">
-            Kunne ikke laste venner.
+            {t("friends.loadError")}
           </Text>
           <TouchableOpacity
             onPress={() => fetchData()}
             accessibilityRole="button"
-            accessibilityLabel="Prøv igjen"
+            accessibilityLabel={t("common.retry")}
             className="bg-accent dark:bg-accent-dark rounded-xl px-5 py-2"
           >
-            <Text className="text-white font-semibold text-sm">Prøv igjen</Text>
+            <Text className="text-white font-semibold text-sm">{t("common.retry")}</Text>
           </TouchableOpacity>
         </View>
       ) : friends.length === 0 ? (
         <View className="mx-4 mb-8 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark p-6 items-center">
           <Text className="text-content-secondary dark:text-content-secondary-dark text-sm text-center">
-            Ingen venner ennå. Del koden din eller skriv inn en venns kode.
+            {t("friends.empty")}
           </Text>
         </View>
       ) : (
@@ -262,13 +267,13 @@ export default function FriendsScreen() {
               onPress={() =>
                 navigation.navigate("FriendCollection", {
                   friendId: friend.id,
-                  friendName: friend.name ?? "Ukjent",
+                  friendName: friend.name ?? t("common.unknownUser"),
                   avatarUrl: friend.avatarUrl,
                 })
               }
               accessibilityRole="button"
-              accessibilityLabel={friend.name ?? "Ukjent"}
-              accessibilityHint="Trykk for å se samlingen"
+              accessibilityLabel={friend.name ?? t("common.unknownUser")}
+              accessibilityHint={t("friends.openCollectionHint")}
               className={`flex-row items-center px-4 py-3 ${
                 i < friends.length - 1
                   ? "border-b border-border dark:border-border-dark"
@@ -277,7 +282,7 @@ export default function FriendsScreen() {
             >
               <UserAvatar name={friend.name} avatarUrl={friend.avatarUrl} size={44} />
               <Text className="flex-1 ml-3 text-content dark:text-content-dark font-medium">
-                {friend.name}
+                {friend.name ?? t("common.unknownUser")}
               </Text>
               <Ionicons
                 name="chevron-forward"

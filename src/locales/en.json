@@ -29,5 +29,28 @@
   "language": {
     "no": "Norsk",
     "en": "English"
+  },
+  "friends": {
+    "title": "Friends",
+    "myInvite": "MY INVITE",
+    "shareHint": "Share your code so someone can add you as a friend.",
+    "share": "Share",
+    "shareA11y": "Share invite",
+    "codeA11y": "Your invite code is {{code}}",
+    "codeLoading": "Loading code",
+    "addFriend": "ADD FRIEND",
+    "enterCode": "Enter code",
+    "codeField": "Invite code",
+    "add": "Add",
+    "addA11y": "Add friend",
+    "listHeader": "FRIENDS",
+    "loadError": "Could not load friends.",
+    "empty": "No friends yet. Share your code or enter a friend's code.",
+    "openCollectionHint": "Tap to see their collection",
+    "addFailed": "Could not add friend",
+    "added": "Added",
+    "addedNamed": "You and {{name}} are now friends.",
+    "addedUnnamed": "You are now friends.",
+    "shareMessage": "Add me as a friend in the app with the code: {{code}}"
   }
 }
