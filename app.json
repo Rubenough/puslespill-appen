@@ -47,7 +47,8 @@
           "photosPermission": "Appen bruker bilder for å lagre øktbilder.",
           "cameraPermission": "Appen bruker kameraet for å ta bilder av økter."
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "extra": {
       "eas": {
