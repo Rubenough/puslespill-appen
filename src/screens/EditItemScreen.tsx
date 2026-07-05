@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { Alert } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
-import { ITEM_LABELS } from "../utils/collections";
+import { itemTypeLabel } from "../utils/collectionLabels";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import ItemForm, { type ItemFormValues } from "../components/ItemForm";
 
@@ -11,6 +12,7 @@ type EditItemRouteProp = RouteProp<RootStackParamList, "EditItem">;
 type EditItemNavProp = NativeStackNavigationProp<RootStackParamList, "EditItem">;
 
 export default function EditItemScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<EditItemNavProp>();
   const route = useRoute<EditItemRouteProp>();
   const { item, type } = route.params;
@@ -31,7 +33,7 @@ export default function EditItemScreen() {
     setSaving(false);
 
     if (error) {
-      Alert.alert("Noe gikk galt", error.message);
+      Alert.alert(t("common.somethingWrong"), error.message);
       return;
     }
 
@@ -41,9 +43,11 @@ export default function EditItemScreen() {
   return (
     <ItemForm
       type={type}
-      headerLabel={`Rediger ${ITEM_LABELS[type].toLowerCase()}`}
-      saveLabel="Lagre endringer"
-      saveAccessibilityLabel={`Lagre endringer for ${ITEM_LABELS[type].toLowerCase()}`}
+      headerLabel={t("itemForm.editHeader", { type: itemTypeLabel(type).toLowerCase() })}
+      saveLabel={t("itemForm.saveChanges")}
+      saveAccessibilityLabel={t("itemForm.saveChangesA11y", {
+        type: itemTypeLabel(type).toLowerCase(),
+      })}
       initialValues={{
         title: item.title,
         brand: item.brand ?? "",

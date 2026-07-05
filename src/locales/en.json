@@ -246,5 +246,31 @@
   },
   "editSession": {
     "title": "Edit session"
+  },
+  "itemForm": {
+    "close": "Close",
+    "missingTitleTitle": "Missing title",
+    "missingTitleBody": "Fill in a title for the item.",
+    "titleLabel": "TITLE",
+    "titlePlaceholderPuzzle": "e.g. Kinkaku-ji",
+    "titlePlaceholderBoardGame": "e.g. Wingspan",
+    "titleA11y": "Title",
+    "brandLabel": "BRAND (OPTIONAL)",
+    "brandPlaceholderPuzzle": "e.g. Ravensburger",
+    "brandPlaceholderBoardGame": "e.g. Stonemaier Games",
+    "brandA11y": "Brand (optional)",
+    "pieceCountLabel": "NUMBER OF PIECES (OPTIONAL)",
+    "pieceCountPlaceholder": "e.g. 1000",
+    "pieceCountA11y": "Number of pieces (optional)",
+    "difficultyHeader": "DIFFICULTY (OPTIONAL)",
+    "playerCountLabel": "MAX NUMBER OF PLAYERS (OPTIONAL)",
+    "playerCountPlaceholder": "e.g. 5",
+    "playerCountA11y": "Max number of players (optional)",
+    "addHeader": "Add {{type}}",
+    "editHeader": "Edit {{type}}",
+    "save": "Save",
+    "saveChanges": "Save changes",
+    "saveA11y": "Save {{type}}",
+    "saveChangesA11y": "Save changes for {{type}}"
   }
 }
