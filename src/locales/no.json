@@ -5,6 +5,14 @@
     "unknownUser": "Ukjent bruker",
     "unknownItem": "Ukjent gjenstand"
   },
+  "date": {
+    "today": "i dag",
+    "yesterday": "i går",
+    "daysAgo_one": "{{count}} dag siden",
+    "daysAgo_other": "{{count}} dager siden",
+    "weeksAgo_one": "1 uke siden",
+    "weeksAgo_other": "{{count}} uker siden"
+  },
   "profile": {
     "signOut": "Logg ut",
     "myLoans": "MINE UTLÅN",

@@ -1,8 +1,9 @@
+import i18n from "../../lib/i18n";
 import {
   getDayNumber,
-  formatShortDate,
   getRelativeDayLabel,
   getRelativeDayOrWeekLabel,
+  formatShortDate,
 } from "../date";
 
 // Fast "nå" for deterministiske relative etiketter.
@@ -16,8 +17,9 @@ beforeEach(() => {
   jest.spyOn(Date, "now").mockReturnValue(NOW);
 });
 
-afterEach(() => {
+afterEach(async () => {
   jest.restoreAllMocks();
+  await i18n.changeLanguage("no");
 });
 
 describe("getDayNumber", () => {
@@ -31,7 +33,7 @@ describe("getDayNumber", () => {
   });
 });
 
-describe("getRelativeDayLabel", () => {
+describe("getRelativeDayLabel (no)", () => {
   it("bruker i dag / i går for de siste to dagene", () => {
     expect(getRelativeDayLabel(daysAgo(0))).toBe("i dag");
     expect(getRelativeDayLabel(daysAgo(1))).toBe("i går");
@@ -43,18 +45,26 @@ describe("getRelativeDayLabel", () => {
   });
 });
 
-describe("getRelativeDayOrWeekLabel", () => {
-  it("oppfører seg som dag-etiketten under en uke", () => {
-    expect(getRelativeDayOrWeekLabel(daysAgo(0))).toBe("i dag");
-    expect(getRelativeDayOrWeekLabel(daysAgo(1))).toBe("i går");
+describe("getRelativeDayOrWeekLabel (no)", () => {
+  it("slår sammen til uker fra sju dager, med entall/flertall", () => {
     expect(getRelativeDayOrWeekLabel(daysAgo(6))).toBe("6 dager siden");
-  });
-
-  it("slår sammen til uker fra sju dager", () => {
     expect(getRelativeDayOrWeekLabel(daysAgo(7))).toBe("1 uke siden");
     expect(getRelativeDayOrWeekLabel(daysAgo(13))).toBe("1 uke siden");
     expect(getRelativeDayOrWeekLabel(daysAgo(14))).toBe("2 uker siden");
-    expect(getRelativeDayOrWeekLabel(daysAgo(21))).toBe("3 uker siden");
+  });
+});
+
+describe("relative labels (en)", () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("en");
+  });
+
+  it("oversetter dager og uker til engelsk", () => {
+    expect(getRelativeDayLabel(daysAgo(0))).toBe("today");
+    expect(getRelativeDayLabel(daysAgo(1))).toBe("yesterday");
+    expect(getRelativeDayLabel(daysAgo(3))).toBe("3 days ago");
+    expect(getRelativeDayOrWeekLabel(daysAgo(7))).toBe("1 week ago");
+    expect(getRelativeDayOrWeekLabel(daysAgo(21))).toBe("3 weeks ago");
   });
 });
 
