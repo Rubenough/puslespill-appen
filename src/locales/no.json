@@ -116,5 +116,26 @@
     "addedNamed": "Du og {{name}} er nå venner.",
     "addedUnnamed": "Dere er nå venner.",
     "shareMessage": "Legg meg til som venn i appen med koden: {{code}}"
+  },
+  "feed": {
+    "activeSessions": "AKTIVE ØKTER",
+    "feed": "FEED",
+    "noActiveSessions": "Ingen aktive økter",
+    "noActivity": "Ingen aktivitet de siste 14 dagene",
+    "loadError": "Kunne ikke laste innhold.",
+    "added": "la til i samlingen · {{when}}",
+    "startedWith": "startet en økt med {{users}} · {{when}}",
+    "started": "startet en økt · {{when}}",
+    "completed": "fullførte · {{when}}",
+    "loanedTo": "lånte ut til {{name}} · {{when}}",
+    "loaned": "lånte ut · {{when}}",
+    "badgeCompleted": "Ferdig",
+    "badgeLoaned": "Utlånt",
+    "cardA11y": "{{user}} {{action}}: {{title}}",
+    "ownSession": "Din økt",
+    "imagePlaceholder": "Bilde",
+    "dayProgress": "Dag {{day}} · {{when}}",
+    "sessionCardA11y": "{{owner}}: {{title}}, dag {{day}}, {{when}}",
+    "sessionCardHint": "Trykk for å se økt-detaljer"
   }
 }

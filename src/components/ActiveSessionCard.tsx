@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity } from "react-native";
+import { useTranslation } from "react-i18next";
 import UserAvatar from "./UserAvatar";
 
 type OwnSession = {
@@ -25,16 +26,22 @@ type FriendSession = {
 type Props = OwnSession | FriendSession;
 
 export default function ActiveSessionCard(props: Props) {
+  const { t } = useTranslation();
   const { puzzleTitle, dayNumber, timeLabel } = props;
 
-  const ownerLabel = props.isOwn ? "Din økt" : props.userName;
+  const ownerLabel = props.isOwn ? t("feed.ownSession") : props.userName;
 
   return (
     <TouchableOpacity
       onPress={props.onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${ownerLabel}: ${puzzleTitle}, dag ${dayNumber}, ${timeLabel}`}
-      accessibilityHint="Trykk for å se økt-detaljer"
+      accessibilityLabel={t("feed.sessionCardA11y", {
+        owner: ownerLabel,
+        title: puzzleTitle,
+        day: dayNumber,
+        when: timeLabel,
+      })}
+      accessibilityHint={t("feed.sessionCardHint")}
       style={{ width: 200 }}
       className={`rounded-xl p-3 bg-surface dark:bg-surface-dark mr-3 ${
         props.isOwn
@@ -47,7 +54,7 @@ export default function ActiveSessionCard(props: Props) {
         <View className="flex-row items-center gap-1.5 mb-2">
           <View className="w-2 h-2 rounded-full bg-accent dark:bg-accent-dark" />
           <Text className="text-accent dark:text-accent-dark text-xs font-semibold">
-            Din økt
+            {t("feed.ownSession")}
           </Text>
         </View>
       ) : (
@@ -70,7 +77,7 @@ export default function ActiveSessionCard(props: Props) {
       ) : (
         <View className="w-full h-[110px] rounded-lg bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mb-2">
           <Text className="text-content-secondary dark:text-content-secondary-dark text-xs">
-            Bilde
+            {t("feed.imagePlaceholder")}
           </Text>
         </View>
       )}
@@ -83,7 +90,7 @@ export default function ActiveSessionCard(props: Props) {
         {puzzleTitle}
       </Text>
       <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-0.5">
-        Dag {dayNumber} · {timeLabel}
+        {t("feed.dayProgress", { day: dayNumber, when: timeLabel })}
       </Text>
     </TouchableOpacity>
   );
