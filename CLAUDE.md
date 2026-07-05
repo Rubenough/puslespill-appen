@@ -74,7 +74,8 @@ src/
 │   └── CollectionsStack.tsx    # Stack: CollectionsList → CollectionDetail
 ├── context/
 │   ├── AuthContext.tsx         # Session, user, isLoggedIn — useAuth()
-│   └── ProfilContext.tsx       # User profile from profiles table — useProfil()
+│   ├── ProfilContext.tsx       # User profile from profiles table — useProfil()
+│   └── ThemeContext.tsx        # Theme preference (system/light/dark), persisted — useTheme()
 ├── lib/
 │   ├── supabase.ts             # Typed Supabase client (createClient<Database>)
 │   ├── database.types.ts       # Generated schema types (npm run gen:types)
@@ -112,7 +113,12 @@ Consult this file when adding new UI — all new components should follow the sa
 
 - Use NativeWind (Tailwind class names) for all styling
 - Custom theme colors in `tailwind.config.js`: `surface`, `border`, `content`, `accent` (green)
-- Dark mode via `useColorScheme()` — manual theme objects used in AppNavigator
+- **Dark mode is user-controlled** (system / light / dark), not OS-only. `tailwind.config.js` uses
+  `darkMode: "class"` and `ThemeContext` drives the `dark:` variants via NativeWind's
+  `colorScheme.set()`; the preference is persisted in SecureStore. Components that need imperative
+  colours (tab bar in `AppNavigator`, `SessionDetailScreen`) read `useColorScheme` **from
+  `nativewind`** (app-controlled) — never from `react-native` (OS-only). See the theme toggle on
+  `ProfileScreen` and [`docs/dark-mode-toggle.md`](./docs/dark-mode-toggle.md).
 - Exception: `GoogleSignInButton` uses inline styles to match Google's brand guidelines
 
 ## Architecture Notes
@@ -158,6 +164,7 @@ Consult this file when adding new UI — all new components should follow the sa
 
 - `useAuth()` — returns `{ session, user, isLoggedIn, loading }`
 - `useProfil()` — returns `{ profil, loading, error, retry }` from `profiles` table (only mounted when logged in)
+- `useTheme()` — returns `{ preference, setPreference, ready }` (`preference`: `"system" | "light" | "dark"`). `ThemeProvider` wraps the whole app in `App.tsx` (outside `AuthProvider`) and gates the splash on `ready` to avoid a wrong-theme flash while the saved preference loads from SecureStore.
 
 ### Navigation
 
