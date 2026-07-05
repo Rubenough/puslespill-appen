@@ -137,5 +137,28 @@
     "dayProgress": "Dag {{day}} · {{when}}",
     "sessionCardA11y": "{{owner}}: {{title}}, dag {{day}}, {{when}}",
     "sessionCardHint": "Trykk for å se økt-detaljer"
+  },
+  "collectionDetail": {
+    "backA11y": "Tilbake til samlinger",
+    "rowHint": "Trykk for handlinger",
+    "closeActions": "Lukk handlinger",
+    "closeLoanModal": "Lukk utlånsmodal",
+    "startSession": "Start økt",
+    "unavailable": "Ikke tilgjengelig",
+    "registerLoan": "Registrer utlån",
+    "edit": "Rediger",
+    "delete": "Slett",
+    "deleteTitle": "Slett {{title}}?",
+    "deleteBody": "Dette kan ikke angres.",
+    "missingNameTitle": "Mangler navn",
+    "missingNameBody": "Fyll inn hvem du låner ut til.",
+    "loanWhoPrompt": "Hvem låner du ut til?",
+    "nameLabel": "NAVN",
+    "namePlaceholder": "f.eks. Kari Nordmann",
+    "nameFieldA11y": "Navn på låntaker",
+    "visibleToFriends": "Synlig for felles venner",
+    "visibleToFriendsDesc": "Viser at du har lånt ut — ikke hvem til",
+    "visibleToFriendsHint": "Viser at du har lånt ut, men ikke hvem til",
+    "lendOut": "Lån ut"
   }
 }
