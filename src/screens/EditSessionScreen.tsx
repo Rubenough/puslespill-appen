@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { RootStackParamList } from "../navigation/RootNavigator";
 
@@ -20,6 +21,7 @@ type EditSessionNavProp = NativeStackNavigationProp<RootStackParamList, "EditSes
 
 export default function EditSessionScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const navigation = useNavigation<EditSessionNavProp>();
   const route = useRoute<EditSessionRouteProp>();
   const { sessionId, guestNames: initialGuests, notes: initialNotes } = route.params;
@@ -49,7 +51,7 @@ export default function EditSessionScreen() {
       .eq("id", sessionId);
     setSaving(false);
     if (error) {
-      Alert.alert("Noe gikk galt", error.message);
+      Alert.alert(t("common.somethingWrong"), error.message);
       return;
     }
     navigation.goBack();
@@ -66,25 +68,25 @@ export default function EditSessionScreen() {
           onPress={() => navigation.goBack()}
           className="mr-3"
           accessibilityRole="button"
-          accessibilityLabel="Lukk"
+          accessibilityLabel={t("sessionForm.close")}
         >
           <Ionicons name="close" size={24} color="#78716C" accessible={false} />
         </TouchableOpacity>
         <Text className="text-content dark:text-content-dark text-lg font-semibold flex-1">
-          Rediger økt
+          {t("editSession.title")}
         </Text>
         <TouchableOpacity
           onPress={handleSave}
           disabled={saving}
           accessibilityRole="button"
-          accessibilityLabel="Lagre"
+          accessibilityLabel={t("sessionForm.save")}
           accessibilityState={{ disabled: saving }}
         >
           {saving ? (
             <ActivityIndicator size="small" color="#1D9E75" />
           ) : (
             <Text className="text-accent dark:text-accent-dark text-base font-semibold">
-              Lagre
+              {t("sessionForm.save")}
             </Text>
           )}
         </TouchableOpacity>
@@ -100,7 +102,7 @@ export default function EditSessionScreen() {
           accessibilityRole="header"
           className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2"
         >
-          DELTAKERE (VALGFRITT)
+          {t("sessionForm.participantsHeader")}
         </Text>
         {guestNames.length > 0 && (
           <View className="flex-row flex-wrap gap-2 mb-3">
@@ -117,7 +119,7 @@ export default function EditSessionScreen() {
                 <TouchableOpacity
                   onPress={() => setGuestNames((prev) => prev.filter((n) => n !== name))}
                   accessibilityRole="button"
-                  accessibilityLabel={`Fjern ${name}`}
+                  accessibilityLabel={t("sessionForm.removeParticipant", { name })}
                 >
                   <Ionicons
                     name="close-circle"
@@ -133,19 +135,19 @@ export default function EditSessionScreen() {
         <View className="flex-row bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden mb-6">
           <TextInput
             className="flex-1 px-4 py-3 text-content dark:text-content-dark text-base"
-            placeholder="Legg til deltaker..."
+            placeholder={t("sessionForm.addParticipantPlaceholder")}
             placeholderTextColor="#A8A29E"
             value={nameInput}
             onChangeText={setNameInput}
             onSubmitEditing={addGuestName}
             returnKeyType="done"
-            accessibilityLabel="Deltakernavn"
+            accessibilityLabel={t("sessionForm.participantNameA11y")}
           />
           <TouchableOpacity
             onPress={addGuestName}
             disabled={!nameInput.trim()}
             accessibilityRole="button"
-            accessibilityLabel="Legg til deltaker"
+            accessibilityLabel={t("sessionForm.addParticipant")}
             className="px-4 justify-center"
           >
             <Ionicons
@@ -162,18 +164,18 @@ export default function EditSessionScreen() {
           accessibilityRole="header"
           className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2"
         >
-          NOTAT (VALGFRITT)
+          {t("sessionForm.noteHeader")}
         </Text>
         <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-3">
           <TextInput
             className="text-content dark:text-content-dark text-base"
-            placeholder="f.eks. Familiekveld, tok 3 timer..."
+            placeholder={t("sessionForm.notePlaceholder")}
             placeholderTextColor="#A8A29E"
             value={notes}
             onChangeText={setNotes}
             multiline
             numberOfLines={3}
-            accessibilityLabel="Notat (valgfritt)"
+            accessibilityLabel={t("sessionForm.noteA11y")}
           />
         </View>
       </ScrollView>
