@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useTranslation } from "react-i18next";
 import * as ImagePicker from "expo-image-picker";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
@@ -33,6 +34,7 @@ type SessionItem = {
 
 export default function NewSessionScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const navigation = useNavigation<NewSessionNavProp>();
   const route = useRoute<NewSessionRouteProp>();
   const { user } = useAuth();
@@ -92,7 +94,7 @@ export default function NewSessionScreen() {
 
   async function handleStart() {
     if (!selectedItemId) {
-      Alert.alert("Velg gjenstand", "Du må velge en gjenstand for å starte en økt.");
+      Alert.alert(t("newSession.selectItemTitle"), t("newSession.selectItemBody"));
       return;
     }
 
@@ -136,8 +138,8 @@ export default function NewSessionScreen() {
       // Rydd opp bildet vi lastet opp før feilen slik at bucketen ikke fylles med foreldreløse filer.
       if (uploadedPath) await removeSessionImages([uploadedPath]).catch(() => {});
       Alert.alert(
-        "Noe gikk galt",
-        err instanceof Error ? err.message : "Kunne ikke starte økten. Prøv igjen.",
+        t("common.somethingWrong"),
+        err instanceof Error ? err.message : t("newSession.startError"),
       );
     } finally {
       setSaving(false);
@@ -155,12 +157,12 @@ export default function NewSessionScreen() {
           onPress={() => navigation.goBack()}
           className="mr-3"
           accessibilityRole="button"
-          accessibilityLabel="Lukk"
+          accessibilityLabel={t("sessionForm.close")}
         >
           <Ionicons name="close" size={24} color="#78716C" accessible={false} />
         </TouchableOpacity>
         <Text className="text-content dark:text-content-dark text-lg font-semibold">
-          Ny økt
+          {t("newSession.title")}
         </Text>
       </View>
 
@@ -174,28 +176,30 @@ export default function NewSessionScreen() {
           accessibilityRole="header"
           className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2"
         >
-          GJENSTAND
+          {t("newSession.itemHeader")}
         </Text>
         {loadingItems ? (
           <ActivityIndicator color="#1D9E75" style={{ marginVertical: 24 }} />
         ) : itemsError ? (
           <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-4 mb-6 items-center">
             <Text className="text-content dark:text-content-dark text-sm text-center mb-3">
-              Kunne ikke laste gjenstandene.
+              {t("newSession.itemsLoadError")}
             </Text>
             <TouchableOpacity
               onPress={() => fetchItems()}
               accessibilityRole="button"
-              accessibilityLabel="Prøv igjen"
+              accessibilityLabel={t("common.retry")}
               className="bg-accent dark:bg-accent-dark rounded-xl px-5 py-2"
             >
-              <Text className="text-white font-semibold text-sm">Prøv igjen</Text>
+              <Text className="text-white font-semibold text-sm">
+                {t("common.retry")}
+              </Text>
             </TouchableOpacity>
           </View>
         ) : items.length === 0 ? (
           <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-4 mb-6">
             <Text className="text-content-secondary dark:text-content-secondary-dark text-base">
-              Du har ingen gjenstander i samlingen ennå.
+              {t("newSession.noItems")}
             </Text>
           </View>
         ) : (
@@ -251,7 +255,7 @@ export default function NewSessionScreen() {
           accessibilityRole="header"
           className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2"
         >
-          DELTAKERE (VALGFRITT)
+          {t("sessionForm.participantsHeader")}
         </Text>
         {guestNames.length > 0 && (
           <View className="flex-row flex-wrap gap-2 mb-3">
@@ -268,7 +272,7 @@ export default function NewSessionScreen() {
                 <TouchableOpacity
                   onPress={() => setGuestNames((prev) => prev.filter((n) => n !== name))}
                   accessibilityRole="button"
-                  accessibilityLabel={`Fjern ${name}`}
+                  accessibilityLabel={t("sessionForm.removeParticipant", { name })}
                 >
                   <Ionicons
                     name="close-circle"
@@ -284,19 +288,19 @@ export default function NewSessionScreen() {
         <View className="flex-row bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden mb-6">
           <TextInput
             className="flex-1 px-4 py-3 text-content dark:text-content-dark text-base"
-            placeholder="Legg til deltaker..."
+            placeholder={t("sessionForm.addParticipantPlaceholder")}
             placeholderTextColor="#A8A29E"
             value={nameInput}
             onChangeText={setNameInput}
             onSubmitEditing={addGuestName}
             returnKeyType="done"
-            accessibilityLabel="Deltakernavn"
+            accessibilityLabel={t("sessionForm.participantNameA11y")}
           />
           <TouchableOpacity
             onPress={addGuestName}
             disabled={!nameInput.trim()}
             accessibilityRole="button"
-            accessibilityLabel="Legg til deltaker"
+            accessibilityLabel={t("sessionForm.addParticipant")}
             className="px-4 justify-center"
           >
             <Ionicons
@@ -312,10 +316,10 @@ export default function NewSessionScreen() {
         <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-4 mb-6 flex-row items-center justify-between">
           <View className="flex-1 mr-4">
             <Text className="text-content dark:text-content-dark text-base">
-              Fullført
+              {t("newSession.completedLabel")}
             </Text>
             <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-0.5">
-              Ble gjenstanden ferdig denne gangen?
+              {t("newSession.completedDesc")}
             </Text>
           </View>
           <Switch
@@ -323,8 +327,8 @@ export default function NewSessionScreen() {
             onValueChange={setCompleted}
             trackColor={{ false: "#D6D3D1", true: "#1D9E75" }}
             thumbColor="white"
-            accessibilityLabel="Fullført"
-            accessibilityHint="Marker om gjenstanden ble ferdig denne gangen"
+            accessibilityLabel={t("newSession.completedLabel")}
+            accessibilityHint={t("newSession.completedHint")}
           />
         </View>
 
@@ -333,7 +337,9 @@ export default function NewSessionScreen() {
           accessibilityRole="header"
           className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2"
         >
-          {isPuzzle ? "BILDE AV BOKSEN" : "BILDE (VALGFRITT)"}
+          {isPuzzle
+            ? t("newSession.imageHeaderPuzzle")
+            : t("newSession.imageHeaderOptional")}
         </Text>
         {imageUri ? (
           <View className="relative mb-6">
@@ -346,7 +352,7 @@ export default function NewSessionScreen() {
             <TouchableOpacity
               onPress={() => setImageUri(null)}
               accessibilityRole="button"
-              accessibilityLabel="Fjern bilde"
+              accessibilityLabel={t("sessionForm.removeImage")}
               className="absolute top-2 right-2 bg-black/50 rounded-full p-1"
             >
               <Ionicons name="close" size={20} color="white" accessible={false} />
@@ -357,7 +363,7 @@ export default function NewSessionScreen() {
             onPress={pickImage}
             accessibilityRole="button"
             accessibilityLabel={
-              isPuzzle ? "Ta bilde av boksen" : "Velg bilde fra bildebiblioteket"
+              isPuzzle ? t("newSession.pickBoxA11y") : t("newSession.pickImageA11y")
             }
             className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark p-6 items-center mb-6"
           >
@@ -368,7 +374,7 @@ export default function NewSessionScreen() {
               accessible={false}
             />
             <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mt-2">
-              {isPuzzle ? "Ta bilde av forsiden" : "Velg bilde"}
+              {isPuzzle ? t("newSession.pickBoxText") : t("newSession.pickImageText")}
             </Text>
           </TouchableOpacity>
         )}
@@ -378,18 +384,18 @@ export default function NewSessionScreen() {
           accessibilityRole="header"
           className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2"
         >
-          NOTAT (VALGFRITT)
+          {t("sessionForm.noteHeader")}
         </Text>
         <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-6">
           <TextInput
             className="text-content dark:text-content-dark text-base"
-            placeholder="f.eks. Familiekveld, tok 3 timer..."
+            placeholder={t("sessionForm.notePlaceholder")}
             placeholderTextColor="#A8A29E"
             value={notes}
             onChangeText={setNotes}
             multiline
             numberOfLines={3}
-            accessibilityLabel="Notat (valgfritt)"
+            accessibilityLabel={t("sessionForm.noteA11y")}
           />
         </View>
       </ScrollView>
@@ -403,7 +409,7 @@ export default function NewSessionScreen() {
           onPress={handleStart}
           disabled={saving || !selectedItemId}
           accessibilityRole="button"
-          accessibilityLabel="Start økt"
+          accessibilityLabel={t("newSession.startSession")}
           accessibilityState={{ disabled: saving || !selectedItemId }}
           className={`rounded-2xl py-4 items-center justify-center ${
             selectedItemId
@@ -414,7 +420,9 @@ export default function NewSessionScreen() {
           {saving ? (
             <ActivityIndicator size="small" color="white" />
           ) : (
-            <Text className="text-white text-base font-semibold">Start økt</Text>
+            <Text className="text-white text-base font-semibold">
+              {t("newSession.startSession")}
+            </Text>
           )}
         </TouchableOpacity>
       </View>
