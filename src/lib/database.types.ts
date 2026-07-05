@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      borrow_requests: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          loan_id: string | null
+          message: string | null
+          owner_id: string
+          requester_id: string
+          responded_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          loan_id?: string | null
+          message?: string | null
+          owner_id: string
+          requester_id: string
+          responded_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          loan_id?: string | null
+          message?: string | null
+          owner_id?: string
+          requester_id?: string
+          responded_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "borrow_requests_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrow_requests_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrow_requests_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrow_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       friendships: {
         Row: {
           addressee_id: string
@@ -297,9 +362,89 @@ export type Database = {
           full_name: string
         }[]
       }
+      approve_request: {
+        Args: { p_request_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          item_id: string
+          loan_id: string | null
+          message: string | null
+          owner_id: string
+          requester_id: string
+          responded_at: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "borrow_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       are_friends: { Args: { a: string; b: string }; Returns: boolean }
+      cancel_request: {
+        Args: { p_request_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          item_id: string
+          loan_id: string | null
+          message: string | null
+          owner_id: string
+          requester_id: string
+          responded_at: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "borrow_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      decline_request: {
+        Args: { p_request_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          item_id: string
+          loan_id: string | null
+          message: string | null
+          owner_id: string
+          requester_id: string
+          responded_at: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "borrow_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       gen_invite_code: { Args: never; Returns: string }
       get_my_invite_code: { Args: never; Returns: string }
+      request_to_borrow: {
+        Args: { p_item_id: string; p_message?: string }
+        Returns: {
+          created_at: string
+          id: string
+          item_id: string
+          loan_id: string | null
+          message: string | null
+          owner_id: string
+          requester_id: string
+          responded_at: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "borrow_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never
