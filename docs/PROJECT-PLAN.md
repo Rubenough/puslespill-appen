@@ -8,6 +8,24 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ---
 
+## ▶︎ Resume here (status 2026-07-06)
+
+**Concept spine is complete:** friends (invite codes, mutual, friend-scoped RLS) → browse a friend's collection → **borrow-request loop** (ask → approve/decline → tracked loan). All backend RPCs are live in Supabase; types regenerated.
+
+**Also done:** CI (typecheck/lint/format/tests), typed Supabase client, private image bucket + signed URLs (GDPR), i18n foundation + toggle (no/en) with `ProfileScreen`/`FriendsScreen`/`CollectionsScreen`/`FriendCollectionScreen`/`RequestsScreen`/dates migrated. A `theme`/appearance (dark-mode) feature also merged.
+
+**Pick up next (in priority order):**
+
+1. **Finish the i18n retrofit** — mechanical, fully speced in [`docs/i18n-remaining.md`](./i18n-remaining.md) (remaining: CollectionDetail, sessions, feed cards, ItemForm, AuthScreen, nav). Great for a fresh agent.
+2. **Phase 2 polish** — unread badge on the Header bell; cancel-a-request from the collection; a `borrowed` feed event.
+3. **Phase 2.2 Notifications** — `expo-notifications` + push token on `profiles` + Supabase Edge Function (borrow request/approve, loan reminders). Design in [`docs/phase2-borrow-loop.md`](./phase2-borrow-loop.md) §Notifications.
+4. **Phase 2.3 Swap/give-away status** and **2.4 Wishlist** (see below).
+5. **Deferred DB tasks** (batch when next in the SQL editor): `delete_session` RPC, CHECK/NOT NULL column constraints (unlocks removing the last `as any` casts), dedupe policies in [`docs/db-cleanup.md`](./db-cleanup.md).
+
+**Then:** Phase 3 (activity-model unification + React Query) and Phase 4 (release: Apple Sign-In gate, Sentry, privacy policy, store).
+
+---
+
 ## Why this was re-sequenced
 
 A product review found a gap between the **concept** (friends share/borrow physical things; "alle kan se hva andre eier, låne og bytte") and the **build** (deep, polished _puzzle-progress_ logging; the social core is mock or missing). The target users are explicitly _"ikke hardcore statistikk-fokuserte"_, yet the deepest feature is a progress tracker.
