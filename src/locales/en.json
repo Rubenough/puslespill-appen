@@ -1,0 +1,25 @@
+{
+  "common": {
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "unknownUser": "Unknown user",
+    "unknownItem": "Unknown item"
+  },
+  "profile": {
+    "signOut": "Sign out",
+    "myLoans": "MY LOANS",
+    "noLoans": "No loans registered yet",
+    "loadError": "Could not load loans.",
+    "returnedSection": "Returned",
+    "statusLoaned": "On loan",
+    "statusReturned": "Returned",
+    "toBorrower": "to {{name}}",
+    "returnedTo": "to {{name}} · returned {{when}}",
+    "loanedTo": "to {{name}} · {{when}}",
+    "language": "LANGUAGE"
+  },
+  "language": {
+    "no": "Norsk",
+    "en": "English"
+  }
+}

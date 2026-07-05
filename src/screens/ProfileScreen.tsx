@@ -8,15 +8,15 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { useProfil } from "../context/ProfilContext";
 import UserAvatar from "../components/UserAvatar";
 import { type ItemType, ITEM_ICONS } from "../utils/collections";
 import { getRelativeDayOrWeekLabel } from "../utils/date";
+import { setLanguage, SUPPORTED_LANGUAGES, type AppLanguage } from "../lib/i18n";
 import { Ionicons } from "@expo/vector-icons";
-
-const FALLBACK_NAME = "Ukjent bruker";
 
 type LoanHistoryItem = {
   id: string;
@@ -28,6 +28,7 @@ type LoanHistoryItem = {
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { profil } = useProfil();
 
@@ -61,6 +62,7 @@ export default function ProfileScreen() {
     await supabase.auth.signOut();
   }
 
+  const fallbackName = t("common.unknownUser");
   const activeLoans = loans.filter((l) => l.returned_at === null);
   const returnedLoans = loans.filter((l) => l.returned_at !== null);
 
@@ -74,12 +76,12 @@ export default function ProfileScreen() {
         {/* Avatar og navn */}
         <View className="items-center mb-6">
           <UserAvatar
-            name={profil?.full_name ?? FALLBACK_NAME}
+            name={profil?.full_name ?? fallbackName}
             avatarUrl={profil?.avatar_url}
             size={72}
           />
           <Text className="text-content dark:text-content-dark text-xl font-semibold mt-3">
-            {profil?.full_name ?? FALLBACK_NAME}
+            {profil?.full_name ?? fallbackName}
           </Text>
         </View>
 
@@ -87,10 +89,12 @@ export default function ProfileScreen() {
         <TouchableOpacity
           onPress={signOut}
           accessibilityRole="button"
-          accessibilityLabel="Logg ut"
+          accessibilityLabel={t("profile.signOut")}
           className="w-full bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-xl py-4 items-center mb-8"
         >
-          <Text className="text-content dark:text-content-dark font-medium">Logg ut</Text>
+          <Text className="text-content dark:text-content-dark font-medium">
+            {t("profile.signOut")}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -99,7 +103,7 @@ export default function ProfileScreen() {
         accessibilityRole="header"
         className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3"
       >
-        MINE UTLÅN
+        {t("profile.myLoans")}
       </Text>
 
       {loadingLoans ? (
@@ -107,20 +111,20 @@ export default function ProfileScreen() {
       ) : loansError ? (
         <View className="mx-4 bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-2xl p-4 items-center">
           <Text className="text-content dark:text-content-dark text-sm text-center mb-3">
-            Kunne ikke laste utlån.
+            {t("profile.loadError")}
           </Text>
           <TouchableOpacity
             onPress={() => fetchLoans()}
             accessibilityRole="button"
-            accessibilityLabel="Prøv igjen"
+            accessibilityLabel={t("common.retry")}
             className="bg-accent dark:bg-accent-dark rounded-xl px-5 py-2"
           >
-            <Text className="text-white font-semibold text-sm">Prøv igjen</Text>
+            <Text className="text-white font-semibold text-sm">{t("common.retry")}</Text>
           </TouchableOpacity>
         </View>
       ) : loans.length === 0 ? (
         <Text className="text-content-secondary dark:text-content-secondary-dark text-sm px-4">
-          Ingen utlån registrert ennå
+          {t("profile.noLoans")}
         </Text>
       ) : (
         <View className="mx-4 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden">
@@ -137,7 +141,7 @@ export default function ProfileScreen() {
           {activeLoans.length > 0 && returnedLoans.length > 0 && (
             <View className="px-4 py-2 bg-surface-secondary dark:bg-surface-dark-secondary border-y border-border dark:border-border-dark">
               <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold">
-                Returnerte
+                {t("profile.returnedSection")}
               </Text>
             </View>
           )}
@@ -148,6 +152,41 @@ export default function ProfileScreen() {
           ))}
         </View>
       )}
+
+      {/* Språkvelger */}
+      <Text
+        accessibilityRole="header"
+        className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pt-8 pb-3"
+      >
+        {t("profile.language")}
+      </Text>
+      <View className="mx-4 flex-row gap-3">
+        {SUPPORTED_LANGUAGES.map((lang) => {
+          const isSelected = i18n.language === lang;
+          return (
+            <TouchableOpacity
+              key={lang}
+              onPress={() => setLanguage(lang)}
+              accessibilityRole="button"
+              accessibilityLabel={t(`language.${lang}`)}
+              accessibilityState={{ selected: isSelected }}
+              className={`flex-1 py-3 rounded-2xl border items-center ${
+                isSelected
+                  ? "bg-accent dark:bg-accent-dark border-accent dark:border-accent-dark"
+                  : "bg-surface dark:bg-surface-dark border-border dark:border-border-dark"
+              }`}
+            >
+              <Text
+                className={`text-sm font-medium ${
+                  isSelected ? "text-white" : "text-content dark:text-content-dark"
+                }`}
+              >
+                {t(`language.${lang}`)}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </ScrollView>
   );
 }
@@ -155,19 +194,24 @@ export default function ProfileScreen() {
 type LoanRowProps = { loan: LoanHistoryItem; isLast: boolean };
 
 function LoanRow({ loan, isLast }: LoanRowProps) {
+  const { t } = useTranslation();
   const isActive = loan.returned_at === null;
   const itemType = loan.items?.type as ItemType | undefined;
+  const title = loan.items?.title ?? t("common.unknownItem");
+  const subtitle = isActive
+    ? t("profile.loanedTo", {
+        name: loan.borrower_name,
+        when: getRelativeDayOrWeekLabel(loan.loaned_at),
+      })
+    : t("profile.returnedTo", {
+        name: loan.borrower_name,
+        when: getRelativeDayOrWeekLabel(loan.returned_at!),
+      });
 
   return (
     <View
       accessible
-      accessibilityLabel={[
-        loan.items?.title ?? "Ukjent gjenstand",
-        `til ${loan.borrower_name}`,
-        isActive
-          ? `utlånt ${getRelativeDayOrWeekLabel(loan.loaned_at)}`
-          : `returnert ${getRelativeDayOrWeekLabel(loan.returned_at!)}`,
-      ].join(", ")}
+      accessibilityLabel={[title, subtitle].join(", ")}
       className={`flex-row items-center px-4 py-3 ${
         !isLast ? "border-b border-border dark:border-border-dark" : ""
       }`}
@@ -190,12 +234,10 @@ function LoanRow({ loan, isLast }: LoanRowProps) {
           className="text-content dark:text-content-dark text-sm font-medium"
           numberOfLines={1}
         >
-          {loan.items?.title ?? "Ukjent gjenstand"}
+          {title}
         </Text>
         <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-0.5">
-          {isActive
-            ? `til ${loan.borrower_name} · ${getRelativeDayOrWeekLabel(loan.loaned_at)}`
-            : `til ${loan.borrower_name} · returnert ${getRelativeDayOrWeekLabel(loan.returned_at!)}`}
+          {subtitle}
         </Text>
       </View>
 
@@ -214,7 +256,7 @@ function LoanRow({ loan, isLast }: LoanRowProps) {
               : "text-content-secondary dark:text-content-secondary-dark"
           }`}
         >
-          {isActive ? "Utlånt" : "Returnert"}
+          {isActive ? t("profile.statusLoaned") : t("profile.statusReturned")}
         </Text>
       </View>
     </View>

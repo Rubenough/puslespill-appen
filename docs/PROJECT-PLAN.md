@@ -88,10 +88,11 @@ Not a blocking phase; keep these green/moving as you build.
 
 Stand up i18n before building Phase 2 UI so new strings are keys, not hardcoded Norwegian to retrofit. **Plan in [`docs/i18n-plan.md`](./i18n-plan.md).**
 
-- [ ] `i18next` + `react-i18next` + `expo-localization`; `src/lib/i18n.ts`; `src/locales/{no,en}.json`; wrap `App.tsx`.
-- [ ] Make `utils/date.ts` locale-aware (relative words + `toLocaleDateString`).
+- [x] `i18next` + `react-i18next` + `expo-localization`; `src/lib/i18n.ts`; `src/locales/{no,en}.json`; imported in `App.tsx` with persisted override.
+- [x] Language toggle in `ProfileScreen`; `ProfileScreen` migrated as the reference.
+- [ ] Make `utils/date.ts` locale-aware (relative words + `toLocaleDateString`) — its tests assert Norwegian, so update together.
+- [ ] Retrofit remaining screens one-per-PR (mechanical).
 - [ ] Author all Phase 2 UI with `t()` keys.
-- [ ] Retrofit existing screens one-per-PR (mechanical); add ProfileScreen language toggle once primary flows are translated.
 
 ### 2.1 Borrow requests
 

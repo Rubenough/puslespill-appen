@@ -76,13 +76,19 @@ src/
 │   ├── AuthContext.tsx         # Session, user, isLoggedIn — useAuth()
 │   └── ProfilContext.tsx       # User profile from profiles table — useProfil()
 ├── lib/
-│   └── supabase.ts             # Supabase client with ExpoSecureStoreAdapter
+│   ├── supabase.ts             # Typed Supabase client (createClient<Database>)
+│   ├── database.types.ts       # Generated schema types (npm run gen:types)
+│   └── i18n.ts                 # i18next init: device locale + persisted override, setLanguage()
+├── locales/
+│   ├── no.json                 # Norwegian (source of truth)
+│   └── en.json                 # English
 └── utils/
     ├── initials.ts             # Avatar initial generation + deterministic colors
     ├── collections.ts          # ItemType, ITEM_ICONS, ITEM_LABELS, Difficulty
     ├── date.ts                 # Shared date helpers (getDayNumber, relative labels)
+    ├── auth.ts                 # parseOAuthRedirect (pure, tested)
     └── sessionImages.ts        # Shared storage helpers (upload/remove/path-parse for session-images bucket)
-App.tsx                         # Entry point — wraps AuthProvider, routes on session
+App.tsx                         # Entry point — imports i18n, wraps AuthProvider, routes on session
 ```
 
 ## Naming & Language Conventions
@@ -140,6 +146,13 @@ Consult this file when adding new UI — all new components should follow the sa
 ### Data-fetch error handling
 
 - Every screen that fetches data surfaces errors: capture the `error` field (or `try/catch` around helpers that throw) and render an inline "Kunne ikke laste …" message with a "Prøv igjen" retry button instead of a misleading empty state. See `CollectionsScreen`, `FeedScreen` (`SectionError`), `ProfileScreen`, `NewSessionScreen`.
+
+### Internationalization (i18n)
+
+- `lib/i18n.ts` (i18next + react-i18next + expo-localization) is imported once in `App.tsx`. Default = device locale mapped to `no`/`en` (fallback `no`); a manual override is persisted in SecureStore and loaded on startup via `loadPersistedLanguage()`.
+- In UI: `const { t } = useTranslation();` → `t("namespace.key")`. accessibility labels/hints go through `t()` too. Add both `no.json` and `en.json` entries in the same change; `no.json` is source of truth.
+- Language toggle lives in `ProfileScreen` (`setLanguage("no"|"en")`).
+- **Migration is incremental** — new screens use keys; existing Norwegian literals stay until their screen is migrated (one-per-PR). `ProfileScreen` is the migrated reference. `utils/date.ts` is still Norwegian-only (locale-aware dates are a tracked follow-up). See [`docs/i18n-plan.md`](./docs/i18n-plan.md).
 
 ### Contexts
 
