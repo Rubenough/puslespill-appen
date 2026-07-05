@@ -69,6 +69,16 @@ type FeedItem =
       itemType: ItemType;
       itemTitle: string;
       loanedTo?: string;
+    }
+  | {
+      id: string;
+      type: "borrowed";
+      timestamp: string;
+      userName: string;
+      avatarUrl: string | null;
+      itemType: ItemType;
+      itemTitle: string;
+      fromName: string;
     };
 
 // ─── Datahenting ──────────────────────────────────────────────────────────────
@@ -96,14 +106,14 @@ async function attachSessionImages(sessions: ActiveSession[]): Promise<ActiveSes
   }));
 }
 
-// Henter feed-hendelser fra tre parallelle queries og returnerer dem sortert nyest først.
+// Henter feed-hendelser fra fire parallelle queries og returnerer dem sortert nyest først.
 // Profiler hentes i ett separat kall for å unngå avhengighet av FK-konfigurasjon.
 // RLS er venneskopet: sessions/items returnerer kun egne + venners rader — vi
-// filtrerer derfor ikke på bruker her. Lån vises kun for egne (owner_id = userId).
+// filtrerer derfor ikke på bruker her. Lån/lånt vises kun for egen aktivitet.
 async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
   const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [sessionsRes, itemsRes, loansRes] = await Promise.all([
+  const [sessionsRes, itemsRes, loansRes, borrowedRes] = await Promise.all([
     // Sessions siste 14 dager — item-join fungerer siden sessions.item_id → items.id (FK)
     supabase
       .from("sessions")
@@ -130,15 +140,27 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
       .gt("loaned_at", twoWeeksAgo)
       .order("loaned_at", { ascending: false })
       .limit(10),
+
+    // Egen låneaktivitet — godkjente forespørsler der jeg er den som lånte
+    supabase
+      .from("borrow_requests")
+      .select("id, owner_id, responded_at, items(title, type)")
+      .eq("requester_id", userId)
+      .eq("status", "approved")
+      .gt("responded_at", twoWeeksAgo)
+      .order("responded_at", { ascending: false })
+      .limit(10),
   ]);
 
-  const queryError = sessionsRes.error ?? itemsRes.error ?? loansRes.error;
+  const queryError =
+    sessionsRes.error ?? itemsRes.error ?? loansRes.error ?? borrowedRes.error;
   if (queryError) throw queryError;
 
-  // Samle alle unike bruker-IDer fra sessions og items, hent profiler i ett kall
+  // Samle alle unike bruker-IDer fra sessions, items og lån-fra-eiere; hent profiler i ett kall
   const userIds = new Set<string>([userId]);
   for (const s of (sessionsRes.data ?? []) as any[]) userIds.add(s.created_by);
   for (const i of (itemsRes.data ?? []) as any[]) userIds.add(i.owner_id);
+  for (const b of (borrowedRes.data ?? []) as any[]) userIds.add(b.owner_id);
 
   const { data: profilesData } = await supabase
     .from("profiles")
@@ -203,6 +225,23 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
       itemType: loan.items?.type as ItemType,
       itemTitle: loan.items?.title ?? "",
       loanedTo: loan.borrower_name,
+    });
+  }
+
+  // Godkjente forespørsler → "borrowed" (egen låneaktivitet)
+  const self = profilesById.get(userId);
+  for (const req of (borrowedRes.data ?? []) as any[]) {
+    if (!req.responded_at) continue;
+    const owner = profilesById.get(req.owner_id);
+    feedItems.push({
+      id: `borrowed-${req.id}`,
+      type: "borrowed",
+      timestamp: req.responded_at,
+      userName: self?.full_name ?? i18n.t("common.unknownUser"),
+      avatarUrl: self?.avatar_url ?? null,
+      itemType: req.items?.type as ItemType,
+      itemTitle: req.items?.title ?? "",
+      fromName: owner?.full_name ?? i18n.t("common.unknownUser"),
     });
   }
 
@@ -345,6 +384,7 @@ export default function FeedScreen() {
                 itemTitle={item.itemTitle}
                 {...(item.type === "started" ? { withUsers: item.withUsers } : {})}
                 {...(item.type === "loaned" ? { loanedTo: item.loanedTo } : {})}
+                {...(item.type === "borrowed" ? { fromName: item.fromName } : {})}
               />
             ))}
           </View>
