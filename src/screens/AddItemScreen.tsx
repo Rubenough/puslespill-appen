@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { Alert } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
-import { ITEM_LABELS } from "../utils/collections";
+import { itemTypeLabel } from "../utils/collectionLabels";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import ItemForm, { type ItemFormValues } from "../components/ItemForm";
 
@@ -12,6 +13,7 @@ type AddItemRouteProp = RouteProp<RootStackParamList, "AddItem">;
 type AddItemNavProp = NativeStackNavigationProp<RootStackParamList, "AddItem">;
 
 export default function AddItemScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<AddItemNavProp>();
   const route = useRoute<AddItemRouteProp>();
   const { type } = route.params;
@@ -33,7 +35,7 @@ export default function AddItemScreen() {
     setSaving(false);
 
     if (error) {
-      Alert.alert("Noe gikk galt", error.message);
+      Alert.alert(t("common.somethingWrong"), error.message);
       return;
     }
 
@@ -43,9 +45,11 @@ export default function AddItemScreen() {
   return (
     <ItemForm
       type={type}
-      headerLabel={`Legg til ${ITEM_LABELS[type].toLowerCase()}`}
-      saveLabel="Lagre"
-      saveAccessibilityLabel={`Lagre ${ITEM_LABELS[type].toLowerCase()}`}
+      headerLabel={t("itemForm.addHeader", { type: itemTypeLabel(type).toLowerCase() })}
+      saveLabel={t("itemForm.save")}
+      saveAccessibilityLabel={t("itemForm.saveA11y", {
+        type: itemTypeLabel(type).toLowerCase(),
+      })}
       saving={saving}
       onSave={handleSave}
       onClose={() => navigation.goBack()}

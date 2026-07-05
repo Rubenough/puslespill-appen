@@ -10,7 +10,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { type ItemType, type Difficulty, DIFFICULTY_OPTIONS } from "../utils/collections";
+import { difficultyLabel } from "../utils/collectionLabels";
 
 export type ItemFormValues = {
   title: string;
@@ -42,6 +44,7 @@ export default function ItemForm({
   onClose,
 }: ItemFormProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   const [title, setTitle] = useState(initialValues?.title ?? "");
   const [brand, setBrand] = useState(initialValues?.brand ?? "");
@@ -51,7 +54,7 @@ export default function ItemForm({
 
   function handleSave() {
     if (!title.trim()) {
-      Alert.alert("Mangler tittel", "Fyll inn tittel for gjenstanden.");
+      Alert.alert(t("itemForm.missingTitleTitle"), t("itemForm.missingTitleBody"));
       return;
     }
     onSave({ title, brand, pieceCount, playerCount, difficulty });
@@ -68,7 +71,7 @@ export default function ItemForm({
           onPress={onClose}
           className="mr-3"
           accessibilityRole="button"
-          accessibilityLabel="Lukk"
+          accessibilityLabel={t("itemForm.close")}
         >
           <Ionicons name="close" size={24} color="#78716C" accessible={false} />
         </TouchableOpacity>
@@ -84,34 +87,40 @@ export default function ItemForm({
       >
         {/* Tittel */}
         <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2">
-          TITTEL
-        </Text>
-        <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-6">
-          <TextInput
-            className="text-content dark:text-content-dark text-base"
-            placeholder={type === "puslespill" ? "f.eks. Kinkaku-ji" : "f.eks. Wingspan"}
-            placeholderTextColor="#A8A29E"
-            value={title}
-            onChangeText={setTitle}
-            autoFocus
-            accessibilityLabel="Tittel"
-          />
-        </View>
-
-        {/* Merke */}
-        <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2">
-          MERKE (VALGFRITT)
+          {t("itemForm.titleLabel")}
         </Text>
         <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-6">
           <TextInput
             className="text-content dark:text-content-dark text-base"
             placeholder={
-              type === "puslespill" ? "f.eks. Ravensburger" : "f.eks. Stonemaier Games"
+              type === "puslespill"
+                ? t("itemForm.titlePlaceholderPuzzle")
+                : t("itemForm.titlePlaceholderBoardGame")
+            }
+            placeholderTextColor="#A8A29E"
+            value={title}
+            onChangeText={setTitle}
+            autoFocus
+            accessibilityLabel={t("itemForm.titleA11y")}
+          />
+        </View>
+
+        {/* Merke */}
+        <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2">
+          {t("itemForm.brandLabel")}
+        </Text>
+        <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-6">
+          <TextInput
+            className="text-content dark:text-content-dark text-base"
+            placeholder={
+              type === "puslespill"
+                ? t("itemForm.brandPlaceholderPuzzle")
+                : t("itemForm.brandPlaceholderBoardGame")
             }
             placeholderTextColor="#A8A29E"
             value={brand}
             onChangeText={setBrand}
-            accessibilityLabel="Merke (valgfritt)"
+            accessibilityLabel={t("itemForm.brandA11y")}
           />
         </View>
 
@@ -119,22 +128,22 @@ export default function ItemForm({
         {type === "puslespill" && (
           <>
             <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2">
-              ANTALL BRIKKER (VALGFRITT)
+              {t("itemForm.pieceCountLabel")}
             </Text>
             <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-6">
               <TextInput
                 className="text-content dark:text-content-dark text-base"
-                placeholder="f.eks. 1000"
+                placeholder={t("itemForm.pieceCountPlaceholder")}
                 placeholderTextColor="#A8A29E"
                 value={pieceCount}
                 onChangeText={(text) => setPieceCount(text.replace(/[^0-9]/g, ""))}
                 keyboardType="number-pad"
-                accessibilityLabel="Antall brikker (valgfritt)"
+                accessibilityLabel={t("itemForm.pieceCountA11y")}
               />
             </View>
 
             <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2">
-              VANSKELIGHETSGRAD (VALGFRITT)
+              {t("itemForm.difficultyHeader")}
             </Text>
             <View className="flex-row gap-3 mb-6">
               {DIFFICULTY_OPTIONS.map((opt) => (
@@ -142,7 +151,7 @@ export default function ItemForm({
                   key={opt}
                   onPress={() => setDifficulty(difficulty === opt ? "" : opt)}
                   accessibilityRole="button"
-                  accessibilityLabel={opt}
+                  accessibilityLabel={difficultyLabel(opt)}
                   accessibilityState={{ selected: difficulty === opt }}
                   className={`flex-1 py-3 rounded-2xl border items-center ${
                     difficulty === opt
@@ -157,7 +166,7 @@ export default function ItemForm({
                         : "text-content dark:text-content-dark"
                     }`}
                   >
-                    {opt}
+                    {difficultyLabel(opt)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -168,17 +177,17 @@ export default function ItemForm({
         {type === "brettspill" && (
           <>
             <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2">
-              MAKS ANTALL SPILLERE (VALGFRITT)
+              {t("itemForm.playerCountLabel")}
             </Text>
             <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-6">
               <TextInput
                 className="text-content dark:text-content-dark text-base"
-                placeholder="f.eks. 5"
+                placeholder={t("itemForm.playerCountPlaceholder")}
                 placeholderTextColor="#A8A29E"
                 value={playerCount}
                 onChangeText={(text) => setPlayerCount(text.replace(/[^0-9]/g, ""))}
                 keyboardType="number-pad"
-                accessibilityLabel="Maks antall spillere (valgfritt)"
+                accessibilityLabel={t("itemForm.playerCountA11y")}
               />
             </View>
           </>
