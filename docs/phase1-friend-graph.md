@@ -107,7 +107,7 @@ grant execute on function accept_invite(text) to authenticated;
 
 ---
 
-## Step 4 — Lock reads to friends (run after the UI works)
+## Step 4 — Lock reads to friends ✅ APPLIED (2026-07-05)
 
 Replace the interim "all authenticated users can read" policies with self-or-friends. **First drop your current permissive read policies** on these tables (check Dashboard → Auth → Policies for their exact names), then:
 

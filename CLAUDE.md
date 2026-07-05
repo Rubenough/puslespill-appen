@@ -135,7 +135,7 @@ Consult this file when adding new UI — all new components should follow the sa
 - **Legacy rows** that still hold full public URLs keep working — `toStoragePath` extracts the path, so no DB migration is required.
 - **Upload-then-insert ordering:** upload first, then insert/update the DB row. Track the uploaded path outside the `try`; if a later step fails, remove the orphaned file. Once a DB row references the file, set the tracked path to `null` so it is not deleted on a subsequent failure.
 - All async handlers that flip a loading flag (`saving`/`updating`/`deleting`) must use `try/catch/finally` — reset the flag in `finally`, alert in `catch`. Never leave a flag set on a thrown exception.
-- **Dashboard requirement:** the bucket must be **Private** with a storage `SELECT` policy for authenticated users (needed for `createSignedUrl`). Interim policy = any authenticated user; tightened to friend-scoped in the Phase 2 RLS audit (`docs/PROJECT-PLAN.md`).
+- **Dashboard requirement:** the bucket is **Private** with a storage `SELECT` policy (needed for `createSignedUrl`). The policy is **friend-scoped** — a user can sign an object only if the path owner (`(storage.foldername(name))[1]`) is themselves or an accepted friend (`are_friends`). See `docs/phase1-friend-graph.md`.
 
 ### Data-fetch error handling
 

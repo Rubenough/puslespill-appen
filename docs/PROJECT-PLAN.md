@@ -16,7 +16,7 @@ A product review found a gap between the **concept** (friends share/borrow physi
 
 ### The concept spine (new priority order)
 
-1. ✅ **Friends graph** — mutual friendships via invite codes (`friendships` + RPCs), real `FriendsScreen`. _Still open:_ lock reads to friends (Phase 1 Step 4) to close the "feed reads all users" hole.
+1. ✅ **Friends graph** — mutual friendships via invite codes (`friendships` + RPCs), real `FriendsScreen`, and reads locked to friends (Step 4 applied) — the "feed reads all users" hole is closed.
 2. ✅ **Browse a friend's collection** — `FriendCollectionScreen` delivers "alle kan se hva andre eier."
 3. **Borrow-request loop** — request → approve → handoff → return. Turns the current single-sided loan _notebook_ into a shared _library_. ← **next**
 
@@ -69,11 +69,11 @@ Not a blocking phase; keep these green/moving as you build.
 
 ### 1.3 Lock everything to the friend graph (RLS audit)
 
-- [ ] Replace the interim "all authenticated users" reads on `sessions` / `items` / `session_images` with **friend-scoped** policies (self + accepted friends). _This is the privacy fix, not just a feature._
-- [ ] Feed query: drop the implicit all-users behavior; show self + friends only.
-- [ ] Tighten the **storage `SELECT` policy** on `session-images` from "any authenticated" to friend-scoped (path owner is self or a friend).
-- [ ] Re-confirm the loan invariant: `borrower_name` never selectable by non-owners even when `is_public = true`.
-- [ ] Write the policy matrix down (table × role × operation) in `docs/`.
+- [x] Replace the interim "all authenticated users" reads on `sessions` / `items` / `session_images` with **friend-scoped** policies (self + accepted friends). _The privacy fix._
+- [x] Feed query: dropped the implicit all-users behavior — RLS now returns self + friends only (no client change needed).
+- [x] Tightened the **storage `SELECT` policy** on `session-images` to friend-scoped (path owner is self or a friend) — also completes the deferred Phase 5 storage item.
+- [x] Loan invariant holds: `loans` stay owner-only; `borrower_name` never leaks.
+- [x] Policy matrix written in `docs/phase1-friend-graph.md`.
 
 **Exit criteria:** a user only ever sees their own + friends' data; no path to a stranger's item, session, or photo; Friends is fully real.
 
