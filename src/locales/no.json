@@ -29,5 +29,28 @@
   "language": {
     "no": "Norsk",
     "en": "English"
+  },
+  "friends": {
+    "title": "Venner",
+    "myInvite": "MIN INVITASJON",
+    "shareHint": "Del koden din så noen kan legge deg til som venn.",
+    "share": "Del",
+    "shareA11y": "Del invitasjon",
+    "codeA11y": "Din invitasjonskode er {{code}}",
+    "codeLoading": "Laster kode",
+    "addFriend": "LEGG TIL VENN",
+    "enterCode": "Skriv inn kode",
+    "codeField": "Invitasjonskode",
+    "add": "Legg til",
+    "addA11y": "Legg til venn",
+    "listHeader": "VENNER",
+    "loadError": "Kunne ikke laste venner.",
+    "empty": "Ingen venner ennå. Del koden din eller skriv inn en venns kode.",
+    "openCollectionHint": "Trykk for å se samlingen",
+    "addFailed": "Kunne ikke legge til venn",
+    "added": "Lagt til",
+    "addedNamed": "Du og {{name}} er nå venner.",
+    "addedUnnamed": "Dere er nå venner.",
+    "shareMessage": "Legg meg til som venn i appen med koden: {{code}}"
   }
 }
