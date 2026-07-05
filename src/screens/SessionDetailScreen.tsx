@@ -22,9 +22,11 @@ import {
   useFocusEffect,
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { ITEM_ICONS, type ItemType, type Difficulty } from "../utils/collections";
+import { piecesLabel, playersLabel, difficultyLabel } from "../utils/collectionLabels";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import PuzzleProgressIcon, { progressToFilled } from "../components/PuzzleProgressIcon";
 import ProgressSheet from "../components/ProgressSheet";
@@ -70,6 +72,7 @@ type SessionDetail = {
 
 export default function SessionDetailScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
   const navigation = useNavigation<SessionDetailNavProp>();
@@ -190,8 +193,8 @@ export default function SessionDetailScreen() {
     } catch (err) {
       if (uploadedPath) await removeSessionImages([uploadedPath]).catch(() => {});
       Alert.alert(
-        "Noe gikk galt",
-        err instanceof Error ? err.message : "Kunne ikke oppdatere økten.",
+        t("common.somethingWrong"),
+        err instanceof Error ? err.message : t("session.updateError"),
       );
     } finally {
       setUpdating(false);
@@ -205,14 +208,14 @@ export default function SessionDetailScreen() {
     }
 
     // Brettspill: valgark
-    Alert.alert("Oppdater økt", undefined, [
-      { text: "Avbryt", style: "cancel" },
+    Alert.alert(t("session.updateSheetTitle"), undefined, [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Legg til bilde",
+        text: t("session.addImage"),
         onPress: () => setProgressSheetVisible(true),
       },
       {
-        text: "Fullfør økt",
+        text: t("session.completeSession"),
         onPress: async () => {
           setUpdating(true);
           const { error } = await supabase
@@ -221,7 +224,7 @@ export default function SessionDetailScreen() {
             .eq("id", sessionId);
           setUpdating(false);
           if (error) {
-            Alert.alert("Noe gikk galt", error.message);
+            Alert.alert(t("common.somethingWrong"), error.message);
             return;
           }
           navigation.goBack();
@@ -232,10 +235,10 @@ export default function SessionDetailScreen() {
 
   function handleDelete() {
     setMenuVisible(false);
-    Alert.alert("Slett økt?", "Dette kan ikke angres.", [
-      { text: "Avbryt", style: "cancel" },
+    Alert.alert(t("session.deleteConfirmTitle"), t("session.deleteBody"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Slett",
+        text: t("session.delete"),
         style: "destructive",
         onPress: async () => {
           setDeleting(true);
@@ -257,7 +260,7 @@ export default function SessionDetailScreen() {
               .delete()
               .eq("session_id", sessionId);
             if (imgError)
-              throw new Error(`Kunne ikke slette bilder: ${imgError.message}`);
+              throw new Error(t("session.deleteImagesError", { msg: imgError.message }));
 
             // Slett session_participants-rader
             const { error: partError } = await supabase
@@ -265,7 +268,9 @@ export default function SessionDetailScreen() {
               .delete()
               .eq("session_id", sessionId);
             if (partError)
-              throw new Error(`Kunne ikke slette deltakere: ${partError.message}`);
+              throw new Error(
+                t("session.deleteParticipantsError", { msg: partError.message }),
+              );
 
             // Slett selve økten — bruk .select() for å verifisere at raden faktisk ble slettet
             const { data: deleted, error } = await supabase
@@ -276,7 +281,7 @@ export default function SessionDetailScreen() {
 
             if (error) throw new Error(error.message);
             if (!deleted || deleted.length === 0) {
-              throw new Error("Økten ble ikke slettet. Du har kanskje ikke tilgang.");
+              throw new Error(t("session.deleteNoAccess"));
             }
 
             // Rydd storage først etter bekreftet sletting — best-effort.
@@ -285,8 +290,8 @@ export default function SessionDetailScreen() {
             navigation.goBack();
           } catch (err) {
             Alert.alert(
-              "Noe gikk galt",
-              err instanceof Error ? err.message : "Kunne ikke slette økten.",
+              t("common.somethingWrong"),
+              err instanceof Error ? err.message : t("session.deleteError"),
             );
           } finally {
             setDeleting(false);
@@ -322,10 +327,10 @@ export default function SessionDetailScreen() {
   const metaParts: string[] = [];
   if (session.item.brand) metaParts.push(session.item.brand);
   if (session.item.type === "puslespill" && session.item.piece_count)
-    metaParts.push(`${session.item.piece_count} brikker`);
+    metaParts.push(piecesLabel(session.item.piece_count));
   if (session.item.type === "brettspill" && session.item.player_count)
-    metaParts.push(`${session.item.player_count} spillere`);
-  if (session.item.difficulty) metaParts.push(session.item.difficulty);
+    metaParts.push(playersLabel(session.item.player_count));
+  if (session.item.difficulty) metaParts.push(difficultyLabel(session.item.difficulty));
   const metaSubtitle = metaParts.join(" · ");
   const isPuzzle = session.item.type === "puslespill";
   const showProgress = isPuzzle && session.progress_pct !== null;
@@ -340,7 +345,7 @@ export default function SessionDetailScreen() {
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           accessibilityRole="button"
-          accessibilityLabel="Tilbake"
+          accessibilityLabel={t("common.back")}
           className="mr-3"
         >
           <Ionicons name="arrow-back" size={24} color="#78716C" accessible={false} />
@@ -354,8 +359,8 @@ export default function SessionDetailScreen() {
         <TouchableOpacity
           onPress={() => setMenuVisible(true)}
           accessibilityRole="button"
-          accessibilityLabel="Flere handlinger"
-          accessibilityHint="Åpner meny med rediger og slett"
+          accessibilityLabel={t("session.moreActions")}
+          accessibilityHint={t("session.moreActionsHint")}
           className="w-9 h-9 rounded-full bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center"
         >
           <Ionicons
@@ -389,16 +394,21 @@ export default function SessionDetailScreen() {
                 accessible={false}
               />
               <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mt-2">
-                Ingen bilder ennå
+                {t("session.noImagesYet")}
               </Text>
             </View>
           )}
           {/* Dag-badge */}
           <View className="absolute bottom-3 left-3 bg-black/50 rounded-full px-3 py-1">
             <Text className="text-white text-xs font-semibold">
-              Dag {dayNumber} · Startet {formatShortDate(session.started_at)}
+              {t("session.dayStarted", {
+                day: dayNumber,
+                start: formatShortDate(session.started_at),
+              })}
               {isCompleted && session.completed_at
-                ? ` · Fullført ${formatShortDate(session.completed_at)}`
+                ? ` ${t("session.completedAppendix", {
+                    end: formatShortDate(session.completed_at),
+                  })}`
                 : ""}
             </Text>
           </View>
@@ -410,7 +420,9 @@ export default function SessionDetailScreen() {
           accessibilityLabel={[
             session.item.title,
             metaSubtitle,
-            showProgress ? `${session.progress_pct} prosent` : null,
+            showProgress
+              ? t("session.progressPctA11y", { pct: session.progress_pct })
+              : null,
           ]
             .filter(Boolean)
             .join(", ")}
@@ -427,7 +439,7 @@ export default function SessionDetailScreen() {
                 })
               }
               accessibilityRole="button"
-              accessibilityLabel="Vis bilde av boksen i fullskjerm"
+              accessibilityLabel={t("session.coverFullscreenA11y")}
               className="mr-3"
             >
               <Image
@@ -480,7 +492,7 @@ export default function SessionDetailScreen() {
               accessibilityRole="header"
               className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 mb-3"
             >
-              FREMGANG
+              {t("session.progressHeader")}
             </Text>
             <ScrollView
               horizontal
@@ -492,7 +504,16 @@ export default function SessionDetailScreen() {
                   key={img.id}
                   onPress={() => setFullscreenImage(img)}
                   accessibilityRole="button"
-                  accessibilityLabel={`Vis bilde fra ${formatShortDate(img.captured_at)}${img.note ? `, ${img.note}` : ""} i fullskjerm`}
+                  accessibilityLabel={
+                    img.note
+                      ? t("session.progressImageA11yNote", {
+                          date: formatShortDate(img.captured_at),
+                          note: img.note,
+                        })
+                      : t("session.progressImageA11y", {
+                          date: formatShortDate(img.captured_at),
+                        })
+                  }
                   style={{ width: 100 }}
                 >
                   <Image
@@ -525,7 +546,7 @@ export default function SessionDetailScreen() {
               accessibilityRole="header"
               className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-3"
             >
-              DELTAKERE
+              {t("session.participantsHeader")}
             </Text>
             <View className="flex-row flex-wrap gap-2">
               {session.guest_names.map((name) => (
@@ -551,7 +572,7 @@ export default function SessionDetailScreen() {
               accessibilityRole="header"
               className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2"
             >
-              NOTAT
+              {t("session.noteHeader")}
             </Text>
             <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-3">
               <Text className="text-content dark:text-content-dark text-base">
@@ -574,14 +595,16 @@ export default function SessionDetailScreen() {
             onPress={handleUpdate}
             disabled={updating}
             accessibilityRole="button"
-            accessibilityLabel="Oppdater økt"
+            accessibilityLabel={t("session.updateA11y")}
             accessibilityState={{ disabled: updating }}
             className="bg-accent dark:bg-accent-dark rounded-2xl py-4 items-center"
           >
             {updating ? (
               <ActivityIndicator size="small" color="white" />
             ) : (
-              <Text className="text-white text-base font-semibold">Oppdater</Text>
+              <Text className="text-white text-base font-semibold">
+                {t("session.update")}
+              </Text>
             )}
           </TouchableOpacity>
         </View>
@@ -606,7 +629,7 @@ export default function SessionDetailScreen() {
           className="flex-1 bg-black/40"
           onPress={() => setMenuVisible(false)}
           accessibilityRole="button"
-          accessibilityLabel="Lukk meny"
+          accessibilityLabel={t("session.closeMenu")}
         />
         <View
           className="bg-surface dark:bg-surface-dark rounded-t-3xl px-4 pt-2"
@@ -625,7 +648,7 @@ export default function SessionDetailScreen() {
                 });
               }}
               accessibilityRole="button"
-              accessibilityLabel="Rediger deltakere og notat"
+              accessibilityLabel={t("session.editParticipants")}
               className="flex-row items-center px-4 py-4 border-b border-border dark:border-border-dark"
             >
               <Ionicons
@@ -635,7 +658,7 @@ export default function SessionDetailScreen() {
                 accessible={false}
               />
               <Text className="text-content dark:text-content-dark text-base ml-3">
-                Rediger deltakere og notat
+                {t("session.editParticipants")}
               </Text>
             </TouchableOpacity>
 
@@ -643,7 +666,7 @@ export default function SessionDetailScreen() {
               onPress={handleDelete}
               disabled={deleting}
               accessibilityRole="button"
-              accessibilityLabel="Slett økt"
+              accessibilityLabel={t("session.deleteSession")}
               accessibilityState={{ disabled: deleting }}
               className="flex-row items-center px-4 py-4"
             >
@@ -657,18 +680,20 @@ export default function SessionDetailScreen() {
                   accessible={false}
                 />
               )}
-              <Text className="text-red-500 text-base ml-3">Slett økt</Text>
+              <Text className="text-red-500 text-base ml-3">
+                {t("session.deleteSession")}
+              </Text>
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity
             onPress={() => setMenuVisible(false)}
             accessibilityRole="button"
-            accessibilityLabel="Avbryt"
+            accessibilityLabel={t("common.cancel")}
             className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center"
           >
             <Text className="text-content dark:text-content-dark font-semibold text-base">
-              Avbryt
+              {t("common.cancel")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -686,7 +711,7 @@ export default function SessionDetailScreen() {
           style={{ flex: 1 }}
           onPress={() => setFullscreenImage(null)}
           accessibilityRole="button"
-          accessibilityLabel="Lukk fullskjerm"
+          accessibilityLabel={t("session.closeFullscreen")}
         >
           <BlurView
             intensity={80}
@@ -697,7 +722,7 @@ export default function SessionDetailScreen() {
             <TouchableOpacity
               onPress={() => setFullscreenImage(null)}
               accessibilityRole="button"
-              accessibilityLabel="Lukk fullskjerm"
+              accessibilityLabel={t("session.closeFullscreen")}
               style={{
                 position: "absolute",
                 top: insets.top + 12,
