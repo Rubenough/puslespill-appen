@@ -186,6 +186,39 @@ create policy "borrower can see own loans" on loans
 
 Policy matrix update: `loans` SELECT becomes **owner or borrower** (was owner-only). INSERT/UPDATE/DELETE stay owner-only.
 
+### C.2 Borrower-initiated return, owner confirms — shipped
+
+The return stays **owner-authoritative** (the item is theirs), so the borrower only _signals_ "returned" and the owner _confirms_. A `return_requested_at` column persists the signal; a security-definer RPC lets the borrower set it (they have no `loans` UPDATE policy — all mutations go through RPCs). Owner confirmation reuses the existing "UTLÅNT NÅ" return tap (sets `returned_at`, `trg_sync_item_status` flips the item back to `Tilgjengelig`).
+
+UI: borrower taps a **"DU LÅNER NÅ"** row → "Marker som levert" → row shows a **"Retur meldt"** badge; the owner's matching **"UTLÅNT NÅ"** row shows the same **"Retur meldt"** badge until they confirm.
+
+Run once in the SQL editor:
+
+```sql
+alter table loans add column if not exists return_requested_at timestamptz;
+
+create or replace function mark_loan_returned(p_loan_id uuid)
+returns loans
+language plpgsql security definer set search_path = public as $$
+declare v_loan loans;
+begin
+  select * into v_loan from loans where id = p_loan_id;
+  if v_loan.id is null then raise exception 'Fant ikke lånet'; end if;
+  if v_loan.borrower_user_id is distinct from auth.uid() then
+    raise exception 'Bare låntakeren kan melde retur'; end if;
+  if v_loan.returned_at is not null then
+    raise exception 'Lånet er allerede returnert'; end if;
+
+  update loans set return_requested_at = now()
+    where id = p_loan_id returning * into v_loan;
+  return v_loan;
+end; $$;
+
+grant execute on function mark_loan_returned(uuid) to authenticated;
+```
+
+`database.types.ts` was hand-edited to add `loans.return_requested_at` + the `mark_loan_returned` function; a `npm run gen:types` after applying the SQL will regenerate the same shape.
+
 ### D. Feed (optional, later)
 
 Add a `borrowed` feed event when a request is approved (owner's public activity), mirroring the existing `loaned` card. **Shipped** — sourced from the borrower's own approved `borrow_requests`.
