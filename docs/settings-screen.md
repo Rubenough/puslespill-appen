@@ -1,7 +1,9 @@
 # Dedicated Settings screen — design + plan
 
-**Status:** 📝 Plan — not yet implemented. Follow-up to the theme toggle (#16), which parked a
-dedicated Settings screen as the natural next step (see [`dark-mode-toggle.md`](./dark-mode-toggle.md)).
+**Status:** ✅ Shipped (PR 1). Follow-up to the theme toggle (#16), which parked a dedicated
+Settings screen as the natural next step (see [`dark-mode-toggle.md`](./dark-mode-toggle.md)).
+The design below is retained as the record; **§10 documents where the shipped code corrected the
+plan** after review.
 
 ## 1. Why now / UX rationale
 
@@ -95,3 +97,29 @@ i18n / Phase 2 branches move.
 2. **Version footer** — _recommend yes_ (`expo-constants` → `nativeApplicationVersion`); cheap and
    useful for a friend-group beta.
 3. **Header title** — Norwegian **"Innstillinger"** (matches `nb-NO`; app brand is "Fordriv").
+
+## 10. Implementation notes — corrections applied at build
+
+The plan was reviewed before coding; five points were corrected in the shipped `SettingsScreen`:
+
+1. **Version footer uses `expo-application`, not `expo-constants`.** `nativeApplicationVersion` is
+   an `expo-application` API (the old `Constants.nativeAppVersion` is deprecated), and neither
+   package was previously installed. Shipped: `npx expo install expo-application`, then
+   `Application.nativeApplicationVersion` + `nativeBuildVersion`. **Native module added → the dev
+   client must be rebuilt** (`npm run rebuild:check`); in an un-rebuilt client the version falls
+   back to `"1.0.0"`.
+2. **Back chevron is not hardcoded `#78716C`.** stone-500 fails contrast on dark surfaces
+   (CLAUDE.md). The chevron (and the Profile gear) read `useColorScheme()` **from `nativewind`**
+   and pick the content-secondary token per scheme (`#78716C` light / `#A8A29E` dark).
+3. **i18n keys.** New `settings` namespace in both locales at parity: `title`, `language`
+   (moved off the now-removed `profile.language`), `signOutConfirmTitle`, `signOutConfirmMessage`,
+   `version`. The Appearance header **reuses `theme.title`** (no duplicate `settings.appearance`).
+   Sign-out Alert buttons reuse `common.cancel` + `profile.signOut`.
+4. **Gear entry a11y.** The Profile gear has `accessibilityRole="button"`,
+   `accessibilityLabel={t("settings.title")}`, and `hitSlop`.
+5. **Bottom safe-area.** The scroll content pads `insets.bottom + 24` so the sign-out button and
+   version footer clear the home indicator.
+
+Not done (deferred, low risk): the optional `SettingsScreen` render/sign-out-confirm test (§6) —
+the moved toggles are already covered by `ThemeContext.test`; the one new behaviour is the
+sign-out confirm Alert. Worth adding if this screen grows.

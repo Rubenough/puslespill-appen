@@ -77,8 +77,7 @@
     "statusReturned": "Returnert",
     "toBorrower": "til {{name}}",
     "returnedTo": "til {{name}} · returnert {{when}}",
-    "loanedTo": "til {{name}} · {{when}}",
-    "language": "SPRÅK"
+    "loanedTo": "til {{name}} · {{when}}"
   },
   "language": {
     "no": "Norsk",
@@ -89,6 +88,13 @@
     "system": "System",
     "light": "Lyst",
     "dark": "Mørkt"
+  },
+  "settings": {
+    "title": "Innstillinger",
+    "language": "SPRÅK",
+    "signOutConfirmTitle": "Logg ut?",
+    "signOutConfirmMessage": "Er du sikker på at du vil logge ut?",
+    "version": "Fordriv v{{version}}"
   },
   "borrow": {
     "ask": "Be om å låne",
