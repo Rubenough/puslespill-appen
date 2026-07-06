@@ -24,7 +24,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 **Pick up next (in priority order):**
 
-1. **Phase 2.2 Notifications** — `expo-notifications` + push token on `profiles` + Supabase Edge Function (borrow request/approve, **loan reminders / overdue nudges** — `loans.due_at` now exists to drive them). Design in [`docs/phase2-borrow-loop.md`](./phase2-borrow-loop.md) §Notifications.
+1. **Phase 2.2 Notifications** — `expo-notifications` + a `notifications` queue table + Supabase Edge Function + Database Webhook (borrow request/approve, return signals, **overdue nudges** off `loans.due_at`). **Full design in [`docs/phase2.2-notifications.md`](./phase2.2-notifications.md)** — Android-first; iOS deferred to Phase 4 with Apple Sign-In.
 2. ~~**Due date on the approve-a-request flow**~~ ✅ Done — `approve_request` takes an optional `p_due_at date`; `RequestsScreen` shows quick-pick chips per incoming request (shared `utils/loans.ts`). **Requires the updated RPC applied in the Supabase dashboard** (see [`docs/phase2-borrow-loop.md`](./phase2-borrow-loop.md)) + `npm run gen:types`.
 3. **Phase 2.3 Swap/give-away status** and **2.4 Wishlist** (see below).
 4. **Deferred DB tasks** (batch when next in the SQL editor): regenerate types (`npm run gen:types`) to replace the **hand-edited** `database.types.ts` loan columns/RPCs; `delete_session` RPC; CHECK/NOT NULL column constraints (unlocks removing the last `as any` casts); dedupe policies in [`docs/db-cleanup.md`](./db-cleanup.md).
@@ -143,8 +143,11 @@ Full design + SQL in [`docs/phase2-borrow-loop.md`](./phase2-borrow-loop.md) §C
 
 ### 2.2 Notifications (the nudge channel)
 
-- [ ] Expo Notifications: push-token registration + storage; server-side sends (Supabase Edge Function or scheduled job).
-- [ ] Triggers: incoming borrow request, request approved/declined, borrower's "Retur meldt" / owner's "Be om retur," "added you to a session," and **overdue-loan nudges** (drive off `loans.due_at`).
+**Full design + phasing in [`docs/phase2.2-notifications.md`](./phase2.2-notifications.md)** (Android-first; iOS deferred to Phase 4).
+
+- [ ] Per-device tokens (`device_push_tokens`) + `profiles.locale`; register on login.
+- [ ] `notifications` queue table → Database Webhook → `push` Edge Function (Deno) → Expo Push API.
+- [ ] Enqueue from the existing RPCs: incoming borrow request, approved/declined, borrower's "Retur meldt" / owner's "Be om retur," and **overdue-loan nudges** via `pg_cron` (drive off `loans.due_at`). "Added to a session" + iOS come later.
 
 ### 2.3 Serve puzzles' natural lifecycle
 

@@ -281,8 +281,9 @@ plus error strings surfaced from the RPCs (kept server-side in Norwegian for now
 
 ---
 
-## Notifications (Step 4 — optional, later)
+## Notifications (Step 4)
 
-- `expo-notifications`: register push token → store on `profiles.push_token`.
-- Send via a Supabase Edge Function triggered on `borrow_requests` insert/update: notify owner on new request, requester on approve/decline.
-- Also enables the deferred **loan reminder after X weeks**.
+Fully designed in **[`phase2.2-notifications.md`](./phase2.2-notifications.md)** — Android-first,
+a `notifications` queue table + Database Webhook + a `push` Edge Function, per-device tokens, and
+`profiles.locale` for localized copy. (This section's original single-column / per-table sketch was
+superseded there.)
