@@ -48,7 +48,8 @@
           "cameraPermission": "Appen bruker kameraet for å ta bilder av økter."
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "expo-font"
     ],
     "extra": {
       "eas": {
