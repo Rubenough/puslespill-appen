@@ -201,7 +201,7 @@ RootNavigator (Stack)
 
 ### Database
 
-The client is typed: `createClient<Database>` in `supabase.ts`, where `Database` comes from `src/lib/database.types.ts` (generated). **Regenerate after any schema change** with `supabase login && npm run gen:types` (project ref `mzcppyhxikbkawmyrkrh`). The generated file is git-tracked but excluded from lint/format. **Note:** the `loans` lifecycle columns/RPCs were hand-edited into this file (client shipped before the SQL) — a `gen:types` run will reconcile it (tracked in `PROJECT-PLAN.md` Track 0).
+The client is typed: `createClient<Database>` in `supabase.ts`, where `Database` comes from `src/lib/database.types.ts` (generated). **Regenerate after any schema change** with `supabase login && npm run gen:types` (project ref `mzcppyhxikbkawmyrkrh`). The generated file is git-tracked but excluded from lint/format.
 
 Caveat: `type`/`difficulty`/`status` are `text` columns and some timestamps are nullable-with-default, so they come back as `string` / `string | null`. Where the app narrows to a union (`ItemType`, `Difficulty`, `ItemStatus`) or a non-null timestamp, a boundary cast at the query is still needed until DB `CHECK`/`NOT NULL` constraints are added (see `docs/PROJECT-PLAN.md` Track 0).
 

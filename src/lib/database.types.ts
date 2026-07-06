@@ -415,6 +415,28 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      decline_request: {
+        Args: { p_request_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          item_id: string
+          loan_id: string | null
+          message: string | null
+          owner_id: string
+          requester_id: string
+          responded_at: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "borrow_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      gen_invite_code: { Args: never; Returns: string }
+      get_my_invite_code: { Args: never; Returns: string }
       mark_loan_returned: {
         Args: { p_loan_id: string }
         Returns: {
@@ -438,6 +460,26 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      request_to_borrow: {
+        Args: { p_item_id: string; p_message?: string }
+        Returns: {
+          created_at: string
+          id: string
+          item_id: string
+          loan_id: string | null
+          message: string | null
+          owner_id: string
+          requester_id: string
+          responded_at: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "borrow_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       unmark_loan_returned: {
         Args: { p_loan_id: string }
         Returns: {
@@ -457,48 +499,6 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "loans"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      decline_request: {
-        Args: { p_request_id: string }
-        Returns: {
-          created_at: string
-          id: string
-          item_id: string
-          loan_id: string | null
-          message: string | null
-          owner_id: string
-          requester_id: string
-          responded_at: string | null
-          status: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "borrow_requests"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      gen_invite_code: { Args: never; Returns: string }
-      get_my_invite_code: { Args: never; Returns: string }
-      request_to_borrow: {
-        Args: { p_item_id: string; p_message?: string }
-        Returns: {
-          created_at: string
-          id: string
-          item_id: string
-          loan_id: string | null
-          message: string | null
-          owner_id: string
-          requester_id: string
-          responded_at: string | null
-          status: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "borrow_requests"
           isOneToOne: true
           isSetofReturn: false
         }
