@@ -77,8 +77,7 @@
     "statusReturned": "Returned",
     "toBorrower": "to {{name}}",
     "returnedTo": "to {{name}} · returned {{when}}",
-    "loanedTo": "to {{name}} · {{when}}",
-    "language": "LANGUAGE"
+    "loanedTo": "to {{name}} · {{when}}"
   },
   "language": {
     "no": "Norsk",
@@ -89,6 +88,13 @@
     "system": "System",
     "light": "Light",
     "dark": "Dark"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "LANGUAGE",
+    "signOutConfirmTitle": "Sign out?",
+    "signOutConfirmMessage": "Are you sure you want to sign out?",
+    "version": "Fordriv v{{version}}"
   },
   "borrow": {
     "ask": "Ask to borrow",
@@ -179,6 +185,7 @@
     "nameLabel": "NAME",
     "namePlaceholder": "e.g. Kari Nordmann",
     "nameFieldA11y": "Borrower name",
+    "pickFriendHint": "Tap to pick this friend as the borrower",
     "visibleToFriends": "Visible to mutual friends",
     "visibleToFriendsDesc": "Shows that you've lent it out — not to whom",
     "visibleToFriendsHint": "Shows that you've lent it out, but not to whom",

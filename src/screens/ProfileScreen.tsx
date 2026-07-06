@@ -6,8 +6,10 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useColorScheme } from "nativewind";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
@@ -15,9 +17,10 @@ import { useProfil } from "../context/ProfilContext";
 import UserAvatar from "../components/UserAvatar";
 import { type ItemType, ITEM_ICONS } from "../utils/collections";
 import { getRelativeDayOrWeekLabel } from "../utils/date";
-import { setLanguage, SUPPORTED_LANGUAGES, type AppLanguage } from "../lib/i18n";
-import { useTheme, THEME_OPTIONS } from "../context/ThemeContext";
+import { RootStackParamList } from "../navigation/RootNavigator";
 import { Ionicons } from "@expo/vector-icons";
+
+type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 type LoanHistoryItem = {
   id: string;
@@ -29,10 +32,14 @@ type LoanHistoryItem = {
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const navigation = useNavigation<NavProp>();
+  const { colorScheme } = useColorScheme();
   const { user } = useAuth();
   const { profil } = useProfil();
-  const { preference, setPreference } = useTheme();
+
+  // content-secondary (#78716C) feiler kontrast på mørk flate; bruk content-dark-secondary der.
+  const gearColor = colorScheme === "dark" ? "#A8A29E" : "#78716C";
 
   const [loans, setLoans] = useState<LoanHistoryItem[]>([]);
   const [loadingLoans, setLoadingLoans] = useState(true);
@@ -60,10 +67,6 @@ export default function ProfileScreen() {
     }, [fetchLoans]),
   );
 
-  async function signOut() {
-    await supabase.auth.signOut();
-  }
-
   const fallbackName = t("common.unknownUser");
   const activeLoans = loans.filter((l) => l.returned_at === null);
   const returnedLoans = loans.filter((l) => l.returned_at !== null);
@@ -75,8 +78,25 @@ export default function ProfileScreen() {
       contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 32 }}
     >
       <View className="px-4">
+        {/* Topprad: tannhjul til innstillinger */}
+        <View className="flex-row justify-end mb-2">
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Settings")}
+            accessibilityRole="button"
+            accessibilityLabel={t("settings.title")}
+            hitSlop={8}
+          >
+            <Ionicons
+              name="settings-outline"
+              size={24}
+              color={gearColor}
+              accessible={false}
+            />
+          </TouchableOpacity>
+        </View>
+
         {/* Avatar og navn */}
-        <View className="items-center mb-6">
+        <View className="items-center mb-8">
           <UserAvatar
             name={profil?.full_name ?? fallbackName}
             avatarUrl={profil?.avatar_url}
@@ -86,18 +106,6 @@ export default function ProfileScreen() {
             {profil?.full_name ?? fallbackName}
           </Text>
         </View>
-
-        {/* Logg ut */}
-        <TouchableOpacity
-          onPress={signOut}
-          accessibilityRole="button"
-          accessibilityLabel={t("profile.signOut")}
-          className="w-full bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-xl py-4 items-center mb-8"
-        >
-          <Text className="text-content dark:text-content-dark font-medium">
-            {t("profile.signOut")}
-          </Text>
-        </TouchableOpacity>
       </View>
 
       {/* Utlånshistorikk */}
@@ -154,76 +162,6 @@ export default function ProfileScreen() {
           ))}
         </View>
       )}
-
-      {/* Språkvelger */}
-      <Text
-        accessibilityRole="header"
-        className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pt-8 pb-3"
-      >
-        {t("profile.language")}
-      </Text>
-      <View className="mx-4 flex-row gap-3">
-        {SUPPORTED_LANGUAGES.map((lang) => {
-          const isSelected = i18n.language === lang;
-          return (
-            <TouchableOpacity
-              key={lang}
-              onPress={() => setLanguage(lang)}
-              accessibilityRole="button"
-              accessibilityLabel={t(`language.${lang}`)}
-              accessibilityState={{ selected: isSelected }}
-              className={`flex-1 py-3 rounded-2xl border items-center ${
-                isSelected
-                  ? "bg-accent dark:bg-accent-dark border-accent dark:border-accent-dark"
-                  : "bg-surface dark:bg-surface-dark border-border dark:border-border-dark"
-              }`}
-            >
-              <Text
-                className={`text-sm font-medium ${
-                  isSelected ? "text-white" : "text-content dark:text-content-dark"
-                }`}
-              >
-                {t(`language.${lang}`)}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      {/* Utseende (tema) */}
-      <Text
-        accessibilityRole="header"
-        className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pt-8 pb-3"
-      >
-        {t("theme.title")}
-      </Text>
-      <View className="mx-4 flex-row gap-3">
-        {THEME_OPTIONS.map((option) => {
-          const isSelected = preference === option;
-          return (
-            <TouchableOpacity
-              key={option}
-              onPress={() => setPreference(option)}
-              accessibilityRole="button"
-              accessibilityLabel={t(`theme.${option}`)}
-              accessibilityState={{ selected: isSelected }}
-              className={`flex-1 py-3 rounded-2xl border items-center ${
-                isSelected
-                  ? "bg-accent dark:bg-accent-dark border-accent dark:border-accent-dark"
-                  : "bg-surface dark:bg-surface-dark border-border dark:border-border-dark"
-              }`}
-            >
-              <Text
-                className={`text-sm font-medium ${
-                  isSelected ? "text-white" : "text-content dark:text-content-dark"
-                }`}
-              >
-                {t(`theme.${option}`)}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
     </ScrollView>
   );
 }

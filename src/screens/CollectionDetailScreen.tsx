@@ -34,6 +34,8 @@ import { CollectionsStackParamList } from "../navigation/CollectionsStack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import { fetchFriends, type Friend } from "../utils/friends";
+import UserAvatar from "../components/UserAvatar";
 
 type CollectionDetailRouteProp = RouteProp<CollectionsStackParamList, "CollectionDetail">;
 type RootNavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -73,8 +75,15 @@ export default function CollectionDetailScreen() {
   const [loanItem, setLoanItem] = useState<Item | null>(null);
   const [loanModalVisible, setLoanModalVisible] = useState(false);
   const [borrowerName, setBorrowerName] = useState("");
+  const [borrowerUserId, setBorrowerUserId] = useState<string | null>(null);
+  const [friends, setFriends] = useState<Friend[]>([]);
   const [loanIsPublic, setLoanIsPublic] = useState(false);
   const [loanDueKey, setLoanDueKey] = useState<string>("none");
+
+  // Be om retur-modal (eier ber låntaker levere tilbake)
+  const [requestReturnItem, setRequestReturnItem] = useState<Item | null>(null);
+  const [returnNote, setReturnNote] = useState("");
+  const [requestingReturn, setRequestingReturn] = useState(false);
 
   // Refetch when screen comes back into focus (e.g. after adding or editing an item)
   const fetchItems = useCallback(
@@ -109,10 +118,28 @@ export default function CollectionDetailScreen() {
   function openLoanModal() {
     setLoanItem(selectedItem); // lagre referanse før vi lukker handlingsarket
     setBorrowerName("");
+    setBorrowerUserId(null);
     setLoanIsPublic(false);
     setLoanDueKey("none");
     setSelectedItem(null); // lukk handlingsarket
     setLoanModalVisible(true);
+    // Last venner for hurtigvalg; feiler stille → fri­tekst fungerer fortsatt.
+    if (user)
+      fetchFriends(user.id)
+        .then(setFriends)
+        .catch(() => setFriends([]));
+  }
+
+  // Velg en venn fra listen → forhåndsutfyll navn og knytt til borrower_user_id.
+  function selectFriend(friend: Friend) {
+    setBorrowerName(friend.name ?? "");
+    setBorrowerUserId(friend.id);
+  }
+
+  // Fri­tekst: bruker skriver selv → koble fra ev. valgt venn.
+  function onBorrowerNameChange(text: string) {
+    setBorrowerName(text);
+    if (borrowerUserId) setBorrowerUserId(null);
   }
 
   async function handleLoan() {
@@ -132,6 +159,7 @@ export default function CollectionDetailScreen() {
       item_id: loanItem.id,
       owner_id: user!.id,
       borrower_name: borrowerName.trim(),
+      borrower_user_id: borrowerUserId,
       is_public: loanIsPublic,
       due_at: dueAtFromKey(loanDueKey),
     });
@@ -170,6 +198,36 @@ export default function CollectionDetailScreen() {
     setItems((prev) =>
       prev.map((i) => (i.id === item.id ? { ...i, status: "Tilgjengelig" } : i)),
     );
+  }
+
+  function openRequestReturn() {
+    setRequestReturnItem(selectedItem); // lagre referanse før vi lukker handlingsarket
+    setReturnNote("");
+    setSelectedItem(null);
+  }
+
+  async function handleSendReturnRequest() {
+    if (!requestReturnItem) return;
+    setRequestingReturn(true);
+
+    // Sett owner_return_requested_at på det aktive lånet for denne tingen (borrower ser "Retur etterspurt")
+    const { error } = await supabase
+      .from("loans")
+      .update({
+        owner_return_requested_at: new Date().toISOString(),
+        owner_return_note: returnNote.trim() || null,
+      })
+      .eq("item_id", requestReturnItem.id)
+      .is("returned_at", null);
+
+    setRequestingReturn(false);
+
+    if (error) {
+      Alert.alert(t("common.somethingWrong"), error.message);
+      return;
+    }
+
+    setRequestReturnItem(null);
   }
 
   async function handleDelete(item: Item) {
@@ -225,6 +283,14 @@ export default function CollectionDetailScreen() {
       </View>
     );
   }
+
+  // Vennehurtigvalg i utlånsmodalen: skjul når en venn allerede er valgt,
+  // ellers filtrer på det som er skrevet i navnefeltet.
+  const friendQuery = borrowerName.trim().toLowerCase();
+  const friendMatches =
+    borrowerUserId !== null
+      ? []
+      : friends.filter((f) => (f.name ?? "").toLowerCase().includes(friendQuery));
 
   return (
     <>
@@ -403,17 +469,31 @@ export default function CollectionDetailScreen() {
                 </Text>
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity
-                onPress={() => selectedItem && handleReturn(selectedItem)}
-                accessibilityRole="button"
-                accessibilityLabel={t("loans.registerReturn")}
-                className="flex-row items-center px-4 py-4"
-              >
-                <Ionicons name="arrow-undo-outline" size={22} color="#1D9E75" />
-                <Text className="text-content dark:text-content-dark text-base ml-3">
-                  {t("loans.registerReturn")}
-                </Text>
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity
+                  onPress={openRequestReturn}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("collections.requestReturn")}
+                  className="flex-row items-center px-4 py-4 border-b border-border dark:border-border-dark"
+                >
+                  <Ionicons name="notifications-outline" size={22} color="#1D9E75" />
+                  <Text className="text-content dark:text-content-dark text-base ml-3">
+                    {t("collections.requestReturn")}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => selectedItem && handleReturn(selectedItem)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("loans.registerReturn")}
+                  className="flex-row items-center px-4 py-4"
+                >
+                  <Ionicons name="arrow-undo-outline" size={22} color="#1D9E75" />
+                  <Text className="text-content dark:text-content-dark text-base ml-3">
+                    {t("loans.registerReturn")}
+                  </Text>
+                </TouchableOpacity>
+              </>
             )}
           </View>
 
@@ -482,21 +562,60 @@ export default function CollectionDetailScreen() {
             {t("collectionDetail.loanWhoPrompt")}
           </Text>
 
-          {/* Navn-felt */}
+          {/* Navn-felt (venn eller fritekst) */}
           <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2 px-1">
             {t("collectionDetail.nameLabel")}
           </Text>
-          <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-5">
-            <TextInput
-              className="text-content dark:text-content-dark text-base"
-              placeholder={t("collectionDetail.namePlaceholder")}
-              placeholderTextColor="#A8A29E"
-              value={borrowerName}
-              onChangeText={setBorrowerName}
-              autoFocus
-              autoCapitalize="words"
-              accessibilityLabel={t("collectionDetail.nameFieldA11y")}
-            />
+          <View className="mb-5">
+            <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 flex-row items-center">
+              <TextInput
+                className="flex-1 text-content dark:text-content-dark text-base"
+                placeholder={t("collectionDetail.namePlaceholder")}
+                placeholderTextColor="#A8A29E"
+                value={borrowerName}
+                onChangeText={onBorrowerNameChange}
+                autoFocus
+                autoCapitalize="words"
+                accessibilityLabel={t("collectionDetail.nameFieldA11y")}
+              />
+              {borrowerUserId && (
+                <Ionicons
+                  name="checkmark-circle"
+                  size={20}
+                  color="#1D9E75"
+                  accessible={false}
+                />
+              )}
+            </View>
+
+            {friendMatches.length > 0 && (
+              <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark overflow-hidden mt-2 max-h-56">
+                <ScrollView keyboardShouldPersistTaps="handled">
+                  {friendMatches.map((f, idx) => (
+                    <TouchableOpacity
+                      key={f.id}
+                      onPress={() => selectFriend(f)}
+                      accessibilityRole="button"
+                      accessibilityLabel={f.name ?? t("common.unknownUser")}
+                      accessibilityHint={t("collectionDetail.pickFriendHint")}
+                      className={`flex-row items-center px-4 py-3 ${
+                        idx < friendMatches.length - 1
+                          ? "border-b border-border dark:border-border-dark"
+                          : ""
+                      }`}
+                    >
+                      <UserAvatar name={f.name} avatarUrl={f.avatarUrl} size={32} />
+                      <Text
+                        className="text-content dark:text-content-dark text-base ml-3 flex-1"
+                        numberOfLines={1}
+                      >
+                        {f.name ?? t("common.unknownUser")}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
           </View>
 
           {/* Synlighet-toggle */}
@@ -576,6 +695,76 @@ export default function CollectionDetailScreen() {
             className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center"
           >
             <Text className="text-content dark:text-content-dark font-semibold text-base">
+              {t("common.cancel")}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* Be om retur-modal */}
+      <Modal
+        visible={requestReturnItem !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setRequestReturnItem(null)}
+      >
+        <Pressable
+          className="flex-1 bg-black/40"
+          onPress={() => setRequestReturnItem(null)}
+          accessibilityRole="button"
+          accessibilityLabel={t("collections.closeLoanActions")}
+        />
+        <View
+          className="bg-surface dark:bg-surface-dark rounded-t-3xl px-4 pt-2"
+          style={{ paddingBottom: insets.bottom + 16 }}
+        >
+          <View className="w-10 h-1 bg-border dark:bg-border-dark rounded-full self-center mb-4" />
+
+          <Text className="text-content dark:text-content-dark text-lg font-semibold mb-1 px-1">
+            {t("collections.requestReturn")}
+          </Text>
+          <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mb-4 px-1">
+            {requestReturnItem?.title ?? t("common.unknownItem")}
+          </Text>
+
+          <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-4">
+            <TextInput
+              className="text-content dark:text-content-dark text-base"
+              placeholder={t("borrow.messagePlaceholder")}
+              placeholderTextColor="#A8A29E"
+              value={returnNote}
+              onChangeText={setReturnNote}
+              multiline
+              numberOfLines={2}
+              textAlignVertical="top"
+              accessibilityLabel={t("borrow.messagePlaceholder")}
+            />
+          </View>
+
+          <TouchableOpacity
+            onPress={handleSendReturnRequest}
+            disabled={requestingReturn}
+            accessibilityRole="button"
+            accessibilityLabel={t("collections.requestReturnSend")}
+            accessibilityState={{ disabled: requestingReturn }}
+            className="bg-accent dark:bg-accent-dark rounded-2xl py-4 items-center mb-2"
+          >
+            {requestingReturn ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Text className="text-white font-semibold text-base">
+                {t("collections.requestReturnSend")}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setRequestReturnItem(null)}
+            accessibilityRole="button"
+            accessibilityLabel={t("common.cancel")}
+            className="py-3 items-center"
+          >
+            <Text className="text-content-secondary dark:text-content-secondary-dark text-sm">
               {t("common.cancel")}
             </Text>
           </TouchableOpacity>

@@ -18,15 +18,9 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import UserAvatar from "../components/UserAvatar";
+import { fetchFriends, type Friend } from "../utils/friends";
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
-
-type Friend = {
-  friendshipId: string;
-  id: string;
-  name: string | null;
-  avatarUrl: string | null;
-};
 
 export default function FriendsScreen() {
   const insets = useSafeAreaInsets();
@@ -45,57 +39,15 @@ export default function FriendsScreen() {
   const fetchData = useCallback(async () => {
     if (!user) return;
 
-    const [codeRes, friendshipsRes] = await Promise.all([
-      supabase.rpc("get_my_invite_code"),
-      supabase
-        .from("friendships")
-        .select("id, requester_id, addressee_id")
-        .eq("status", "accepted"),
-    ]);
-
+    const codeRes = await supabase.rpc("get_my_invite_code");
     if (codeRes.data) setInviteCode(codeRes.data);
 
-    if (friendshipsRes.error) {
+    try {
+      setFriends(await fetchFriends(user.id));
+      setFetchError(false);
+    } catch {
       setFetchError(true);
-      setLoading(false);
-      return;
     }
-
-    const rows = friendshipsRes.data ?? [];
-    // Motparten i hvert vennskap er den som ikke er meg.
-    const friendIdByFriendship = new Map<string, string>();
-    for (const row of rows) {
-      const otherId = row.requester_id === user.id ? row.addressee_id : row.requester_id;
-      friendIdByFriendship.set(row.id, otherId);
-    }
-
-    const otherIds = [...new Set(friendIdByFriendship.values())];
-    let profilesById = new Map<
-      string,
-      { full_name: string | null; avatar_url: string | null }
-    >();
-    if (otherIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, full_name, avatar_url")
-        .in("id", otherIds);
-      profilesById = new Map((profiles ?? []).map((p) => [p.id, p]));
-    }
-
-    const list: Friend[] = [];
-    for (const [friendshipId, friendId] of friendIdByFriendship) {
-      const profile = profilesById.get(friendId);
-      list.push({
-        friendshipId,
-        id: friendId,
-        name: profile?.full_name ?? null,
-        avatarUrl: profile?.avatar_url ?? null,
-      });
-    }
-    list.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", "nb"));
-
-    setFriends(list);
-    setFetchError(false);
     setLoading(false);
   }, [user]);
 
