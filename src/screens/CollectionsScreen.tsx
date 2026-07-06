@@ -30,6 +30,7 @@ type ActiveLoan = {
   id: string;
   borrower_name: string;
   loaned_at: string;
+  return_requested_at: string | null;
   items: { title: string; type: string } | null;
 };
 
@@ -38,6 +39,7 @@ type BorrowedLoan = {
   id: string;
   loaned_at: string;
   ownerName: string;
+  return_requested_at: string | null;
   items: { title: string; type: string } | null;
 };
 
@@ -55,6 +57,7 @@ export default function CollectionsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [returningId, setReturningId] = useState<string | null>(null);
+  const [markingId, setMarkingId] = useState<string | null>(null);
 
   const fetchData = useCallback(
     async (isRefresh = false) => {
@@ -64,14 +67,14 @@ export default function CollectionsScreen() {
         supabase.from("items").select("type, status").eq("owner_id", user!.id),
         supabase
           .from("loans")
-          .select("id, borrower_name, loaned_at, items(title, type)")
+          .select("id, borrower_name, loaned_at, return_requested_at, items(title, type)")
           .eq("owner_id", user!.id)
           .is("returned_at", null)
           .order("loaned_at", { ascending: false }),
         // Ting jeg selv låner nå — synlig via RLS-policy for låntaker (borrower_user_id = auth.uid()).
         supabase
           .from("loans")
-          .select("id, loaned_at, owner_id, items(title, type)")
+          .select("id, loaned_at, owner_id, return_requested_at, items(title, type)")
           .eq("borrower_user_id", user!.id)
           .is("returned_at", null)
           .order("loaned_at", { ascending: false }),
@@ -110,6 +113,7 @@ export default function CollectionsScreen() {
         id: row.id,
         borrower_name: row.borrower_name,
         loaned_at: row.loaned_at,
+        return_requested_at: row.return_requested_at,
         items: Array.isArray(row.items) ? (row.items[0] ?? null) : row.items,
       }));
       setActiveLoans(mapped);
@@ -130,6 +134,7 @@ export default function CollectionsScreen() {
           id: row.id,
           loaned_at: row.loaned_at,
           ownerName: ownerNameById.get(row.owner_id) || t("common.unknownUser"),
+          return_requested_at: row.return_requested_at,
           items: Array.isArray(row.items) ? (row.items[0] ?? null) : row.items,
         })),
       );
@@ -163,6 +168,32 @@ export default function CollectionsScreen() {
               .update({ returned_at: new Date().toISOString() })
               .eq("id", loan.id);
             setReturningId(null);
+            if (error) {
+              Alert.alert(t("common.somethingWrong"), error.message);
+              return;
+            }
+            fetchData();
+          },
+        },
+      ],
+    );
+  }
+
+  function handleMarkReturned(loan: BorrowedLoan) {
+    const item = loan.items?.title ?? t("common.unknownItem");
+    Alert.alert(
+      t("collections.markReturnedTitle", { item }),
+      t("collections.markReturnedBody", { owner: loan.ownerName }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("collections.markReturned"),
+          onPress: async () => {
+            setMarkingId(loan.id);
+            const { error } = await supabase.rpc("mark_loan_returned", {
+              p_loan_id: loan.id,
+            });
+            setMarkingId(null);
             if (error) {
               Alert.alert(t("common.somethingWrong"), error.message);
               return;
@@ -313,6 +344,13 @@ export default function CollectionsScreen() {
                       })}
                     </Text>
                   </View>
+                  {loan.return_requested_at && !isReturning && (
+                    <View className="bg-accent/10 dark:bg-accent-dark/10 px-2 py-1 rounded-full mr-2">
+                      <Text className="text-accent dark:text-accent-dark text-xs font-semibold">
+                        {t("collections.returnReported")}
+                      </Text>
+                    </View>
+                  )}
                   {isReturning ? (
                     <ActivityIndicator size="small" color="#1D9E75" />
                   ) : (
@@ -343,15 +381,30 @@ export default function CollectionsScreen() {
               const itemType = loan.items?.type as ItemType | undefined;
               const dateLabel = getRelativeDayLabel(loan.loaned_at);
               const title = loan.items?.title ?? t("common.unknownItem");
+              const reported = !!loan.return_requested_at;
+              const isMarking = markingId === loan.id;
               return (
-                <View
+                <TouchableOpacity
                   key={loan.id}
-                  accessible
-                  accessibilityLabel={t("collections.borrowedA11y", {
-                    item: title,
-                    name: loan.ownerName,
-                    when: dateLabel,
-                  })}
+                  onPress={() => handleMarkReturned(loan)}
+                  disabled={reported || isMarking}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    reported
+                      ? t("collections.returnReportedA11y", {
+                          item: title,
+                          name: loan.ownerName,
+                        })
+                      : t("collections.borrowedA11y", {
+                          item: title,
+                          name: loan.ownerName,
+                          when: dateLabel,
+                        })
+                  }
+                  accessibilityHint={
+                    reported ? undefined : t("collections.markReturnedHint")
+                  }
+                  accessibilityState={{ disabled: reported || isMarking }}
                   className={`flex-row items-center px-4 py-4 ${
                     i < borrowedLoans.length - 1
                       ? "border-b border-border dark:border-border-dark"
@@ -377,7 +430,23 @@ export default function CollectionsScreen() {
                       })}
                     </Text>
                   </View>
-                </View>
+                  {isMarking ? (
+                    <ActivityIndicator size="small" color="#1D9E75" />
+                  ) : reported ? (
+                    <View className="bg-accent/10 dark:bg-accent-dark/10 px-2 py-1 rounded-full">
+                      <Text className="text-accent dark:text-accent-dark text-xs font-semibold">
+                        {t("collections.returnReported")}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Ionicons
+                      name="return-down-back-outline"
+                      size={20}
+                      color="#78716C"
+                      accessible={false}
+                    />
+                  )}
+                </TouchableOpacity>
               );
             })}
           </View>

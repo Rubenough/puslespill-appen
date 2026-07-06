@@ -177,6 +177,7 @@ export type Database = {
           item_id: string
           loaned_at: string
           owner_id: string
+          return_requested_at: string | null
           returned_at: string | null
         }
         Insert: {
@@ -187,6 +188,7 @@ export type Database = {
           item_id: string
           loaned_at?: string
           owner_id: string
+          return_requested_at?: string | null
           returned_at?: string | null
         }
         Update: {
@@ -197,6 +199,7 @@ export type Database = {
           item_id?: string
           loaned_at?: string
           owner_id?: string
+          return_requested_at?: string | null
           returned_at?: string | null
         }
         Relationships: [
@@ -399,6 +402,26 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "borrow_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      mark_loan_returned: {
+        Args: { p_loan_id: string }
+        Returns: {
+          borrower_name: string
+          borrower_user_id: string | null
+          id: string
+          is_public: boolean
+          item_id: string
+          loaned_at: string
+          owner_id: string
+          return_requested_at: string | null
+          returned_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "loans"
           isOneToOne: true
           isSetofReturn: false
         }
