@@ -172,9 +172,23 @@ Optional: unread badge count on the bell = number of incoming pending requests.
 
 On approve, a `loans` row is created (borrower = the friend via `borrower_user_id`, `borrower_name` = their name), so **CollectionsScreen "UTLÅNT NÅ"**, the return flow, and **ProfileScreen** history all work unchanged.
 
+### C.1 Borrowing-now section (borrower's view) — shipped
+
+The `loans` SELECT policy is **owner-only**, so the borrower can't see the loan for something _they_ borrowed → borrowed items never appeared on their side. Fixed by an **additive** SELECT policy so the borrower can read their own active borrows, plus a read-only **"DU LÅNER NÅ"** section on `CollectionsScreen` (`loans` where `borrower_user_id = auth.uid()` and `returned_at is null`, owner name joined). No return action — the owner still owns the return (UPDATE stays owner-only).
+
+Run once in the SQL editor:
+
+```sql
+create policy "borrower can see own loans" on loans
+  for select to authenticated
+  using (borrower_user_id = auth.uid());
+```
+
+Policy matrix update: `loans` SELECT becomes **owner or borrower** (was owner-only). INSERT/UPDATE/DELETE stay owner-only.
+
 ### D. Feed (optional, later)
 
-Add a `borrowed` feed event when a request is approved (owner's public activity), mirroring the existing `loaned` card.
+Add a `borrowed` feed event when a request is approved (owner's public activity), mirroring the existing `loaned` card. **Shipped** — sourced from the borrower's own approved `borrow_requests`.
 
 ### New screens / nav
 

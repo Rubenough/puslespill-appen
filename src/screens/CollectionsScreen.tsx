@@ -33,6 +33,14 @@ type ActiveLoan = {
   items: { title: string; type: string } | null;
 };
 
+// Ting brukeren selv låner nå (godkjente forespørsler → loans der jeg er låntaker).
+type BorrowedLoan = {
+  id: string;
+  loaned_at: string;
+  ownerName: string;
+  items: { title: string; type: string } | null;
+};
+
 export default function CollectionsScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -43,6 +51,7 @@ export default function CollectionsScreen() {
     COLLECTION_TYPES.map((type) => ({ type, count: 0, loaned: 0 })),
   );
   const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([]);
+  const [borrowedLoans, setBorrowedLoans] = useState<BorrowedLoan[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [returningId, setReturningId] = useState<string | null>(null);
@@ -51,12 +60,19 @@ export default function CollectionsScreen() {
     async (isRefresh = false) => {
       if (isRefresh) setRefreshing(true);
 
-      const [itemsResult, loansResult] = await Promise.all([
+      const [itemsResult, loansResult, borrowedResult] = await Promise.all([
         supabase.from("items").select("type, status").eq("owner_id", user!.id),
         supabase
           .from("loans")
           .select("id, borrower_name, loaned_at, items(title, type)")
           .eq("owner_id", user!.id)
+          .is("returned_at", null)
+          .order("loaned_at", { ascending: false }),
+        // Ting jeg selv låner nå — synlig via RLS-policy for låntaker (borrower_user_id = auth.uid()).
+        supabase
+          .from("loans")
+          .select("id, loaned_at, owner_id, items(title, type)")
+          .eq("borrower_user_id", user!.id)
           .is("returned_at", null)
           .order("loaned_at", { ascending: false }),
       ]);
@@ -68,6 +84,11 @@ export default function CollectionsScreen() {
       }
       if (loansResult.error) {
         setFetchError(loansResult.error.message);
+        setRefreshing(false);
+        return;
+      }
+      if (borrowedResult.error) {
+        setFetchError(borrowedResult.error.message);
         setRefreshing(false);
         return;
       }
@@ -92,9 +113,30 @@ export default function CollectionsScreen() {
         items: Array.isArray(row.items) ? (row.items[0] ?? null) : row.items,
       }));
       setActiveLoans(mapped);
+
+      // Slå opp eiernavn for tingene jeg låner (én batch mot profiles).
+      const borrowedRows = borrowedResult.data ?? [];
+      const ownerIds = [...new Set(borrowedRows.map((row) => row.owner_id))];
+      let ownerNameById = new Map<string, string>();
+      if (ownerIds.length > 0) {
+        const { data: owners } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", ownerIds);
+        ownerNameById = new Map((owners ?? []).map((p) => [p.id, p.full_name ?? ""]));
+      }
+      setBorrowedLoans(
+        borrowedRows.map((row) => ({
+          id: row.id,
+          loaned_at: row.loaned_at,
+          ownerName: ownerNameById.get(row.owner_id) || t("common.unknownUser"),
+          items: Array.isArray(row.items) ? (row.items[0] ?? null) : row.items,
+        })),
+      );
+
       setRefreshing(false);
     },
-    [user],
+    [user, t],
   );
 
   useFocusEffect(
@@ -287,6 +329,60 @@ export default function CollectionsScreen() {
           </View>
         )}
       </View>
+
+      {borrowedLoans.length > 0 && (
+        <>
+          <Text
+            accessibilityRole="header"
+            className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3"
+          >
+            {t("collections.sectionBorrowingNow")}
+          </Text>
+          <View className="mx-4 mb-8 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden">
+            {borrowedLoans.map((loan, i) => {
+              const itemType = loan.items?.type as ItemType | undefined;
+              const dateLabel = getRelativeDayLabel(loan.loaned_at);
+              const title = loan.items?.title ?? t("common.unknownItem");
+              return (
+                <View
+                  key={loan.id}
+                  accessible
+                  accessibilityLabel={t("collections.borrowedA11y", {
+                    item: title,
+                    name: loan.ownerName,
+                    when: dateLabel,
+                  })}
+                  className={`flex-row items-center px-4 py-4 ${
+                    i < borrowedLoans.length - 1
+                      ? "border-b border-border dark:border-border-dark"
+                      : ""
+                  }`}
+                >
+                  <View className="w-10 h-10 rounded-xl bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-4">
+                    <Ionicons
+                      name={itemType ? ITEM_ICONS[itemType] : "cube-outline"}
+                      size={20}
+                      color="#1D9E75"
+                      accessible={false}
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-content dark:text-content-dark font-medium">
+                      {title}
+                    </Text>
+                    <Text className="text-content-secondary dark:text-content-secondary-dark text-xs">
+                      {t("collections.borrowedFromWhen", {
+                        name: loan.ownerName,
+                        when: dateLabel,
+                      })}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </>
+      )}
     </ScrollView>
   );
 }
