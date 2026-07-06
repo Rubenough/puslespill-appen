@@ -103,5 +103,6 @@ merge risk with the i18n branch minimal. Keys: `theme.title`, `theme.system`, `t
 
 ## Out of scope / follow-ups
 
-- Dedicated `SettingsScreen` + relocating the language toggle.
+- ~~Dedicated `SettingsScreen` + relocating the language toggle.~~ ✅ Shipped — see
+  [`settings-screen.md`](./settings-screen.md) (theme + language + sign-out moved off Profile).
 - Migrating `AppNavigator`'s local `colors` map to shared theme tokens (pre-existing duplication).
