@@ -39,7 +39,15 @@ npm test              # jest (jest-expo preset)
 npm run test:ci       # jest --ci --runInBand (used by CI)
 ```
 
+Other:
+
+```bash
+npm run rebuild:check          # scripts/check-rebuild.sh — does this change need a fresh
+                               # EAS/dev-client build (native) or can it stream over Metro (JS-only)?
+```
+
 CI (`.github/workflows/ci.yml`) runs typecheck + lint + format:check + tests on every push/PR to `main`.
+Keep `eslint-config-expo` at `^57` — the SDK-aligned `~55.0.1` references a `react-hooks` rule its resolved plugin lacks and crashes lint.
 Tests live in `__tests__/` folders next to the code; start with pure utils. Do not
 add a new test _framework_ — extend the existing jest setup.
 
@@ -59,7 +67,7 @@ src/
 ├── screens/
 │   ├── AuthScreen.tsx              # Google OAuth login
 │   ├── FeedScreen.tsx              # Active sessions + activity feed (both real Supabase)
-│   ├── CollectionsScreen.tsx       # Collection types + UTLÅNT NÅ with return action (real Supabase)
+│   ├── CollectionsScreen.tsx       # Collection types + UTLÅNT NÅ (lent out) + DU LÅNER NÅ (borrowing), full return lifecycle
 │   ├── CollectionDetailScreen.tsx  # Items in a collection, loan/return actions (real Supabase)
 │   ├── AddItemScreen.tsx           # Add puzzle/board game form (real Supabase insert)
 │   ├── ProfileScreen.tsx           # User profile + sign-out (real Supabase profile)
@@ -95,7 +103,7 @@ App.tsx                         # Entry point — imports i18n, wraps AuthProvid
 ## Naming & Language Conventions
 
 - **Functions, constants, variables, types: English**
-- **UI text (labels, placeholders, headings): Norwegian** — being migrated to i18n (`t('key')`, `no.json` source of truth, English toggle planned). See [`docs/i18n-plan.md`](./docs/i18n-plan.md). New screens should use keys; existing Norwegian literals stay until their screen is migrated.
+- **UI text (labels, placeholders, headings): all through i18n** — `t('key')`, `no.json` source of truth + `en.json`, toggle in `ProfileScreen`. The retrofit is **complete** (every screen migrated; full `no`/`en` key parity). **Always** add user-facing strings — visible text, `placeholder`, `accessibilityLabel`/`accessibilityHint`, `Alert` copy — as keys in **both** locale files. Never hardcode Norwegian. See [`docs/i18n-plan.md`](./docs/i18n-plan.md).
 - **Code comments: Norwegian is fine**
 
 ## Design System
@@ -158,7 +166,7 @@ Consult this file when adding new UI — all new components should follow the sa
 - `lib/i18n.ts` (i18next + react-i18next + expo-localization) is imported once in `App.tsx`. Default = device locale mapped to `no`/`en` (fallback `no`); a manual override is persisted in SecureStore and loaded on startup via `loadPersistedLanguage()`.
 - In UI: `const { t } = useTranslation();` → `t("namespace.key")`. accessibility labels/hints go through `t()` too. Add both `no.json` and `en.json` entries in the same change; `no.json` is source of truth.
 - Language toggle lives in `ProfileScreen` (`setLanguage("no"|"en")`).
-- **Migration is incremental** — new screens use keys; existing Norwegian literals stay until their screen is migrated (one-per-PR). `ProfileScreen` is the migrated reference. `utils/date.ts` is still Norwegian-only (locale-aware dates are a tracked follow-up). See [`docs/i18n-plan.md`](./docs/i18n-plan.md).
+- **Migration is complete** — every screen resolves its strings through `t()`; `no.json`/`en.json` are at full key parity (keep them that way). Non-component helpers call `i18n.t(...)` directly (e.g. `utils/collectionLabels.ts`, the `fetchFeedItems` fallbacks); category/metadata text goes through `collectionLabels.ts` (`itemTypeLabel` / `piecesLabel` / `playersLabel` / `difficultyLabel`), not raw literals. Do **not** translate DB values (`"Utlånt"`, `"Tilgjengelig"`, `ItemType`, difficulty) or route names — only display text. See [`docs/i18n-plan.md`](./docs/i18n-plan.md).
 
 ### Contexts
 
@@ -193,7 +201,7 @@ RootNavigator (Stack)
 
 ### Database
 
-The client is typed: `createClient<Database>` in `supabase.ts`, where `Database` comes from `src/lib/database.types.ts` (generated). **Regenerate after any schema change** with `supabase login && npm run gen:types` (project ref `mzcppyhxikbkawmyrkrh`). The generated file is git-tracked but excluded from lint/format.
+The client is typed: `createClient<Database>` in `supabase.ts`, where `Database` comes from `src/lib/database.types.ts` (generated). **Regenerate after any schema change** with `supabase login && npm run gen:types` (project ref `mzcppyhxikbkawmyrkrh`). The generated file is git-tracked but excluded from lint/format. **Note:** the `loans` lifecycle columns/RPCs were hand-edited into this file (client shipped before the SQL) — a `gen:types` run will reconcile it (tracked in `PROJECT-PLAN.md` Track 0).
 
 Caveat: `type`/`difficulty`/`status` are `text` columns and some timestamps are nullable-with-default, so they come back as `string` / `string | null`. Where the app narrows to a union (`ItemType`, `Difficulty`, `ItemStatus`) or a non-null timestamp, a boundary cast at the query is still needed until DB `CHECK`/`NOT NULL` constraints are added (see `docs/PROJECT-PLAN.md` Track 0).
 
@@ -201,10 +209,14 @@ Supabase tables in use:
 
 - `profiles` — user profile (id, full_name, avatar_url)
 - `items` — puzzle/board game collection (id, owner_id, type, title, brand, piece_count, player_count, difficulty, status, created_at)
-- `loans` — loan records (id, item_id, owner_id, borrower_user_id [nullable], borrower_name, loaned_at, returned_at [null = active loan], is_public)
+- `loans` — loan records (id, item_id, owner_id, borrower_user_id [nullable], borrower_name, loaned_at, returned_at [null = active loan], is_public, due_at [date, nullable], return_requested_at [borrower signalled], owner_return_requested_at + owner_return_note [owner nudged])
+- `borrow_requests` — request lifecycle (id, item_id, owner_id, requester_id, status [pending/approved/declined/cancelled], message, loan_id). All mutations via security-definer RPCs.
 - `sessions` — activity sessions (id, item_id, created_by, started_at, completed_at, progress_pct [0–100, puzzle only], guest_names, notes)
 - `session_images` — progress photos (id, session_id, image_url, captured_at, note)
 - `session_participants` — user participants (session_id, profile_id)
+- `friendships` — mutual friend graph (via `accept_invite` RPC)
+
+RPCs (security-definer): `get_my_invite_code`, `accept_invite`, `are_friends`; borrow loop — `request_to_borrow`, `approve_request`, `decline_request`, `cancel_request`; return loop — `mark_loan_returned` (borrower signals), `unmark_loan_returned` (borrower undoes). Owner-side writes (register/confirm return, set `due_at`, request-return note) use direct `loans` INSERT/UPDATE under the owner RLS policy. `loans` SELECT is **owner or borrower**; return/register-return UPDATE stays owner-only.
 
 Item types: `"puslespill"` | `"brettspill"` (defined in `utils/collections.ts` as `ItemType`)
 
@@ -222,12 +234,12 @@ Loans are **private by default** (`is_public = false`). Borrower identity must n
 | Screen                 | Data source                                                                                                                                                                                                                         |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | FeedScreen             | Real — active sessions (`sessions` + `session_images`) + feed (`sessions`/`items`/`loans` last 14 days, profiles joined), per-section error+retry                                                                                   |
-| CollectionsScreen      | Real — `items` + `loans`, UTLÅNT NÅ with return action                                                                                                                                                                              |
-| CollectionDetailScreen | Real — `items` + `loans`, pull-to-refresh + focus-refresh, loan/return actions                                                                                                                                                      |
+| CollectionsScreen      | Real — `items` + `loans`. **UTLÅNT NÅ** (owner: tap → Be om retur/Registrer retur; "Retur meldt"/"Retur etterspurt" badges) + **DU LÅNER NÅ** (borrower: mark returned / undo; sees owner's return request; due dates, overdue red) |
+| CollectionDetailScreen | Real — `items` + `loans`, pull-to-refresh + focus-refresh, loan/return actions; lend modal sets visibility + **due-date** (quick-pick chips → `loans.due_at`)                                                                       |
 | AddItemScreen          | Real — inserts to `items`                                                                                                                                                                                                           |
 | ProfileScreen          | Real — profile from Supabase, loan history from `loans` (error+retry)                                                                                                                                                               |
 | FriendsScreen          | Real — invite code (`get_my_invite_code`), redeem (`accept_invite`), accepted friends from `friendships`                                                                                                                            |
-| FriendCollectionScreen | Real — a friend's `items`; tap an item → Be om å låne (`request_to_borrow`), shows Forespurt/Utlånt state                                                                                                                           |
+| FriendCollectionScreen | Real — a friend's `items`; tap → Be om å låne (`request_to_borrow`) / Avbryt forespørsel (`cancel_request`) when pending; shows Forespurt/Utlånt state                                                                              |
 | RequestsScreen         | Real — borrow requests from the Header bell: incoming (approve/decline) + outgoing (cancel) via RPCs                                                                                                                                |
 | NewSessionScreen       | Real — inserts to `sessions` + `session_participants`, uploads to `session-images` bucket                                                                                                                                           |
 | SessionDetailScreen    | Real — reads `sessions` (incl. `image_url` cover) + `session_images` + `items` metadata, progress icon in metadata card, "Oppdater" flow (image + progress + note via ProgressSheet), ··· menu (edit/delete), blur fullscreen modal |
