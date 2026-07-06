@@ -172,33 +172,42 @@ export type Database = {
         Row: {
           borrower_name: string
           borrower_user_id: string | null
+          due_at: string | null
           id: string
           is_public: boolean
           item_id: string
           loaned_at: string
           owner_id: string
+          owner_return_note: string | null
+          owner_return_requested_at: string | null
           return_requested_at: string | null
           returned_at: string | null
         }
         Insert: {
           borrower_name: string
           borrower_user_id?: string | null
+          due_at?: string | null
           id?: string
           is_public?: boolean
           item_id: string
           loaned_at?: string
           owner_id: string
+          owner_return_note?: string | null
+          owner_return_requested_at?: string | null
           return_requested_at?: string | null
           returned_at?: string | null
         }
         Update: {
           borrower_name?: string
           borrower_user_id?: string | null
+          due_at?: string | null
           id?: string
           is_public?: boolean
           item_id?: string
           loaned_at?: string
           owner_id?: string
+          owner_return_note?: string | null
+          owner_return_requested_at?: string | null
           return_requested_at?: string | null
           returned_at?: string | null
         }
@@ -411,11 +420,37 @@ export type Database = {
         Returns: {
           borrower_name: string
           borrower_user_id: string | null
+          due_at: string | null
           id: string
           is_public: boolean
           item_id: string
           loaned_at: string
           owner_id: string
+          owner_return_note: string | null
+          owner_return_requested_at: string | null
+          return_requested_at: string | null
+          returned_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "loans"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      unmark_loan_returned: {
+        Args: { p_loan_id: string }
+        Returns: {
+          borrower_name: string
+          borrower_user_id: string | null
+          due_at: string | null
+          id: string
+          is_public: boolean
+          item_id: string
+          loaned_at: string
+          owner_id: string
+          owner_return_note: string | null
+          owner_return_requested_at: string | null
           return_requested_at: string | null
           returned_at: string | null
         }

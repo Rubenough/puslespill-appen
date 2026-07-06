@@ -38,6 +38,22 @@ import { useAuth } from "../context/AuthContext";
 type CollectionDetailRouteProp = RouteProp<CollectionsStackParamList, "CollectionDetail">;
 type RootNavProp = NativeStackNavigationProp<RootStackParamList>;
 
+// Hurtigvalg for frist på utlån — beregner en konkret dato (date-kolonne, YYYY-MM-DD).
+const DUE_OPTIONS = [
+  { key: "none", labelKey: "collectionDetail.dueNone", days: null },
+  { key: "1w", labelKey: "collectionDetail.due1Week", days: 7 },
+  { key: "2w", labelKey: "collectionDetail.due2Weeks", days: 14 },
+  { key: "1m", labelKey: "collectionDetail.due1Month", days: 30 },
+] as const;
+
+function dueAtFromKey(key: string): string | null {
+  const opt = DUE_OPTIONS.find((o) => o.key === key);
+  if (!opt || opt.days == null) return null;
+  const d = new Date();
+  d.setDate(d.getDate() + opt.days);
+  return d.toISOString().slice(0, 10);
+}
+
 export default function CollectionDetailScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -58,6 +74,7 @@ export default function CollectionDetailScreen() {
   const [loanModalVisible, setLoanModalVisible] = useState(false);
   const [borrowerName, setBorrowerName] = useState("");
   const [loanIsPublic, setLoanIsPublic] = useState(false);
+  const [loanDueKey, setLoanDueKey] = useState<string>("none");
 
   // Refetch when screen comes back into focus (e.g. after adding or editing an item)
   const fetchItems = useCallback(
@@ -93,6 +110,7 @@ export default function CollectionDetailScreen() {
     setLoanItem(selectedItem); // lagre referanse før vi lukker handlingsarket
     setBorrowerName("");
     setLoanIsPublic(false);
+    setLoanDueKey("none");
     setSelectedItem(null); // lukk handlingsarket
     setLoanModalVisible(true);
   }
@@ -115,6 +133,7 @@ export default function CollectionDetailScreen() {
       owner_id: user!.id,
       borrower_name: borrowerName.trim(),
       is_public: loanIsPublic,
+      due_at: dueAtFromKey(loanDueKey),
     });
 
     setActionLoading(false);
@@ -498,6 +517,38 @@ export default function CollectionDetailScreen() {
               accessibilityLabel={t("collectionDetail.visibleToFriends")}
               accessibilityHint={t("collectionDetail.visibleToFriendsHint")}
             />
+          </View>
+
+          {/* Frist */}
+          <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2 px-1">
+            {t("collectionDetail.dueLabel")}
+          </Text>
+          <View className="flex-row flex-wrap gap-2 mb-5">
+            {DUE_OPTIONS.map((opt) => {
+              const selected = loanDueKey === opt.key;
+              return (
+                <TouchableOpacity
+                  key={opt.key}
+                  onPress={() => setLoanDueKey(opt.key)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(opt.labelKey)}
+                  accessibilityState={{ selected }}
+                  className={`px-4 py-2 rounded-full border ${
+                    selected
+                      ? "bg-accent dark:bg-accent-dark border-accent dark:border-accent-dark"
+                      : "bg-surface-secondary dark:bg-surface-dark-secondary border-border dark:border-border-dark"
+                  }`}
+                >
+                  <Text
+                    className={`text-sm font-medium ${
+                      selected ? "text-white" : "text-content dark:text-content-dark"
+                    }`}
+                  >
+                    {t(opt.labelKey)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           {/* Lån ut-knapp */}

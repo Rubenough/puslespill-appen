@@ -219,6 +219,47 @@ grant execute on function mark_loan_returned(uuid) to authenticated;
 
 `database.types.ts` was hand-edited to add `loans.return_requested_at` + the `mark_loan_returned` function; a `npm run gen:types` after applying the SQL will regenerate the same shape.
 
+### C.3 Loan lifecycle: due date, owner-requests-return, borrower-undo — shipped
+
+Three related additions on top of C.1/C.2:
+
+- **Return-by date** — owner picks a quick duration (Ingen frist / 1 uke / 2 uker / 1 måned) in the lend modal → `loans.due_at` (a `date`). Both loan surfaces show "skal leveres {dato}"; overdue rows go red. Set only on manual "Registrer utlån" loans for now — extending to the approve-a-request flow is a follow-up (needs `approve_request` to take a date + a picker in `RequestsScreen`).
+- **Owner requests a return + note** — owner taps a "UTLÅNT NÅ" row → action menu (**Be om retur** | Registrer retur) → note modal writes `owner_return_requested_at` + `owner_return_note` (owner has `loans` UPDATE, so no RPC). Borrower sees "Eier ber om retur" + the note on their "DU LÅNER NÅ" row; owner sees a "Retur etterspurt" badge.
+- **Borrower undo** — the borrower can tap their own "Retur meldt" row to clear the signal via a `unmark_loan_returned` RPC (they have no UPDATE, so it's an RPC like `mark_loan_returned`).
+
+Run once in the SQL editor:
+
+```sql
+-- return-by date (owner sets when lending)
+alter table loans add column if not exists due_at date;
+
+-- owner-initiated return request + note
+alter table loans add column if not exists owner_return_requested_at timestamptz;
+alter table loans add column if not exists owner_return_note text;
+
+-- borrower can undo their own return signal
+create or replace function unmark_loan_returned(p_loan_id uuid)
+returns loans
+language plpgsql security definer set search_path = public as $$
+declare v_loan loans;
+begin
+  select * into v_loan from loans where id = p_loan_id;
+  if v_loan.id is null then raise exception 'Fant ikke lånet'; end if;
+  if v_loan.borrower_user_id is distinct from auth.uid() then
+    raise exception 'Bare låntakeren kan angre'; end if;
+  if v_loan.returned_at is not null then
+    raise exception 'Lånet er allerede returnert'; end if;
+
+  update loans set return_requested_at = null
+    where id = p_loan_id returning * into v_loan;
+  return v_loan;
+end; $$;
+
+grant execute on function unmark_loan_returned(uuid) to authenticated;
+```
+
+`database.types.ts` hand-edited for `loans.due_at` / `owner_return_requested_at` / `owner_return_note` + the `unmark_loan_returned` function.
+
 ### D. Feed (optional, later)
 
 Add a `borrowed` feed event when a request is approved (owner's public activity), mirroring the existing `loaned` card. **Shipped** — sourced from the borrower's own approved `borrow_requests`.
