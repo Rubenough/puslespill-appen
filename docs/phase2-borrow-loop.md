@@ -82,7 +82,10 @@ begin
 end; $$;
 
 -- Owner approves → creates a loan; trg_sync_item_status flips items.status to 'Utlånt'.
-create or replace function approve_request(p_request_id uuid)
+-- NB: legger til en ny parameter → drop den gamle 1-arg-signaturen først, ellers
+-- får du to overloads og PostgREST-kall blir tvetydige.
+drop function if exists approve_request(uuid);
+create or replace function approve_request(p_request_id uuid, p_due_at date default null)
 returns borrow_requests
 language plpgsql security definer set search_path = public as $$
 declare v_req borrow_requests; v_name text; v_loan uuid;
@@ -94,8 +97,8 @@ begin
 
   select coalesce(full_name, 'Ukjent') into v_name from profiles where id = v_req.requester_id;
 
-  insert into loans (item_id, owner_id, borrower_user_id, borrower_name, is_public)
-  values (v_req.item_id, v_req.owner_id, v_req.requester_id, v_name, false)
+  insert into loans (item_id, owner_id, borrower_user_id, borrower_name, is_public, due_at)
+  values (v_req.item_id, v_req.owner_id, v_req.requester_id, v_name, false, p_due_at)
   returning id into v_loan;
 
   update borrow_requests
@@ -138,7 +141,7 @@ begin
 end; $$;
 
 grant execute on function request_to_borrow(uuid, text) to authenticated;
-grant execute on function approve_request(uuid) to authenticated;
+grant execute on function approve_request(uuid, date) to authenticated;
 grant execute on function decline_request(uuid) to authenticated;
 grant execute on function cancel_request(uuid) to authenticated;
 ```
@@ -223,7 +226,7 @@ grant execute on function mark_loan_returned(uuid) to authenticated;
 
 Three related additions on top of C.1/C.2:
 
-- **Return-by date** — owner picks a quick duration (Ingen frist / 1 uke / 2 uker / 1 måned) in the lend modal → `loans.due_at` (a `date`). Both loan surfaces show "skal leveres {dato}"; overdue rows go red. Set only on manual "Registrer utlån" loans for now — extending to the approve-a-request flow is a follow-up (needs `approve_request` to take a date + a picker in `RequestsScreen`).
+- **Return-by date** — owner picks a quick duration (Ingen frist / 1 uke / 2 uker / 1 måned) in the lend modal → `loans.due_at` (a `date`). Both loan surfaces show "skal leveres {dato}"; overdue rows go red. Set on manual "Registrer utlån" loans **and on the approve-a-request flow** — `approve_request` takes an optional `p_due_at date`, and `RequestsScreen` shows the same quick-pick chips on each incoming request. Shared helper: `utils/loans.ts` (`DUE_OPTIONS` / `dueAtFromKey`).
 - **Owner requests a return + note** — owner taps a "UTLÅNT NÅ" row → action menu (**Be om retur** | Registrer retur) → note modal writes `owner_return_requested_at` + `owner_return_note` (owner has `loans` UPDATE, so no RPC). Borrower sees "Eier ber om retur" + the note on their "DU LÅNER NÅ" row; owner sees a "Retur etterspurt" badge.
 - **Borrower undo** — the borrower can tap their own "Retur meldt" row to clear the signal via a `unmark_loan_returned` RPC (they have no UPDATE, so it's an RPC like `mark_loan_returned`).
 

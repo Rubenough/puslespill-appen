@@ -25,7 +25,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 **Pick up next (in priority order):**
 
 1. **Phase 2.2 Notifications** — `expo-notifications` + push token on `profiles` + Supabase Edge Function (borrow request/approve, **loan reminders / overdue nudges** — `loans.due_at` now exists to drive them). Design in [`docs/phase2-borrow-loop.md`](./phase2-borrow-loop.md) §Notifications.
-2. **Due date on the approve-a-request flow** — currently `due_at` is only set on manual "Registrer utlån" loans; extend `approve_request` to accept a date + add a picker in `RequestsScreen`.
+2. ~~**Due date on the approve-a-request flow**~~ ✅ Done — `approve_request` takes an optional `p_due_at date`; `RequestsScreen` shows quick-pick chips per incoming request (shared `utils/loans.ts`). **Requires the updated RPC applied in the Supabase dashboard** (see [`docs/phase2-borrow-loop.md`](./phase2-borrow-loop.md)) + `npm run gen:types`.
 3. **Phase 2.3 Swap/give-away status** and **2.4 Wishlist** (see below).
 4. **Deferred DB tasks** (batch when next in the SQL editor): regenerate types (`npm run gen:types`) to replace the **hand-edited** `database.types.ts` loan columns/RPCs; `delete_session` RPC; CHECK/NOT NULL column constraints (unlocks removing the last `as any` casts); dedupe policies in [`docs/db-cleanup.md`](./db-cleanup.md).
 
@@ -115,7 +115,7 @@ Not a blocking phase; keep these green/moving as you build.
 Stand up i18n before building Phase 2 UI so new strings are keys, not hardcoded Norwegian to retrofit. **Plan in [`docs/i18n-plan.md`](./i18n-plan.md).**
 
 - [x] `i18next` + `react-i18next` + `expo-localization`; `src/lib/i18n.ts`; `src/locales/{no,en}.json`; imported in `App.tsx` with persisted override.
-- [x] Language toggle in `ProfileScreen`; `ProfileScreen` migrated as the reference.
+- [x] Language toggle (since moved to `SettingsScreen`, #36); `ProfileScreen` migrated as the reference.
 - [x] `utils/date.ts` locale-aware (relative words + `toLocaleDateString`), both languages tested.
 - [x] Shared `collections`/`loans` namespaces + `collectionLabels.ts`; `CollectionsScreen` + `FriendCollectionScreen` migrated.
 - [x] **App declared Phase 2-ready** — infra + shared namespaces done.
@@ -139,7 +139,7 @@ Full design + SQL in [`docs/phase2-borrow-loop.md`](./phase2-borrow-loop.md) §C
 - [x] **Borrower-initiated return, owner confirms** — `return_requested_at` + `mark_loan_returned` RPC; owner confirms via the existing "UTLÅNT NÅ" tap.
 - [x] **Owner requests a return + note** — `owner_return_requested_at` + `owner_return_note` (owner UPDATE); shown to the borrower.
 - [x] **Borrower can undo** a "Retur meldt" — `unmark_loan_returned` RPC.
-- [x] **Return-by / due date** — `loans.due_at`; quick-pick chips in the lend modal; overdue highlighted. _Manual loans only — see "Pick up next" #2 for the approve-flow extension._
+- [x] **Return-by / due date** — `loans.due_at`; quick-pick chips in the lend modal **and on the approve-a-request flow** (`approve_request(p_request_id, p_due_at)` + chips in `RequestsScreen`; shared `utils/loans.ts`); overdue highlighted.
 
 ### 2.2 Notifications (the nudge channel)
 

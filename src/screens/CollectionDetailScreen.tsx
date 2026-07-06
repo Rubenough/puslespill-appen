@@ -30,6 +30,7 @@ import {
   playersLabel,
   difficultyLabel,
 } from "../utils/collectionLabels";
+import { DUE_OPTIONS, dueAtFromKey } from "../utils/loans";
 import { CollectionsStackParamList } from "../navigation/CollectionsStack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { supabase } from "../lib/supabase";
@@ -41,21 +42,6 @@ type CollectionDetailRouteProp = RouteProp<CollectionsStackParamList, "Collectio
 type RootNavProp = NativeStackNavigationProp<RootStackParamList>;
 
 // Hurtigvalg for frist på utlån — beregner en konkret dato (date-kolonne, YYYY-MM-DD).
-const DUE_OPTIONS = [
-  { key: "none", labelKey: "collectionDetail.dueNone", days: null },
-  { key: "1w", labelKey: "collectionDetail.due1Week", days: 7 },
-  { key: "2w", labelKey: "collectionDetail.due2Weeks", days: 14 },
-  { key: "1m", labelKey: "collectionDetail.due1Month", days: 30 },
-] as const;
-
-function dueAtFromKey(key: string): string | null {
-  const opt = DUE_OPTIONS.find((o) => o.key === key);
-  if (!opt || opt.days == null) return null;
-  const d = new Date();
-  d.setDate(d.getDate() + opt.days);
-  return d.toISOString().slice(0, 10);
-}
-
 export default function CollectionDetailScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
