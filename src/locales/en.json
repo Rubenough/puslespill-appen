@@ -179,6 +179,7 @@
     "nameLabel": "NAME",
     "namePlaceholder": "e.g. Kari Nordmann",
     "nameFieldA11y": "Borrower name",
+    "pickFriendHint": "Tap to pick this friend as the borrower",
     "visibleToFriends": "Visible to mutual friends",
     "visibleToFriendsDesc": "Shows that you've lent it out — not to whom",
     "visibleToFriendsHint": "Shows that you've lent it out, but not to whom",

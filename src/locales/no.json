@@ -179,6 +179,7 @@
     "nameLabel": "NAVN",
     "namePlaceholder": "f.eks. Kari Nordmann",
     "nameFieldA11y": "Navn på låntaker",
+    "pickFriendHint": "Trykk for å velge denne vennen som låntaker",
     "visibleToFriends": "Synlig for felles venner",
     "visibleToFriendsDesc": "Viser at du har lånt ut — ikke hvem til",
     "visibleToFriendsHint": "Viser at du har lånt ut, men ikke hvem til",
