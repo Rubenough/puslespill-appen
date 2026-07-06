@@ -14,6 +14,7 @@ A React Native / Expo mobile app for managing puzzle and board game collections,
 - **React Navigation 7** (bottom tabs + stack + modal)
 - **Supabase 2** — auth, database, real-time
 - **expo-secure-store** — encrypted session storage
+- **expo-application** — native app/version info (`nativeApplicationVersion` + `nativeBuildVersion`) for the Settings version footer
 - **expo-splash-screen** — prevents white flash during auth check
 - **expo-blur** — blur overlay for fullscreen image modal
 - **@expo/vector-icons** — Ionicons (install via `npx expo install @expo/vector-icons`, keep SDK-pinned)
@@ -70,14 +71,16 @@ src/
 │   ├── CollectionsScreen.tsx       # Collection types + UTLÅNT NÅ (lent out) + DU LÅNER NÅ (borrowing), full return lifecycle
 │   ├── CollectionDetailScreen.tsx  # Items in a collection, loan/return actions (real Supabase)
 │   ├── AddItemScreen.tsx           # Add puzzle/board game form (real Supabase insert)
-│   ├── ProfileScreen.tsx           # User profile + sign-out (real Supabase profile)
+│   ├── ProfileScreen.tsx           # User profile + loan history (real Supabase); gear top-right → Settings
+│   ├── SettingsScreen.tsx          # Appearance + Language + Sign out (confirm Alert) + version footer (pushed from Profile gear)
 │   ├── FriendsScreen.tsx           # Invite code + redeem + real friends list
 │   ├── FriendCollectionScreen.tsx  # Read-only view of a friend's collection
+│   ├── RequestsScreen.tsx          # Borrow requests (from Header bell): incoming approve/decline + outgoing cancel
 │   ├── NewSessionScreen.tsx        # Start session: item → participants → box photo (puzzle) / image → notes
 │   ├── SessionDetailScreen.tsx     # View session: hero (latest progress or cover), metadata with cover thumbnail + progress icon, "Oppdater" flow, blur fullscreen modal
 │   └── EditSessionScreen.tsx       # Edit session participants + notes (modal)
 ├── navigation/
-│   ├── RootNavigator.tsx       # Stack: Tabs + AddItem + EditItem + NewSession + SessionDetail + EditSession + FriendCollection
+│   ├── RootNavigator.tsx       # Stack: Tabs + AddItem + EditItem + NewSession + SessionDetail + EditSession + FriendCollection + Requests + Settings
 │   ├── AppNavigator.tsx        # Bottom tab navigator (5 tabs)
 │   └── CollectionsStack.tsx    # Stack: CollectionsList → CollectionDetail
 ├── context/
@@ -104,7 +107,7 @@ App.tsx                         # Entry point — imports i18n, wraps AuthProvid
 ## Naming & Language Conventions
 
 - **Functions, constants, variables, types: English**
-- **UI text (labels, placeholders, headings): all through i18n** — `t('key')`, `no.json` source of truth + `en.json`, toggle in `ProfileScreen`. The retrofit is **complete** (every screen migrated; full `no`/`en` key parity). **Always** add user-facing strings — visible text, `placeholder`, `accessibilityLabel`/`accessibilityHint`, `Alert` copy — as keys in **both** locale files. Never hardcode Norwegian. See [`docs/i18n-plan.md`](./docs/i18n-plan.md).
+- **UI text (labels, placeholders, headings): all through i18n** — `t('key')`, `no.json` source of truth + `en.json`, language toggle in `SettingsScreen`. The retrofit is **complete** (every screen migrated; full `no`/`en` key parity). **Always** add user-facing strings — visible text, `placeholder`, `accessibilityLabel`/`accessibilityHint`, `Alert` copy — as keys in **both** locale files. Never hardcode Norwegian. See [`docs/i18n-plan.md`](./docs/i18n-plan.md).
 - **Code comments: Norwegian is fine**
 
 ## Design System
@@ -127,7 +130,10 @@ Consult this file when adding new UI — all new components should follow the sa
   `colorScheme.set()`; the preference is persisted in SecureStore. Components that need imperative
   colours (tab bar in `AppNavigator`, `SessionDetailScreen`) read `useColorScheme` **from
   `nativewind`** (app-controlled) — never from `react-native` (OS-only). See the theme toggle on
-  `ProfileScreen` and [`docs/dark-mode-toggle.md`](./docs/dark-mode-toggle.md).
+  `SettingsScreen` and [`docs/dark-mode-toggle.md`](./docs/dark-mode-toggle.md). Imperative icon
+  colours that must stay legible in both schemes (e.g. the Settings back chevron and Profile gear)
+  read `useColorScheme` from `nativewind` and pick a content token per scheme — never hardcode
+  `#78716C`, which fails contrast on dark surfaces.
 - Exception: `GoogleSignInButton` uses inline styles to match Google's brand guidelines
 
 ## Architecture Notes
@@ -166,7 +172,7 @@ Consult this file when adding new UI — all new components should follow the sa
 
 - `lib/i18n.ts` (i18next + react-i18next + expo-localization) is imported once in `App.tsx`. Default = device locale mapped to `no`/`en` (fallback `no`); a manual override is persisted in SecureStore and loaded on startup via `loadPersistedLanguage()`.
 - In UI: `const { t } = useTranslation();` → `t("namespace.key")`. accessibility labels/hints go through `t()` too. Add both `no.json` and `en.json` entries in the same change; `no.json` is source of truth.
-- Language toggle lives in `ProfileScreen` (`setLanguage("no"|"en")`).
+- Language toggle lives in `SettingsScreen` (`setLanguage("no"|"en")`).
 - **Migration is complete** — every screen resolves its strings through `t()`; `no.json`/`en.json` are at full key parity (keep them that way). Non-component helpers call `i18n.t(...)` directly (e.g. `utils/collectionLabels.ts`, the `fetchFeedItems` fallbacks); category/metadata text goes through `collectionLabels.ts` (`itemTypeLabel` / `piecesLabel` / `playersLabel` / `difficultyLabel`), not raw literals. Do **not** translate DB values (`"Utlånt"`, `"Tilgjengelig"`, `ItemType`, difficulty) or route names — only display text. See [`docs/i18n-plan.md`](./docs/i18n-plan.md).
 
 ### Contexts
@@ -191,10 +197,15 @@ RootNavigator (Stack)
 ├── EditItem (Modal) → EditItemScreen
 ├── NewSession (Modal) → NewSessionScreen
 ├── SessionDetail (Push) → SessionDetailScreen
-└── EditSession (Modal) → EditSessionScreen
+├── EditSession (Modal) → EditSessionScreen
+├── FriendCollection (Push) → FriendCollectionScreen
+├── Requests (Push) → RequestsScreen
+└── Settings (Push) → SettingsScreen
 ```
 
 - Auth state in `App.tsx` routes to `AuthScreen` or `RootNavigator`
+- Settings is reached via a gear (`settings-outline`) top-right on `ProfileScreen`; theme, language,
+  and sign-out (with a confirm `Alert`) live there, not on Profile
 - React Navigation is used (not Expo Router) — `Stack.Protected` does not apply
 - The center (+) tab button opens an action modal with two options: add item, start session
 - "Registrer utlån" is NOT in the + modal — loan registration lives on item level in CollectionDetailScreen
@@ -238,7 +249,8 @@ Loans are **private by default** (`is_public = false`). Borrower identity must n
 | CollectionsScreen      | Real — `items` + `loans`. **UTLÅNT NÅ** (owner: tap → Be om retur/Registrer retur; "Retur meldt"/"Retur etterspurt" badges) + **DU LÅNER NÅ** (borrower: mark returned / undo; sees owner's return request; due dates, overdue red)                                                                                                                                                                                                                                                             |
 | CollectionDetailScreen | Real — `items` + `loans`, pull-to-refresh + focus-refresh, loan/return actions; lend modal has a **friend picker** (filters accepted friends via `utils/friends.ts` → sets `borrower_user_id`; free-text stays as `borrower_name` fallback for non-app people) + visibility + **due-date** (quick-pick chips → `loans.due_at`); lent item's action sheet also offers **Be om retur** (owner nudge → `owner_return_requested_at` + `owner_return_note`, matched by `item_id` on the active loan) |
 | AddItemScreen          | Real — inserts to `items`                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ProfileScreen          | Real — profile from Supabase, loan history from `loans` (error+retry)                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ProfileScreen          | Real — profile from Supabase, loan history from `loans` (error+retry); gear top-right → Settings                                                                                                                                                                                                                                                                                                                                                                                                |
+| SettingsScreen         | Stateless UI — Appearance (`useTheme`) + Language (`setLanguage`), Sign out (`supabase.auth.signOut` behind a confirm `Alert`), version footer (`expo-application`)                                                                                                                                                                                                                                                                                                                             |
 | FriendsScreen          | Real — invite code (`get_my_invite_code`), redeem (`accept_invite`), accepted friends from `friendships`                                                                                                                                                                                                                                                                                                                                                                                        |
 | FriendCollectionScreen | Real — a friend's `items`; tap → Be om å låne (`request_to_borrow`) / Avbryt forespørsel (`cancel_request`) when pending; shows Forespurt/Utlånt state                                                                                                                                                                                                                                                                                                                                          |
 | RequestsScreen         | Real — borrow requests from the Header bell: incoming (approve/decline) + outgoing (cancel) via RPCs                                                                                                                                                                                                                                                                                                                                                                                            |
