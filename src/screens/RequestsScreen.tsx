@@ -133,7 +133,8 @@ export default function RequestsScreen() {
     setActioningId(id);
     const { error } = await supabase.rpc("approve_request", {
       p_request_id: id,
-      p_due_at: dueAtFromKey(dueKeyById[id] ?? "none"),
+      // Generert type er `p_due_at?: string` (ikke null) → utelat i stedet for å sende null.
+      p_due_at: dueAtFromKey(dueKeyById[id] ?? "none") ?? undefined,
     });
     afterAction(error);
   }
