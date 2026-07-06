@@ -375,7 +375,7 @@ export type Database = {
         }[]
       }
       approve_request: {
-        Args: { p_request_id: string; p_due_at?: string | null }
+        Args: { p_due_at?: string; p_request_id: string }
         Returns: {
           created_at: string
           id: string
