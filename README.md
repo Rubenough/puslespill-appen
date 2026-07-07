@@ -45,14 +45,39 @@ Prosjektet kjører på Expo SDK 55 og bruker development builds i stedet for Exp
 npm install
 ```
 
-Deretter trenger du enten en development build installert på mobilen, eller Expo Go i simulator:
+Deretter starter du dev-serveren. Velg modus etter **hvilken klient** som kjører koden og **hvor testeren er**:
 
 ```bash
-# Med development build installert
-npx expo start --dev-client
+# Development build (den ekte appen — kreves når egne native-moduler/plugins er i bruk)
+npx expo start --dev-client            # LAN: mobilen må være på SAMME Wi-Fi som maskinen
+npx expo start --dev-client --tunnel   # hvilket som helst nett / mobildata (via Expos tunnel)
 
-# Eller med Expo Go i iOS-simulator
-npx expo start --go
+# Expo Go (raske UI-sjekker; fungerer fordi alle native-avhengigheter er i SDK 55 sitt Go-sett)
+npx expo start --go                    # åpne Expo Go-appen
+npx expo start --go --ios              # + start iOS-simulator
+
+# Tillegg som kan stables på alt over
+--clear                                # tøm Metro-cache (gjør dette etter en større merge)
+```
+
+| Modus | Klient | Når |
+| --- | --- | --- |
+| `--dev-client` | `puslespill`-APK-en (eget ikon) | Standard. OAuth-redirect bruker `puslespill://`-scheme og virker kun her. |
+| `--dev-client --tunnel` | Samme APK | Tester er på et **annet nett** (venn på egen Wi-Fi/mobildata). |
+| `--go` | Expo Go-appen | Rask UI-/logikk-sjekk uten å installere en build. |
+
+**Koble til enheten:** åpne klient-appen → «Enter URL manually» → `exp://…`-URL-en (LAN `exp://<mac-ip>:8081`, eller tunnel-URL-en). Dev build = åpne **puslespill**; Expo Go = åpne **Expo Go**.
+
+**Tunnel-URL** er stabil per prosjekt: `exp://3ngoqts-rubenough-8081.exp.direct`. Krever `@expo/ngrok` (allerede devDep).
+
+**iOS-simulator:** `--ios` kan henge på en «install recommended Expo Go?»-prompt. Start Metro uten `--ios` og åpne manuelt: `xcrun simctl openurl booted "exp://127.0.0.1:8081"`.
+
+### Trenger jeg en ny build etter en merge?
+
+JS/TS-endringer streames live over Metro — ingen ny build. **Bygg på nytt kun når native-laget endres** (native-avhengighet/config-plugin lagt til, `app.json`-native-config, SDK/RN-bump). Sjekk med:
+
+```bash
+npm run rebuild:check                  # sier om endringen krever ny build (native) eller ikke
 ```
 
 ### Bygge development build
