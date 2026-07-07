@@ -142,7 +142,7 @@
     "added": "Lagt til",
     "addedNamed": "Du og {{name}} er nå venner.",
     "addedUnnamed": "Dere er nå venner.",
-    "shareMessage": "Legg meg til som venn i appen med koden: {{code}}"
+    "shareMessage": "Legg meg til som venn i appen med koden {{code}}. Åpne lenken: {{link}}"
   },
   "feed": {
     "activeSessions": "AKTIVE ØKTER",

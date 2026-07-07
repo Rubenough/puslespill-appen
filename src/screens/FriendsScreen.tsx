@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,20 +11,30 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import {
+  useNavigation,
+  useFocusEffect,
+  useRoute,
+  type RouteProp,
+} from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { RootStackParamList } from "../navigation/RootNavigator";
+import { type TabParamList } from "../navigation/AppNavigator";
 import UserAvatar from "../components/UserAvatar";
 import { fetchFriends, type Friend } from "../utils/friends";
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
+// Dyplenke-koden (puslespill://join?code=…) leveres som ruteparameter på Venner-fanen.
+const inviteLinkFor = (code: string) => `puslespill://join?code=${code}`;
+
 export default function FriendsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavProp>();
+  const route = useRoute<RouteProp<TabParamList, "Venner">>();
   const { t } = useTranslation();
   const { user } = useAuth();
 
@@ -57,11 +67,19 @@ export default function FriendsScreen() {
     }, [fetchData]),
   );
 
+  // Kom hit via en invitasjonslenke? Forhåndsutfyll koden så brukeren bare trykker «Legg til».
+  useEffect(() => {
+    const code = route.params?.code;
+    if (code) setRedeemInput(code.toUpperCase());
+  }, [route.params?.code]);
+
   async function shareInvite() {
     if (!inviteCode) return;
-    // TODO(deep-link): når puslespill://join?code= håndteres, legg til lenken her.
     await Share.share({
-      message: t("friends.shareMessage", { code: inviteCode }),
+      message: t("friends.shareMessage", {
+        code: inviteCode,
+        link: inviteLinkFor(inviteCode),
+      }),
     });
   }
 

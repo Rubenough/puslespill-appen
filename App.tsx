@@ -2,17 +2,33 @@ import "./global.css";
 import "./src/lib/i18n";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, type LinkingOptions } from "@react-navigation/native";
 import * as SplashScreen from "expo-splash-screen";
 import { loadPersistedLanguage } from "./src/lib/i18n";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
-import RootNavigator from "./src/navigation/RootNavigator";
+import RootNavigator, { type RootStackParamList } from "./src/navigation/RootNavigator";
 import AuthScreen from "./src/screens/AuthScreen";
 import { ProfilProvider } from "./src/context/ProfilContext";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 
 SplashScreen.preventAutoHideAsync();
+
+// Dyplenke: puslespill://join?code=XYZ åpner Venner-fanen med koden forhåndsutfylt.
+// Bruker det eksisterende app.json-skjemaet «puslespill» (samme som OAuth), så
+// ingen native-endring/ombygging trengs — dette er ren JS-ruting.
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ["puslespill://"],
+  config: {
+    screens: {
+      Tabs: {
+        screens: {
+          Venner: "join",
+        },
+      },
+    },
+  },
+};
 
 function AppContent() {
   const { session, loading } = useAuth();
@@ -33,7 +49,7 @@ function AppContent() {
   if (loading || !themeReady) return null;
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       {session ? (
         <ProfilProvider>
           <RootNavigator />

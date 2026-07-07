@@ -142,7 +142,7 @@
     "added": "Added",
     "addedNamed": "You and {{name}} are now friends.",
     "addedUnnamed": "You are now friends.",
-    "shareMessage": "Add me as a friend in the app with the code: {{code}}"
+    "shareMessage": "Add me as a friend in the app with the code {{code}}. Open the link: {{link}}"
   },
   "feed": {
     "activeSessions": "ACTIVE SESSIONS",
