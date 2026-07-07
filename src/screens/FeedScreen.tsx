@@ -28,7 +28,21 @@ type ActiveSession = {
   started_at: string;
   guest_names: string[];
   image_url: string | null;
+  created_by: string;
+  isOwn: boolean;
+  ownerName: string;
+  ownerAvatar: string | null;
   item: { id: string; title: string; type: ItemType };
+};
+
+// Rå øktrad før eier-berikelse (item-join kommer som objekt).
+type ActiveSessionRow = {
+  id: string;
+  started_at: string;
+  guest_names: string[] | null;
+  image_url: string | null;
+  created_by: string;
+  item: { id: string; title: string; type: string } | null;
 };
 
 // Felles type for alle feed-hendelser
@@ -142,7 +156,9 @@ async function latestImagePathsBySession(
 }
 
 // Slår siste progresjonsbilde inn i økt-listen (aktive økter).
-async function attachSessionImages(sessions: ActiveSession[]): Promise<ActiveSession[]> {
+async function attachSessionImages<T extends { id: string; image_url: string | null }>(
+  sessions: T[],
+): Promise<T[]> {
   if (sessions.length === 0) return sessions;
   const latest = await latestImagePathsBySession(sessions.map((s) => s.id));
   return sessions.map((s) => ({
@@ -342,24 +358,51 @@ export default function FeedScreen() {
     if (!user) return;
     setLoadingSessions(true);
 
+    // Ingen created_by-filter: RLS venneskoper allerede sessions til egne + venners,
+    // så stripen viser både egne og venners aktive økter.
     const { data, error } = await supabase
       .from("sessions")
-      .select("id, started_at, guest_names, image_url, item:items(id, title, type)")
-      .eq("created_by", user.id)
+      .select(
+        "id, started_at, guest_names, image_url, created_by, item:items(id, title, type)",
+      )
       .is("completed_at", null)
       .order("started_at", { ascending: false });
 
     setSessionsError(!!error);
-    const rows = (data as unknown as ActiveSession[]) ?? [];
+    const rows = (data as unknown as ActiveSessionRow[]) ?? [];
     const withImages = await attachSessionImages(rows);
+
+    // Hent eierprofiler for venners økter i ett kall (id → navn/avatar).
+    const ownerIds = [...new Set(withImages.map((s) => s.created_by))];
+    const { data: ownerProfiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .in("id", ownerIds);
+    const ownerById = new Map(
+      ((ownerProfiles ?? []) as ProfileRow[]).map((p) => [p.id, p]),
+    );
 
     // Bytt lagringsstier mot signerte URL-er for visning i øktkortene.
     const signed = await getSignedUrls(withImages.map((s) => s.image_url));
     setSessions(
-      withImages.map((s) => ({
-        ...s,
-        image_url: s.image_url ? (signed.get(s.image_url) ?? null) : null,
-      })),
+      withImages.map((s) => {
+        const owner = ownerById.get(s.created_by);
+        return {
+          id: s.id,
+          started_at: s.started_at,
+          guest_names: s.guest_names ?? [],
+          image_url: s.image_url ? (signed.get(s.image_url) ?? null) : null,
+          created_by: s.created_by,
+          isOwn: s.created_by === user.id,
+          ownerName: owner?.full_name ?? i18n.t("common.unknownUser"),
+          ownerAvatar: owner?.avatar_url ?? null,
+          item: {
+            id: s.item?.id ?? "",
+            title: s.item?.title ?? "",
+            type: s.item?.type as ItemType,
+          },
+        };
+      }),
     );
     setLoadingSessions(false);
   }, [user]);
@@ -453,17 +496,26 @@ export default function FeedScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
           >
-            {sessions.map((s) => (
-              <ActiveSessionCard
-                key={s.id}
-                isOwn
-                puzzleTitle={s.item.title}
-                dayNumber={getDayNumber(s.started_at)}
-                timeLabel={getRelativeDayLabel(s.started_at)}
-                imageUrl={s.image_url}
-                onPress={() => navigation.navigate("SessionDetail", { sessionId: s.id })}
-              />
-            ))}
+            {sessions.map((s) => {
+              const shared = {
+                puzzleTitle: s.item.title,
+                dayNumber: getDayNumber(s.started_at),
+                timeLabel: getRelativeDayLabel(s.started_at),
+                imageUrl: s.image_url,
+                onPress: () => navigation.navigate("SessionDetail", { sessionId: s.id }),
+              };
+              return s.isOwn ? (
+                <ActiveSessionCard key={s.id} isOwn {...shared} />
+              ) : (
+                <ActiveSessionCard
+                  key={s.id}
+                  isOwn={false}
+                  userName={s.ownerName}
+                  avatarUrl={s.ownerAvatar}
+                  {...shared}
+                />
+              );
+            })}
           </ScrollView>
         )}
 
