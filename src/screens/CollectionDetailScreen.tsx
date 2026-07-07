@@ -6,9 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Modal,
   Alert,
-  Pressable,
   TextInput,
   Switch,
 } from "react-native";
@@ -37,6 +35,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { fetchFriends, type Friend } from "../utils/friends";
 import UserAvatar from "../components/UserAvatar";
+import BottomSheet from "../components/BottomSheet";
 
 type CollectionDetailRouteProp = RouteProp<CollectionsStackParamList, "CollectionDetail">;
 type RootNavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -378,384 +377,342 @@ export default function CollectionDetailScreen() {
       </ScrollView>
 
       {/* Handlingsark */}
-      <Modal
+      <BottomSheet
         visible={selectedItem !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setSelectedItem(null)}
+        onClose={() => setSelectedItem(null)}
+        closeLabel={t("collectionDetail.closeActions")}
       >
-        <Pressable
-          className="flex-1 bg-black/40"
-          onPress={() => setSelectedItem(null)}
-          accessibilityRole="button"
-          accessibilityLabel={t("collectionDetail.closeActions")}
-        />
-        <View
-          className="bg-surface dark:bg-surface-dark rounded-t-3xl px-4 pt-2"
-          style={{ paddingBottom: insets.bottom + 16 }}
-        >
-          <View className="w-10 h-1 bg-border dark:bg-border-dark rounded-full self-center mb-4" />
+        <View className="flex-row items-center mb-4 px-1">
+          <View className="w-9 h-9 rounded-xl bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-3">
+            <Ionicons name={ITEM_ICONS[type]} size={18} color="#1D9E75" />
+          </View>
+          <View className="flex-1">
+            <Text
+              className="text-content dark:text-content-dark font-semibold text-xl"
+              numberOfLines={1}
+            >
+              {selectedItem?.title}
+            </Text>
+            <Text className="text-content-secondary dark:text-content-secondary-dark text-xs">
+              {itemTypeLabel(type)}
+            </Text>
+          </View>
+          {actionLoading && <ActivityIndicator size="small" color="#1D9E75" />}
+        </View>
 
-          <View className="flex-row items-center mb-4 px-1">
-            <View className="w-9 h-9 rounded-xl bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-3">
-              <Ionicons name={ITEM_ICONS[type]} size={18} color="#1D9E75" />
-            </View>
-            <View className="flex-1">
-              <Text
-                className="text-content dark:text-content-dark font-semibold text-xl"
-                numberOfLines={1}
-              >
-                {selectedItem?.title}
-              </Text>
+        <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl overflow-hidden mb-3">
+          {/* Start økt */}
+          <TouchableOpacity
+            onPress={() => {
+              if (!selectedItem) return;
+              setSelectedItem(null);
+              navigation.navigate("NewSession", { itemId: selectedItem.id });
+            }}
+            disabled={selectedItem?.status === "Utlånt"}
+            accessibilityRole="button"
+            accessibilityLabel={t("collectionDetail.startSession")}
+            accessibilityState={{ disabled: selectedItem?.status === "Utlånt" }}
+            className={`flex-row items-center px-4 py-4 border-b border-border dark:border-border-dark ${
+              selectedItem?.status === "Utlånt" ? "opacity-40" : ""
+            }`}
+          >
+            <Ionicons name="play-circle-outline" size={22} color="#1D9E75" />
+            <Text className="text-content dark:text-content-dark text-base ml-3 flex-1">
+              {t("collectionDetail.startSession")}
+            </Text>
+            {selectedItem?.status === "Utlånt" && (
               <Text className="text-content-secondary dark:text-content-secondary-dark text-xs">
-                {itemTypeLabel(type)}
+                {t("collectionDetail.unavailable")}
               </Text>
-            </View>
-            {actionLoading && <ActivityIndicator size="small" color="#1D9E75" />}
-          </View>
-
-          <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl overflow-hidden mb-3">
-            {/* Start økt */}
-            <TouchableOpacity
-              onPress={() => {
-                if (!selectedItem) return;
-                setSelectedItem(null);
-                navigation.navigate("NewSession", { itemId: selectedItem.id });
-              }}
-              disabled={selectedItem?.status === "Utlånt"}
-              accessibilityRole="button"
-              accessibilityLabel={t("collectionDetail.startSession")}
-              accessibilityState={{ disabled: selectedItem?.status === "Utlånt" }}
-              className={`flex-row items-center px-4 py-4 border-b border-border dark:border-border-dark ${
-                selectedItem?.status === "Utlånt" ? "opacity-40" : ""
-              }`}
-            >
-              <Ionicons name="play-circle-outline" size={22} color="#1D9E75" />
-              <Text className="text-content dark:text-content-dark text-base ml-3 flex-1">
-                {t("collectionDetail.startSession")}
-              </Text>
-              {selectedItem?.status === "Utlånt" && (
-                <Text className="text-content-secondary dark:text-content-secondary-dark text-xs">
-                  {t("collectionDetail.unavailable")}
-                </Text>
-              )}
-            </TouchableOpacity>
-
-            {/* Registrer utlån / Registrer retur */}
-            {selectedItem?.status !== "Utlånt" ? (
-              <TouchableOpacity
-                onPress={openLoanModal}
-                accessibilityRole="button"
-                accessibilityLabel={t("collectionDetail.registerLoan")}
-                className="flex-row items-center px-4 py-4"
-              >
-                <Ionicons name="arrow-redo-outline" size={22} color="#1D9E75" />
-                <Text className="text-content dark:text-content-dark text-base ml-3">
-                  {t("collectionDetail.registerLoan")}
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <>
-                <TouchableOpacity
-                  onPress={openRequestReturn}
-                  accessibilityRole="button"
-                  accessibilityLabel={t("collections.requestReturn")}
-                  className="flex-row items-center px-4 py-4 border-b border-border dark:border-border-dark"
-                >
-                  <Ionicons name="notifications-outline" size={22} color="#1D9E75" />
-                  <Text className="text-content dark:text-content-dark text-base ml-3">
-                    {t("collections.requestReturn")}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => selectedItem && handleReturn(selectedItem)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t("loans.registerReturn")}
-                  className="flex-row items-center px-4 py-4"
-                >
-                  <Ionicons name="arrow-undo-outline" size={22} color="#1D9E75" />
-                  <Text className="text-content dark:text-content-dark text-base ml-3">
-                    {t("loans.registerReturn")}
-                  </Text>
-                </TouchableOpacity>
-              </>
             )}
-          </View>
+          </TouchableOpacity>
 
-          <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl overflow-hidden mb-3">
+          {/* Registrer utlån / Registrer retur */}
+          {selectedItem?.status !== "Utlånt" ? (
             <TouchableOpacity
-              onPress={() => selectedItem && handleEdit(selectedItem)}
+              onPress={openLoanModal}
               accessibilityRole="button"
-              accessibilityLabel={t("collectionDetail.edit")}
-              className="flex-row items-center px-4 py-4 border-b border-border dark:border-border-dark"
-            >
-              <Ionicons name="pencil-outline" size={22} color="#1D9E75" />
-              <Text className="text-content dark:text-content-dark text-base ml-3">
-                {t("collectionDetail.edit")}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => selectedItem && handleDelete(selectedItem)}
-              accessibilityRole="button"
-              accessibilityLabel={t("collectionDetail.delete")}
+              accessibilityLabel={t("collectionDetail.registerLoan")}
               className="flex-row items-center px-4 py-4"
             >
-              <Ionicons name="trash-outline" size={22} color="#EF4444" />
-              <Text className="text-red-500 text-base ml-3">
-                {t("collectionDetail.delete")}
+              <Ionicons name="arrow-redo-outline" size={22} color="#1D9E75" />
+              <Text className="text-content dark:text-content-dark text-base ml-3">
+                {t("collectionDetail.registerLoan")}
               </Text>
             </TouchableOpacity>
-          </View>
+          ) : (
+            <>
+              <TouchableOpacity
+                onPress={openRequestReturn}
+                accessibilityRole="button"
+                accessibilityLabel={t("collections.requestReturn")}
+                className="flex-row items-center px-4 py-4 border-b border-border dark:border-border-dark"
+              >
+                <Ionicons name="notifications-outline" size={22} color="#1D9E75" />
+                <Text className="text-content dark:text-content-dark text-base ml-3">
+                  {t("collections.requestReturn")}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => selectedItem && handleReturn(selectedItem)}
+                accessibilityRole="button"
+                accessibilityLabel={t("loans.registerReturn")}
+                className="flex-row items-center px-4 py-4"
+              >
+                <Ionicons name="arrow-undo-outline" size={22} color="#1D9E75" />
+                <Text className="text-content dark:text-content-dark text-base ml-3">
+                  {t("loans.registerReturn")}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+
+        <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl overflow-hidden mb-3">
+          <TouchableOpacity
+            onPress={() => selectedItem && handleEdit(selectedItem)}
+            accessibilityRole="button"
+            accessibilityLabel={t("collectionDetail.edit")}
+            className="flex-row items-center px-4 py-4 border-b border-border dark:border-border-dark"
+          >
+            <Ionicons name="pencil-outline" size={22} color="#1D9E75" />
+            <Text className="text-content dark:text-content-dark text-base ml-3">
+              {t("collectionDetail.edit")}
+            </Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => setSelectedItem(null)}
+            onPress={() => selectedItem && handleDelete(selectedItem)}
             accessibilityRole="button"
-            accessibilityLabel={t("common.cancel")}
-            className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center"
+            accessibilityLabel={t("collectionDetail.delete")}
+            className="flex-row items-center px-4 py-4"
           >
-            <Text className="text-content dark:text-content-dark font-semibold text-base">
-              {t("common.cancel")}
+            <Ionicons name="trash-outline" size={22} color="#EF4444" />
+            <Text className="text-red-500 text-base ml-3">
+              {t("collectionDetail.delete")}
             </Text>
           </TouchableOpacity>
         </View>
-      </Modal>
+
+        <TouchableOpacity
+          onPress={() => setSelectedItem(null)}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.cancel")}
+          className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center"
+        >
+          <Text className="text-content dark:text-content-dark font-semibold text-base">
+            {t("common.cancel")}
+          </Text>
+        </TouchableOpacity>
+      </BottomSheet>
 
       {/* Utlåns-modal */}
-      <Modal
+      <BottomSheet
         visible={loanModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setLoanModalVisible(false)}
+        onClose={() => setLoanModalVisible(false)}
+        closeLabel={t("collectionDetail.closeLoanModal")}
       >
-        <Pressable
-          className="flex-1 bg-black/40"
-          onPress={() => setLoanModalVisible(false)}
-          accessibilityRole="button"
-          accessibilityLabel={t("collectionDetail.closeLoanModal")}
-        />
-        <View
-          className="bg-surface dark:bg-surface-dark rounded-t-3xl px-4 pt-2"
-          style={{ paddingBottom: insets.bottom + 16 }}
-        >
-          <View className="w-10 h-1 bg-border dark:bg-border-dark rounded-full self-center mb-4" />
+        <Text className="text-content dark:text-content-dark text-lg font-semibold mb-1 px-1">
+          {t("collectionDetail.registerLoan")}
+        </Text>
+        <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mb-5 px-1">
+          {t("collectionDetail.loanWhoPrompt")}
+        </Text>
 
-          <Text className="text-content dark:text-content-dark text-lg font-semibold mb-1 px-1">
-            {t("collectionDetail.registerLoan")}
-          </Text>
-          <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mb-5 px-1">
-            {t("collectionDetail.loanWhoPrompt")}
-          </Text>
-
-          {/* Navn-felt (venn eller fritekst) */}
-          <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2 px-1">
-            {t("collectionDetail.nameLabel")}
-          </Text>
-          <View className="mb-5">
-            <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 flex-row items-center">
-              <TextInput
-                className="flex-1 text-content dark:text-content-dark text-base"
-                placeholder={t("collectionDetail.namePlaceholder")}
-                placeholderTextColor="#A8A29E"
-                value={borrowerName}
-                onChangeText={onBorrowerNameChange}
-                autoFocus
-                autoCapitalize="words"
-                accessibilityLabel={t("collectionDetail.nameFieldA11y")}
+        {/* Navn-felt (venn eller fritekst) */}
+        <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2 px-1">
+          {t("collectionDetail.nameLabel")}
+        </Text>
+        <View className="mb-5">
+          <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 flex-row items-center">
+            <TextInput
+              className="flex-1 text-content dark:text-content-dark text-base"
+              placeholder={t("collectionDetail.namePlaceholder")}
+              placeholderTextColor="#A8A29E"
+              value={borrowerName}
+              onChangeText={onBorrowerNameChange}
+              autoFocus
+              autoCapitalize="words"
+              accessibilityLabel={t("collectionDetail.nameFieldA11y")}
+            />
+            {borrowerUserId && (
+              <Ionicons
+                name="checkmark-circle"
+                size={20}
+                color="#1D9E75"
+                accessible={false}
               />
-              {borrowerUserId && (
-                <Ionicons
-                  name="checkmark-circle"
-                  size={20}
-                  color="#1D9E75"
-                  accessible={false}
-                />
-              )}
-            </View>
-
-            {friendMatches.length > 0 && (
-              <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark overflow-hidden mt-2 max-h-56">
-                <ScrollView keyboardShouldPersistTaps="handled">
-                  {friendMatches.map((f, idx) => (
-                    <TouchableOpacity
-                      key={f.id}
-                      onPress={() => selectFriend(f)}
-                      accessibilityRole="button"
-                      accessibilityLabel={f.name ?? t("common.unknownUser")}
-                      accessibilityHint={t("collectionDetail.pickFriendHint")}
-                      className={`flex-row items-center px-4 py-3 ${
-                        idx < friendMatches.length - 1
-                          ? "border-b border-border dark:border-border-dark"
-                          : ""
-                      }`}
-                    >
-                      <UserAvatar name={f.name} avatarUrl={f.avatarUrl} size={32} />
-                      <Text
-                        className="text-content dark:text-content-dark text-base ml-3 flex-1"
-                        numberOfLines={1}
-                      >
-                        {f.name ?? t("common.unknownUser")}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
             )}
           </View>
 
-          {/* Synlighet-toggle */}
-          <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl px-4 py-4 mb-5 flex-row items-center">
-            <View className="flex-1">
-              <Text className="text-content dark:text-content-dark font-medium">
-                {t("collectionDetail.visibleToFriends")}
-              </Text>
-              <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-0.5">
-                {t("collectionDetail.visibleToFriendsDesc")}
-              </Text>
-            </View>
-            <Switch
-              value={loanIsPublic}
-              onValueChange={setLoanIsPublic}
-              trackColor={{ false: "#D6D3D1", true: "#1D9E75" }}
-              thumbColor="white"
-              accessibilityLabel={t("collectionDetail.visibleToFriends")}
-              accessibilityHint={t("collectionDetail.visibleToFriendsHint")}
-            />
-          </View>
-
-          {/* Frist */}
-          <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2 px-1">
-            {t("collectionDetail.dueLabel")}
-          </Text>
-          <View className="flex-row flex-wrap gap-2 mb-5">
-            {DUE_OPTIONS.map((opt) => {
-              const selected = loanDueKey === opt.key;
-              return (
-                <TouchableOpacity
-                  key={opt.key}
-                  onPress={() => setLoanDueKey(opt.key)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t(opt.labelKey)}
-                  accessibilityState={{ selected }}
-                  className={`px-4 py-2 rounded-full border ${
-                    selected
-                      ? "bg-accent dark:bg-accent-dark border-accent dark:border-accent-dark"
-                      : "bg-surface-secondary dark:bg-surface-dark-secondary border-border dark:border-border-dark"
-                  }`}
-                >
-                  <Text
-                    className={`text-sm font-medium ${
-                      selected ? "text-white" : "text-content dark:text-content-dark"
+          {friendMatches.length > 0 && (
+            <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark overflow-hidden mt-2 max-h-56">
+              <ScrollView keyboardShouldPersistTaps="handled">
+                {friendMatches.map((f, idx) => (
+                  <TouchableOpacity
+                    key={f.id}
+                    onPress={() => selectFriend(f)}
+                    accessibilityRole="button"
+                    accessibilityLabel={f.name ?? t("common.unknownUser")}
+                    accessibilityHint={t("collectionDetail.pickFriendHint")}
+                    className={`flex-row items-center px-4 py-3 ${
+                      idx < friendMatches.length - 1
+                        ? "border-b border-border dark:border-border-dark"
+                        : ""
                     }`}
                   >
-                    {t(opt.labelKey)}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {/* Lån ut-knapp */}
-          <TouchableOpacity
-            onPress={handleLoan}
-            disabled={actionLoading}
-            accessibilityRole="button"
-            accessibilityLabel={t("collectionDetail.lendOut")}
-            accessibilityState={{ disabled: actionLoading }}
-            className="bg-accent dark:bg-accent-dark rounded-2xl py-4 items-center justify-center mb-3"
-          >
-            {actionLoading ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <Text className="text-white text-base font-semibold">
-                {t("collectionDetail.lendOut")}
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setLoanModalVisible(false)}
-            accessibilityRole="button"
-            accessibilityLabel={t("common.cancel")}
-            className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center"
-          >
-            <Text className="text-content dark:text-content-dark font-semibold text-base">
-              {t("common.cancel")}
-            </Text>
-          </TouchableOpacity>
+                    <UserAvatar name={f.name} avatarUrl={f.avatarUrl} size={32} />
+                    <Text
+                      className="text-content dark:text-content-dark text-base ml-3 flex-1"
+                      numberOfLines={1}
+                    >
+                      {f.name ?? t("common.unknownUser")}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
         </View>
-      </Modal>
+
+        {/* Synlighet-toggle */}
+        <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl px-4 py-4 mb-5 flex-row items-center">
+          <View className="flex-1">
+            <Text className="text-content dark:text-content-dark font-medium">
+              {t("collectionDetail.visibleToFriends")}
+            </Text>
+            <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-0.5">
+              {t("collectionDetail.visibleToFriendsDesc")}
+            </Text>
+          </View>
+          <Switch
+            value={loanIsPublic}
+            onValueChange={setLoanIsPublic}
+            trackColor={{ false: "#D6D3D1", true: "#1D9E75" }}
+            thumbColor="white"
+            accessibilityLabel={t("collectionDetail.visibleToFriends")}
+            accessibilityHint={t("collectionDetail.visibleToFriendsHint")}
+          />
+        </View>
+
+        {/* Frist */}
+        <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2 px-1">
+          {t("collectionDetail.dueLabel")}
+        </Text>
+        <View className="flex-row flex-wrap gap-2 mb-5">
+          {DUE_OPTIONS.map((opt) => {
+            const selected = loanDueKey === opt.key;
+            return (
+              <TouchableOpacity
+                key={opt.key}
+                onPress={() => setLoanDueKey(opt.key)}
+                accessibilityRole="button"
+                accessibilityLabel={t(opt.labelKey)}
+                accessibilityState={{ selected }}
+                className={`px-4 py-2 rounded-full border ${
+                  selected
+                    ? "bg-accent dark:bg-accent-dark border-accent dark:border-accent-dark"
+                    : "bg-surface-secondary dark:bg-surface-dark-secondary border-border dark:border-border-dark"
+                }`}
+              >
+                <Text
+                  className={`text-sm font-medium ${
+                    selected ? "text-white" : "text-content dark:text-content-dark"
+                  }`}
+                >
+                  {t(opt.labelKey)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Lån ut-knapp */}
+        <TouchableOpacity
+          onPress={handleLoan}
+          disabled={actionLoading}
+          accessibilityRole="button"
+          accessibilityLabel={t("collectionDetail.lendOut")}
+          accessibilityState={{ disabled: actionLoading }}
+          className="bg-accent dark:bg-accent-dark rounded-2xl py-4 items-center justify-center mb-3"
+        >
+          {actionLoading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Text className="text-white text-base font-semibold">
+              {t("collectionDetail.lendOut")}
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setLoanModalVisible(false)}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.cancel")}
+          className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center"
+        >
+          <Text className="text-content dark:text-content-dark font-semibold text-base">
+            {t("common.cancel")}
+          </Text>
+        </TouchableOpacity>
+      </BottomSheet>
 
       {/* Be om retur-modal */}
-      <Modal
+      <BottomSheet
         visible={requestReturnItem !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setRequestReturnItem(null)}
+        onClose={() => setRequestReturnItem(null)}
+        closeLabel={t("collections.closeLoanActions")}
       >
-        <Pressable
-          className="flex-1 bg-black/40"
+        <Text className="text-content dark:text-content-dark text-lg font-semibold mb-1 px-1">
+          {t("collections.requestReturn")}
+        </Text>
+        <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mb-4 px-1">
+          {requestReturnItem?.title ?? t("common.unknownItem")}
+        </Text>
+
+        <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-4">
+          <TextInput
+            className="text-content dark:text-content-dark text-base"
+            placeholder={t("borrow.messagePlaceholder")}
+            placeholderTextColor="#A8A29E"
+            value={returnNote}
+            onChangeText={setReturnNote}
+            multiline
+            numberOfLines={2}
+            textAlignVertical="top"
+            accessibilityLabel={t("borrow.messagePlaceholder")}
+          />
+        </View>
+
+        <TouchableOpacity
+          onPress={handleSendReturnRequest}
+          disabled={requestingReturn}
+          accessibilityRole="button"
+          accessibilityLabel={t("collections.requestReturnSend")}
+          accessibilityState={{ disabled: requestingReturn }}
+          className="bg-accent dark:bg-accent-dark rounded-2xl py-4 items-center mb-2"
+        >
+          {requestingReturn ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Text className="text-white font-semibold text-base">
+              {t("collections.requestReturnSend")}
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
           onPress={() => setRequestReturnItem(null)}
           accessibilityRole="button"
-          accessibilityLabel={t("collections.closeLoanActions")}
-        />
-        <View
-          className="bg-surface dark:bg-surface-dark rounded-t-3xl px-4 pt-2"
-          style={{ paddingBottom: insets.bottom + 16 }}
+          accessibilityLabel={t("common.cancel")}
+          className="py-3 items-center"
         >
-          <View className="w-10 h-1 bg-border dark:bg-border-dark rounded-full self-center mb-4" />
-
-          <Text className="text-content dark:text-content-dark text-lg font-semibold mb-1 px-1">
-            {t("collections.requestReturn")}
+          <Text className="text-content-secondary dark:text-content-secondary-dark text-sm">
+            {t("common.cancel")}
           </Text>
-          <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mb-4 px-1">
-            {requestReturnItem?.title ?? t("common.unknownItem")}
-          </Text>
-
-          <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-4">
-            <TextInput
-              className="text-content dark:text-content-dark text-base"
-              placeholder={t("borrow.messagePlaceholder")}
-              placeholderTextColor="#A8A29E"
-              value={returnNote}
-              onChangeText={setReturnNote}
-              multiline
-              numberOfLines={2}
-              textAlignVertical="top"
-              accessibilityLabel={t("borrow.messagePlaceholder")}
-            />
-          </View>
-
-          <TouchableOpacity
-            onPress={handleSendReturnRequest}
-            disabled={requestingReturn}
-            accessibilityRole="button"
-            accessibilityLabel={t("collections.requestReturnSend")}
-            accessibilityState={{ disabled: requestingReturn }}
-            className="bg-accent dark:bg-accent-dark rounded-2xl py-4 items-center mb-2"
-          >
-            {requestingReturn ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <Text className="text-white font-semibold text-base">
-                {t("collections.requestReturnSend")}
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setRequestReturnItem(null)}
-            accessibilityRole="button"
-            accessibilityLabel={t("common.cancel")}
-            className="py-3 items-center"
-          >
-            <Text className="text-content-secondary dark:text-content-secondary-dark text-sm">
-              {t("common.cancel")}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
+        </TouchableOpacity>
+      </BottomSheet>
     </>
   );
 }

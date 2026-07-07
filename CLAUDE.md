@@ -21,10 +21,67 @@ A React Native / Expo mobile app for managing puzzle and board game collections,
 
 ## Commands
 
+### Running the dev server
+
+Pick the mode by **which client** runs the JS and **where the tester is**:
+
 ```bash
-npx expo start                # Start dev server
-npx expo start --localhost    # Use for iOS Simulator (avoids LAN IP timeout)
-npx expo start --ios          # Run on iOS simulator
+# --- Expo Go (quick UI checks; only works because all native deps are in the SDK-55 Go set) ---
+npx expo start --go                 # start Metro for Expo Go (open the Expo Go app)
+npx expo start --go --ios           # + auto-boot iOS simulator (see simulator gotcha below)
+
+# --- Development build (the real app; required once any custom native dep/plugin is used) ---
+npx expo start --dev-client         # LAN — tester's phone must be on the SAME Wi-Fi as this Mac
+npx expo start --dev-client --tunnel# any network / mobile data (routes via Expo's ngrok tunnel)
+
+# --- Options that stack onto any of the above ---
+--clear                             # bust Metro cache — do this after a bigger merge
+--localhost                         # simulator-only host (physical devices can't reach it)
+```
+
+**`--go` vs `--dev-client`** — `--go` runs the code inside the **Expo Go** app; `--dev-client`
+runs it inside **our own `puslespill` dev-build APK** (its own icon, installed from EAS). Use
+`--dev-client` for anything real — OAuth redirects use the custom `puslespill://` scheme and only
+behave correctly in the dev build. `--go` is fine for pure-UI/logic checks since every current
+native dep happens to be in the SDK-55 Expo Go set.
+
+**`--tunnel`** — needed when the tester is on a **different network** than this Mac (e.g. a friend
+on their own Wi-Fi/mobile data). Requires `@expo/ngrok` (already a devDep). The tunnel URL is
+**deterministic per project/account** and stable across restarts:
+`exp://3ngoqts-rubenough-8081.exp.direct`. If it isn't printed (non-interactive/background start),
+read it from ngrok's local API: `curl -s http://127.0.0.1:4040/api/tunnels`.
+
+**Connecting a device** — open the client app → "Enter URL manually" → the `exp://…` URL
+(LAN `exp://<mac-ip>:8081`, or the tunnel URL). Dev build = open **puslespill**; Expo Go = open
+**Expo Go**. First tunnel load takes ~20–30s.
+
+**iOS simulator gotcha** — `npx expo start --ios` can hang on an interactive "install the
+recommended Expo Go version?" prompt (`CI=1` does NOT suppress it). Workaround: start Metro
+**without** `--ios`, then open the app manually:
+`xcrun simctl openurl booted "exp://127.0.0.1:8081"`. If Expo Go sits on a stale/error screen,
+cold-launch it: `xcrun simctl terminate booted host.exp.Exponent && xcrun simctl launch booted host.exp.Exponent`.
+
+**Do I need a new build after a merge?** JS/TS changes stream live over Metro — no rebuild.
+**Rebuild only when the native layer changes** (native dep/config-plugin added, `app.json` native
+config, SDK/RN bump). Run `npm run rebuild:check` to get a verdict (see Other); a launch-time
+native/module crash like the `FontLoaderModule` one is the signal a rebuild is overdue.
+
+**Health / restart cheats:**
+
+```bash
+curl -s http://127.0.0.1:8081/status                 # "packager-status:running" = up
+pkill -f "expo start"                                # stop the server
+# Watchman "Recrawled this watch N times" + a Metro `_onHasteChange … addedFiles` crash → reset:
+watchman watch-del "$PWD" ; watchman watch-project "$PWD"   # then restart with --clear
+```
+
+Note: **long-running dev servers should be started in the user's own terminal** (via a `!` command),
+not as an agent background task — those get reaped. Killing the local `eas build`/`expo start`
+process does NOT cancel an in-progress **cloud** build.
+
+```bash
+# Legacy shortcuts (still valid)
+npx expo start                # bare Metro (defaults to dev-client since expo-dev-client is installed)
 npx expo start --android
 npx expo start --web
 ```

@@ -7,8 +7,6 @@ import {
   RefreshControl,
   Alert,
   ActivityIndicator,
-  Modal,
-  Pressable,
   TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -22,6 +20,7 @@ import { CollectionsStackParamList } from "../navigation/CollectionsStack";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { getRelativeDayLabel, formatShortDate } from "../utils/date";
+import BottomSheet from "../components/BottomSheet";
 
 type NavProp = NativeStackNavigationProp<CollectionsStackParamList, "CollectionsList">;
 
@@ -595,74 +594,60 @@ export default function CollectionsScreen() {
       </ScrollView>
 
       {/* Be om retur-modal (eier) */}
-      <Modal
+      <BottomSheet
         visible={requestReturnLoan !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setRequestReturnLoan(null)}
+        onClose={() => setRequestReturnLoan(null)}
+        closeLabel={t("collections.closeLoanActions")}
       >
-        <Pressable
-          className="flex-1 bg-black/40"
+        <Text className="text-content dark:text-content-dark text-lg font-semibold mb-1 px-1">
+          {t("collections.requestReturn")}
+        </Text>
+        <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mb-4 px-1">
+          {requestReturnLoan?.items?.title ?? t("common.unknownItem")}
+        </Text>
+
+        <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-4">
+          <TextInput
+            className="text-content dark:text-content-dark text-base"
+            placeholder={t("borrow.messagePlaceholder")}
+            placeholderTextColor="#A8A29E"
+            value={returnNote}
+            onChangeText={setReturnNote}
+            multiline
+            numberOfLines={2}
+            textAlignVertical="top"
+            accessibilityLabel={t("borrow.messagePlaceholder")}
+          />
+        </View>
+
+        <TouchableOpacity
+          onPress={handleSendReturnRequest}
+          disabled={requestingReturn}
+          accessibilityRole="button"
+          accessibilityLabel={t("collections.requestReturnSend")}
+          accessibilityState={{ disabled: requestingReturn }}
+          className="bg-accent dark:bg-accent-dark rounded-2xl py-4 items-center mb-2"
+        >
+          {requestingReturn ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Text className="text-white font-semibold text-base">
+              {t("collections.requestReturnSend")}
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
           onPress={() => setRequestReturnLoan(null)}
           accessibilityRole="button"
-          accessibilityLabel={t("collections.closeLoanActions")}
-        />
-        <View
-          className="bg-surface dark:bg-surface-dark rounded-t-3xl px-4 pt-2"
-          style={{ paddingBottom: insets.bottom + 16 }}
+          accessibilityLabel={t("common.cancel")}
+          className="py-3 items-center"
         >
-          <View className="w-10 h-1 bg-border dark:bg-border-dark rounded-full self-center mb-4" />
-
-          <Text className="text-content dark:text-content-dark text-lg font-semibold mb-1 px-1">
-            {t("collections.requestReturn")}
+          <Text className="text-content-secondary dark:text-content-secondary-dark text-sm">
+            {t("common.cancel")}
           </Text>
-          <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mb-4 px-1">
-            {requestReturnLoan?.items?.title ?? t("common.unknownItem")}
-          </Text>
-
-          <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-4">
-            <TextInput
-              className="text-content dark:text-content-dark text-base"
-              placeholder={t("borrow.messagePlaceholder")}
-              placeholderTextColor="#A8A29E"
-              value={returnNote}
-              onChangeText={setReturnNote}
-              multiline
-              numberOfLines={2}
-              textAlignVertical="top"
-              accessibilityLabel={t("borrow.messagePlaceholder")}
-            />
-          </View>
-
-          <TouchableOpacity
-            onPress={handleSendReturnRequest}
-            disabled={requestingReturn}
-            accessibilityRole="button"
-            accessibilityLabel={t("collections.requestReturnSend")}
-            accessibilityState={{ disabled: requestingReturn }}
-            className="bg-accent dark:bg-accent-dark rounded-2xl py-4 items-center mb-2"
-          >
-            {requestingReturn ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <Text className="text-white font-semibold text-base">
-                {t("collections.requestReturnSend")}
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setRequestReturnLoan(null)}
-            accessibilityRole="button"
-            accessibilityLabel={t("common.cancel")}
-            className="py-3 items-center"
-          >
-            <Text className="text-content-secondary dark:text-content-secondary-dark text-sm">
-              {t("common.cancel")}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
+        </TouchableOpacity>
+      </BottomSheet>
     </>
   );
 }
