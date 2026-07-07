@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
@@ -13,6 +13,9 @@ type BaseCard = {
   timeLabel: string;
   itemType: ItemType;
   itemTitle: string;
+  // Signert URL til siste progresjonsbilde; når null vises kategori-ikonet.
+  imageUrl?: string | null;
+  onPress?: () => void;
 };
 
 type AddedCard = BaseCard & { type: "added" };
@@ -59,20 +62,20 @@ function getBadgeLabel(type: Props["type"], t: TFunction): string | null {
 
 export default function FeedCard(props: Props) {
   const { t } = useTranslation();
-  const { userName, avatarUrl, itemType, itemTitle } = props;
+  const { userName, avatarUrl, itemType, itemTitle, imageUrl, onPress } = props;
   const actionText = getActionText(props, t);
   const badge = getBadgeLabel(props.type, t);
+  const a11yLabel = t("feed.cardA11y", {
+    user: userName,
+    action: actionText,
+    title: itemTitle,
+  });
 
-  return (
-    <View
-      accessible
-      accessibilityLabel={t("feed.cardA11y", {
-        user: userName,
-        action: actionText,
-        title: itemTitle,
-      })}
-      className="bg-surface dark:bg-surface-dark rounded-2xl mx-4 mb-3 overflow-hidden border border-border dark:border-border-dark"
-    >
+  const cardClass =
+    "bg-surface dark:bg-surface-dark rounded-2xl mx-4 mb-3 overflow-hidden border border-border dark:border-border-dark";
+
+  const body = (
+    <>
       {/* Topprad */}
       <View className="flex-row items-center justify-between px-4 pt-4 pb-3">
         <View className="flex-row items-center gap-3 flex-1">
@@ -98,11 +101,23 @@ export default function FeedCard(props: Props) {
         )}
       </View>
 
+      {/* Bilde — siste progresjonsbilde når det finnes */}
+      {imageUrl && (
+        <Image
+          source={{ uri: imageUrl }}
+          className="w-full h-44"
+          resizeMode="cover"
+          accessible={false}
+        />
+      )}
+
       {/* Innhold */}
-      <View className="flex-row items-center gap-3 px-4 pb-4">
-        <View className="w-14 h-14 rounded-lg bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center">
-          <Ionicons name={ITEM_ICONS[itemType]} size={24} color="#78716C" />
-        </View>
+      <View className="flex-row items-center gap-3 px-4 py-4">
+        {!imageUrl && (
+          <View className="w-14 h-14 rounded-lg bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center">
+            <Ionicons name={ITEM_ICONS[itemType]} size={24} color="#78716C" />
+          </View>
+        )}
         <View className="flex-1">
           <Text
             className="text-content dark:text-content-dark text-sm font-medium"
@@ -115,6 +130,26 @@ export default function FeedCard(props: Props) {
           </Text>
         </View>
       </View>
+    </>
+  );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={a11yLabel}
+        accessibilityHint={t("feed.cardHint")}
+        className={cardClass}
+      >
+        {body}
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <View accessible accessibilityLabel={a11yLabel} className={cardClass}>
+      {body}
     </View>
   );
 }

@@ -3,11 +3,12 @@ import { View, Text, TouchableOpacity } from "react-native";
 // NativeWind-varianten følger app-styrt tema (colorScheme.set), ikke bare OS.
 import { useColorScheme } from "nativewind";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, type NavigatorScreenParams } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { RootStackParamList } from "./RootNavigator";
+import { CollectionsStackParamList } from "./CollectionsStack";
 import FeedScreen from "../screens/FeedScreen";
 import CollectionsStack from "./CollectionsStack";
 import FriendsScreen from "../screens/FriendsScreen";
@@ -16,6 +17,15 @@ import BottomSheet from "../components/BottomSheet";
 import { ITEM_ICONS, type ItemType } from "../utils/collections";
 
 type IoniconsName = ComponentProps<typeof Ionicons>["name"];
+
+// Fanenavigatoren. "Venner" tar en valgfri kode fra dyplenke-invitasjonen.
+export type TabParamList = {
+  Feed: undefined;
+  Samlinger: NavigatorScreenParams<CollectionsStackParamList>;
+  NyOkt: undefined;
+  Venner: { code?: string } | undefined;
+  Profil: undefined;
+};
 
 type ModalAction = "add" | "session";
 // Hvilket steg av +-arket som vises: rot-valg eller type-valg for "legg til".
@@ -55,7 +65,7 @@ function PlaceholderScreen() {
   return null;
 }
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<TabParamList>();
 
 type RootNavProp = NativeStackNavigationProp<RootStackParamList>;
 

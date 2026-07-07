@@ -1,6 +1,7 @@
 import React from "react";
+import { type NavigatorScreenParams } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import AppNavigator from "./AppNavigator";
+import AppNavigator, { type TabParamList } from "./AppNavigator";
 import AddItemScreen from "../screens/AddItemScreen";
 import EditItemScreen from "../screens/EditItemScreen";
 import NewSessionScreen from "../screens/NewSessionScreen";
@@ -12,7 +13,7 @@ import SettingsScreen from "../screens/SettingsScreen";
 import { type ItemType, type Item } from "../utils/collections";
 
 export type RootStackParamList = {
-  Tabs: undefined;
+  Tabs: NavigatorScreenParams<TabParamList>;
   AddItem: { type: ItemType };
   EditItem: { item: Item; type: ItemType };
   NewSession: { itemId?: string };

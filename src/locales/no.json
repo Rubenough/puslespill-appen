@@ -161,6 +161,7 @@
     "badgeLoaned": "Utlånt",
     "badgeBorrowed": "Lånt",
     "cardA11y": "{{user}} {{action}}: {{title}}",
+    "cardHint": "Trykk for detaljer",
     "ownSession": "Din økt",
     "imagePlaceholder": "Bilde",
     "dayProgress": "Dag {{day}} · {{when}}",

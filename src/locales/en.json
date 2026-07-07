@@ -161,6 +161,7 @@
     "badgeLoaned": "On loan",
     "badgeBorrowed": "Borrowed",
     "cardA11y": "{{user}} {{action}}: {{title}}",
+    "cardHint": "Tap for details",
     "ownSession": "Your session",
     "imagePlaceholder": "Image",
     "dayProgress": "Day {{day}} · {{when}}",

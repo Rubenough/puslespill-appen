@@ -5,6 +5,7 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -41,6 +42,8 @@ type FeedItem =
       itemType: ItemType;
       itemTitle: string;
       withUsers: string[];
+      sessionId: string;
+      imageUrl: string | null;
     }
   | {
       id: string;
@@ -50,6 +53,8 @@ type FeedItem =
       avatarUrl: string | null;
       itemType: ItemType;
       itemTitle: string;
+      sessionId: string;
+      imageUrl: string | null;
     }
   | {
       id: string;
@@ -59,6 +64,8 @@ type FeedItem =
       avatarUrl: string | null;
       itemType: ItemType;
       itemTitle: string;
+      ownerId: string;
+      isOwn: boolean;
     }
   | {
       id: string;
@@ -83,26 +90,64 @@ type FeedItem =
 
 // ─── Datahenting ──────────────────────────────────────────────────────────────
 
-// Henter siste progresjonsbilde per økt og slår det inn i økt-listen
-async function attachSessionImages(sessions: ActiveSession[]): Promise<ActiveSession[]> {
-  if (sessions.length === 0) return sessions;
+// Radformer for de sammenslåtte Supabase-spørringene (item-join kommer som objekt).
+type ItemJoin = { title: string; type: string } | null;
+type SessionRow = {
+  id: string;
+  started_at: string;
+  completed_at: string | null;
+  guest_names: string[] | null;
+  created_by: string;
+  image_url: string | null;
+  items: ItemJoin;
+};
+type ItemRow = {
+  id: string;
+  title: string;
+  type: string;
+  created_at: string;
+  owner_id: string;
+};
+type LoanRow = {
+  id: string;
+  borrower_name: string | null;
+  loaned_at: string;
+  items: ItemJoin;
+};
+type BorrowRow = {
+  id: string;
+  owner_id: string;
+  responded_at: string | null;
+  items: ItemJoin;
+};
+type ProfileRow = { id: string; full_name: string | null; avatar_url: string | null };
 
-  const ids = sessions.map((s) => s.id);
-  const { data: imgData } = await supabase
+// Henter siste progresjonsbilde (lagringssti) per økt-ID.
+async function latestImagePathsBySession(
+  sessionIds: string[],
+): Promise<Map<string, string>> {
+  const latest = new Map<string, string>();
+  if (sessionIds.length === 0) return latest;
+
+  const { data } = await supabase
     .from("session_images")
     .select("session_id, image_url, captured_at")
-    .in("session_id", ids)
+    .in("session_id", sessionIds)
     .order("captured_at", { ascending: false });
 
-  const latestBySession = new Map<string, string>();
-  for (const img of (imgData ?? []) as { session_id: string; image_url: string }[]) {
-    if (!latestBySession.has(img.session_id)) {
-      latestBySession.set(img.session_id, img.image_url);
-    }
+  for (const img of (data ?? []) as { session_id: string; image_url: string }[]) {
+    if (!latest.has(img.session_id)) latest.set(img.session_id, img.image_url);
   }
+  return latest;
+}
+
+// Slår siste progresjonsbilde inn i økt-listen (aktive økter).
+async function attachSessionImages(sessions: ActiveSession[]): Promise<ActiveSession[]> {
+  if (sessions.length === 0) return sessions;
+  const latest = await latestImagePathsBySession(sessions.map((s) => s.id));
   return sessions.map((s) => ({
     ...s,
-    image_url: latestBySession.get(s.id) ?? s.image_url,
+    image_url: latest.get(s.id) ?? s.image_url,
   }));
 }
 
@@ -117,7 +162,9 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
     // Sessions siste 14 dager — item-join fungerer siden sessions.item_id → items.id (FK)
     supabase
       .from("sessions")
-      .select("id, started_at, completed_at, guest_names, created_by, items(title, type)")
+      .select(
+        "id, started_at, completed_at, guest_names, created_by, image_url, items(title, type)",
+      )
       .gt("started_at", twoWeeksAgo)
       .order("started_at", { ascending: false })
       .limit(30),
@@ -156,29 +203,48 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
     sessionsRes.error ?? itemsRes.error ?? loansRes.error ?? borrowedRes.error;
   if (queryError) throw queryError;
 
+  const sessionRows = (sessionsRes.data ?? []) as unknown as SessionRow[];
+  const itemRows = (itemsRes.data ?? []) as unknown as ItemRow[];
+  const loanRows = (loansRes.data ?? []) as unknown as LoanRow[];
+  const borrowRows = (borrowedRes.data ?? []) as unknown as BorrowRow[];
+
   // Samle alle unike bruker-IDer fra sessions, items og lån-fra-eiere; hent profiler i ett kall
   const userIds = new Set<string>([userId]);
-  for (const s of (sessionsRes.data ?? []) as any[]) userIds.add(s.created_by);
-  for (const i of (itemsRes.data ?? []) as any[]) userIds.add(i.owner_id);
-  for (const b of (borrowedRes.data ?? []) as any[]) userIds.add(b.owner_id);
+  for (const s of sessionRows) userIds.add(s.created_by);
+  for (const i of itemRows) userIds.add(i.owner_id);
+  for (const b of borrowRows) userIds.add(b.owner_id);
 
   const { data: profilesData } = await supabase
     .from("profiles")
     .select("id, full_name, avatar_url")
     .in("id", [...userIds]);
 
-  const profilesById = new Map((profilesData ?? []).map((p: any) => [p.id, p]));
+  const profilesById = new Map(
+    ((profilesData ?? []) as ProfileRow[]).map((p) => [p.id, p]),
+  );
+
+  // Signér siste progresjonsbilde (eller øktens omslag) for økt-hendelsene i ett kall.
+  const latestImg = await latestImagePathsBySession(sessionRows.map((s) => s.id));
+  const imagePathBySession = new Map<string, string>();
+  for (const s of sessionRows) {
+    const path = latestImg.get(s.id) ?? s.image_url;
+    if (path) imagePathBySession.set(s.id, path);
+  }
+  const signedByPath = await getSignedUrls([...imagePathBySession.values()]);
 
   const feedItems: FeedItem[] = [];
 
   // Sessions → "started" eller "completed"
-  for (const s of (sessionsRes.data ?? []) as any[]) {
+  for (const s of sessionRows) {
     const profile = profilesById.get(s.created_by);
+    const path = imagePathBySession.get(s.id);
     const base = {
       userName: profile?.full_name ?? i18n.t("common.unknownUser"),
       avatarUrl: profile?.avatar_url ?? null,
       itemType: s.items?.type as ItemType,
       itemTitle: s.items?.title ?? "",
+      sessionId: s.id,
+      imageUrl: path ? (signedByPath.get(path) ?? null) : null,
     };
 
     if (s.completed_at) {
@@ -200,7 +266,7 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
   }
 
   // Items → "added"
-  for (const item of (itemsRes.data ?? []) as any[]) {
+  for (const item of itemRows) {
     const profile = profilesById.get(item.owner_id);
     feedItems.push({
       id: `added-${item.id}`,
@@ -210,11 +276,13 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
       avatarUrl: profile?.avatar_url ?? null,
       itemType: item.type as ItemType,
       itemTitle: item.title,
+      ownerId: item.owner_id,
+      isOwn: item.owner_id === userId,
     });
   }
 
   // Lån → "loaned"
-  for (const loan of (loansRes.data ?? []) as any[]) {
+  for (const loan of loanRows) {
     const profile = profilesById.get(userId); // egne lån — profilen er brukeren selv
     feedItems.push({
       id: `loaned-${loan.id}`,
@@ -224,13 +292,13 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
       avatarUrl: profile?.avatar_url ?? null,
       itemType: loan.items?.type as ItemType,
       itemTitle: loan.items?.title ?? "",
-      loanedTo: loan.borrower_name,
+      loanedTo: loan.borrower_name ?? undefined,
     });
   }
 
   // Godkjente forespørsler → "borrowed" (egen låneaktivitet)
   const self = profilesById.get(userId);
-  for (const req of (borrowedRes.data ?? []) as any[]) {
+  for (const req of borrowRows) {
     if (!req.responded_at) continue;
     const owner = profilesById.get(req.owner_id);
     feedItems.push({
@@ -267,6 +335,8 @@ export default function FeedScreen() {
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [feedError, setFeedError] = useState(false);
+
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchSessions = useCallback(async () => {
     if (!user) return;
@@ -314,10 +384,51 @@ export default function FeedScreen() {
     }, [fetchSessions, fetchFeed]),
   );
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([fetchSessions(), fetchFeed()]);
+    setRefreshing(false);
+  }, [fetchSessions, fetchFeed]);
+
+  // Hvor et feed-kort navigerer: økt-hendelser → økt-detaljer; "lagt til" → eierens
+  // samling (egen samling for eget kort, ellers venns samling). Lån vises uten trykk.
+  function feedItemPress(item: FeedItem): (() => void) | undefined {
+    switch (item.type) {
+      case "started":
+      case "completed":
+        return () => navigation.navigate("SessionDetail", { sessionId: item.sessionId });
+      case "added":
+        return item.isOwn
+          ? () =>
+              navigation.navigate("Tabs", {
+                screen: "Samlinger",
+                params: { screen: "CollectionDetail", params: { type: item.itemType } },
+              })
+          : () =>
+              navigation.navigate("FriendCollection", {
+                friendId: item.ownerId,
+                friendName: item.userName,
+                avatarUrl: item.avatarUrl,
+              });
+      default:
+        return undefined;
+    }
+  }
+
   return (
     <View className="flex-1 bg-surface-secondary dark:bg-surface-dark-secondary">
       <Header />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#1D9E75"
+            colors={["#1D9E75"]}
+          />
+        }
+      >
         {/* Aktive økter */}
         <Text
           accessibilityRole="header"
@@ -382,6 +493,10 @@ export default function FeedScreen() {
                 timeLabel={getRelativeDayLabel(item.timestamp)}
                 itemType={item.itemType}
                 itemTitle={item.itemTitle}
+                onPress={feedItemPress(item)}
+                {...(item.type === "started" || item.type === "completed"
+                  ? { imageUrl: item.imageUrl }
+                  : {})}
                 {...(item.type === "started" ? { withUsers: item.withUsers } : {})}
                 {...(item.type === "loaned" ? { loanedTo: item.loanedTo } : {})}
                 {...(item.type === "borrowed" ? { fromName: item.fromName } : {})}
