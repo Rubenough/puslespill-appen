@@ -67,12 +67,14 @@ config, SDK/RN bump). Run `npm run rebuild:check` to get a verdict (see Other); 
 native/module crash like the `FontLoaderModule` one is the signal a rebuild is overdue.
 
 **Health / restart cheats:**
+
 ```bash
 curl -s http://127.0.0.1:8081/status                 # "packager-status:running" = up
 pkill -f "expo start"                                # stop the server
 # Watchman "Recrawled this watch N times" + a Metro `_onHasteChange … addedFiles` crash → reset:
 watchman watch-del "$PWD" ; watchman watch-project "$PWD"   # then restart with --clear
 ```
+
 Note: **long-running dev servers should be started in the user's own terminal** (via a `!` command),
 not as an agent background task — those get reaped. Killing the local `eas build`/`expo start`
 process does NOT cancel an in-progress **cloud** build.

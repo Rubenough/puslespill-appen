@@ -5,8 +5,8 @@
 
 ## Why
 
-From the 2026-07-06 product review: the app *tracks* sharing well but doesn't
-*feel* social. The highest-leverage, mostly no-DB batch is a photo-first,
+From the 2026-07-06 product review: the app _tracks_ sharing well but doesn't
+_feel_ social. The highest-leverage, mostly no-DB batch is a photo-first,
 tappable feed plus friends' active sessions and a working deep-link invite.
 See `docs/PROJECT-PLAN.md` (Phase 3.3 feed depth) for the surrounding roadmap.
 

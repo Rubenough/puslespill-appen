@@ -60,11 +60,11 @@ npx expo start --go --ios              # + start iOS-simulator
 --clear                                # tøm Metro-cache (gjør dette etter en større merge)
 ```
 
-| Modus | Klient | Når |
-| --- | --- | --- |
-| `--dev-client` | `puslespill`-APK-en (eget ikon) | Standard. OAuth-redirect bruker `puslespill://`-scheme og virker kun her. |
-| `--dev-client --tunnel` | Samme APK | Tester er på et **annet nett** (venn på egen Wi-Fi/mobildata). |
-| `--go` | Expo Go-appen | Rask UI-/logikk-sjekk uten å installere en build. |
+| Modus                   | Klient                          | Når                                                                       |
+| ----------------------- | ------------------------------- | ------------------------------------------------------------------------- |
+| `--dev-client`          | `puslespill`-APK-en (eget ikon) | Standard. OAuth-redirect bruker `puslespill://`-scheme og virker kun her. |
+| `--dev-client --tunnel` | Samme APK                       | Tester er på et **annet nett** (venn på egen Wi-Fi/mobildata).            |
+| `--go`                  | Expo Go-appen                   | Rask UI-/logikk-sjekk uten å installere en build.                         |
 
 **Koble til enheten:** åpne klient-appen → «Enter URL manually» → `exp://…`-URL-en (LAN `exp://<mac-ip>:8081`, eller tunnel-URL-en). Dev build = åpne **puslespill**; Expo Go = åpne **Expo Go**.
 
