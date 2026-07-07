@@ -31,6 +31,14 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 **Then:** Phase 3 (activity-model unification + React Query) and Phase 4 (release: Apple Sign-In gate, Sentry, privacy policy, store).
 
+**Queued (fresh session, agent team):** _Social Feed v1_ — photo-first tappable
+feed, friends' active sessions in the strip, deep-link invite (Phase 1, no DB);
+reactions + item cover images (Phase 2, needs SQL). Ready-to-run orchestration
+prompt in [`docs/next-social-feed-v1.md`](./next-social-feed-v1.md). Note: the
+`feat/bottom-sheet` branch (shared `BottomSheet` refactor + `+`-menu hardening,
+commit `2b336b2`) is **not yet merged to `main`** — land it or rebase the
+social-feed branch on it first.
+
 ---
 
 ## Why this was re-sequenced
