@@ -5,8 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Modal,
-  Pressable,
   TextInput,
   Alert,
 } from "react-native";
@@ -31,6 +29,7 @@ import {
 } from "../utils/collectionLabels";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import UserAvatar from "../components/UserAvatar";
+import BottomSheet from "../components/BottomSheet";
 
 type FriendCollectionRouteProp = RouteProp<RootStackParamList, "FriendCollection">;
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -281,107 +280,93 @@ export default function FriendCollectionScreen() {
       )}
 
       {/* Låneforespørsel-modal */}
-      <Modal
+      <BottomSheet
         visible={selectedItem !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setSelectedItem(null)}
+        onClose={() => setSelectedItem(null)}
+        closeLabel={t("common.cancel")}
       >
-        <Pressable
-          className="flex-1 bg-black/40"
+        <Text className="text-content dark:text-content-dark text-lg font-semibold mb-1 px-1">
+          {selectedItem?.title}
+        </Text>
+        <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mb-4 px-1">
+          {selectedItem ? itemTypeLabel(selectedItem.type) : ""}
+        </Text>
+
+        {selectedLoaned ? (
+          <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center mb-2">
+            <Text className="text-content-secondary dark:text-content-secondary-dark font-medium">
+              {t("borrow.unavailable")}
+            </Text>
+          </View>
+        ) : selectedPending ? (
+          <>
+            <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center mb-3">
+              <Text className="text-content-secondary dark:text-content-secondary-dark font-medium">
+                {t("borrow.requested")}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={handleCancelRequest}
+              disabled={submitting}
+              accessibilityRole="button"
+              accessibilityLabel={t("borrow.cancelRequest")}
+              accessibilityState={{ disabled: submitting }}
+              className="border border-border dark:border-border-dark rounded-2xl py-4 items-center mb-2"
+            >
+              {submitting ? (
+                <ActivityIndicator size="small" color="#1D9E75" />
+              ) : (
+                <Text className="text-content dark:text-content-dark font-semibold text-base">
+                  {t("borrow.cancelRequest")}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-4">
+              <TextInput
+                className="text-content dark:text-content-dark text-base"
+                placeholder={t("borrow.messagePlaceholder")}
+                placeholderTextColor="#A8A29E"
+                value={message}
+                onChangeText={setMessage}
+                multiline
+                numberOfLines={2}
+                textAlignVertical="top"
+                accessibilityLabel={t("borrow.messagePlaceholder")}
+              />
+            </View>
+            <TouchableOpacity
+              onPress={handleRequest}
+              disabled={submitting}
+              accessibilityRole="button"
+              accessibilityLabel={t("borrow.ask")}
+              accessibilityState={{ disabled: submitting }}
+              className="bg-accent dark:bg-accent-dark rounded-2xl py-4 items-center mb-2"
+            >
+              {submitting ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text className="text-white font-semibold text-base">
+                  {t("borrow.send")}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </>
+        )}
+
+        <TouchableOpacity
           onPress={() => setSelectedItem(null)}
           accessibilityRole="button"
           accessibilityLabel={t("common.cancel")}
-        />
-        <View
-          className="bg-surface dark:bg-surface-dark rounded-t-3xl px-4 pt-2"
-          style={{ paddingBottom: insets.bottom + 16 }}
+          className="py-3 items-center"
         >
-          <View className="w-10 h-1 bg-border dark:bg-border-dark rounded-full self-center mb-4" />
-
-          <Text className="text-content dark:text-content-dark text-lg font-semibold mb-1 px-1">
-            {selectedItem?.title}
+          <Text className="text-content-secondary dark:text-content-secondary-dark text-sm">
+            {t("common.cancel")}
           </Text>
-          <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mb-4 px-1">
-            {selectedItem ? itemTypeLabel(selectedItem.type) : ""}
-          </Text>
-
-          {selectedLoaned ? (
-            <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center mb-2">
-              <Text className="text-content-secondary dark:text-content-secondary-dark font-medium">
-                {t("borrow.unavailable")}
-              </Text>
-            </View>
-          ) : selectedPending ? (
-            <>
-              <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center mb-3">
-                <Text className="text-content-secondary dark:text-content-secondary-dark font-medium">
-                  {t("borrow.requested")}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={handleCancelRequest}
-                disabled={submitting}
-                accessibilityRole="button"
-                accessibilityLabel={t("borrow.cancelRequest")}
-                accessibilityState={{ disabled: submitting }}
-                className="border border-border dark:border-border-dark rounded-2xl py-4 items-center mb-2"
-              >
-                {submitting ? (
-                  <ActivityIndicator size="small" color="#1D9E75" />
-                ) : (
-                  <Text className="text-content dark:text-content-dark font-semibold text-base">
-                    {t("borrow.cancelRequest")}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-4">
-                <TextInput
-                  className="text-content dark:text-content-dark text-base"
-                  placeholder={t("borrow.messagePlaceholder")}
-                  placeholderTextColor="#A8A29E"
-                  value={message}
-                  onChangeText={setMessage}
-                  multiline
-                  numberOfLines={2}
-                  textAlignVertical="top"
-                  accessibilityLabel={t("borrow.messagePlaceholder")}
-                />
-              </View>
-              <TouchableOpacity
-                onPress={handleRequest}
-                disabled={submitting}
-                accessibilityRole="button"
-                accessibilityLabel={t("borrow.ask")}
-                accessibilityState={{ disabled: submitting }}
-                className="bg-accent dark:bg-accent-dark rounded-2xl py-4 items-center mb-2"
-              >
-                {submitting ? (
-                  <ActivityIndicator size="small" color="white" />
-                ) : (
-                  <Text className="text-white font-semibold text-base">
-                    {t("borrow.send")}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </>
-          )}
-
-          <TouchableOpacity
-            onPress={() => setSelectedItem(null)}
-            accessibilityRole="button"
-            accessibilityLabel={t("common.cancel")}
-            className="py-3 items-center"
-          >
-            <Text className="text-content-secondary dark:text-content-secondary-dark text-sm">
-              {t("common.cancel")}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
+        </TouchableOpacity>
+      </BottomSheet>
     </View>
   );
 }

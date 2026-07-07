@@ -1,5 +1,5 @@
 import React, { useState, ComponentProps } from "react";
-import { View, Text, TouchableOpacity, Modal, Pressable, Alert } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 // NativeWind-varianten følger app-styrt tema (colorScheme.set), ikke bare OS.
 import { useColorScheme } from "nativewind";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -12,8 +12,14 @@ import FeedScreen from "../screens/FeedScreen";
 import CollectionsStack from "./CollectionsStack";
 import FriendsScreen from "../screens/FriendsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import BottomSheet from "../components/BottomSheet";
+import { ITEM_ICONS, type ItemType } from "../utils/collections";
 
 type IoniconsName = ComponentProps<typeof Ionicons>["name"];
+
+type ModalAction = "add" | "session";
+// Hvilket steg av +-arket som vises: rot-valg eller type-valg for "legg til".
+type ModalStep = "root" | "addType";
 
 const colors = {
   surface: { light: "#FFFFFF", dark: "#292524" },
@@ -28,7 +34,7 @@ const MODAL_ITEMS: {
   icon: IoniconsName;
   titleKey: string;
   subtitleKey: string;
-  action: string;
+  action: ModalAction;
 }[] = [
   {
     icon: "add-circle-outline",
@@ -58,25 +64,28 @@ export default function AppNavigator() {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === "dark";
   const [modalVisible, setModalVisible] = useState(false);
+  const [modalStep, setModalStep] = useState<ModalStep>("root");
   const navigation = useNavigation<RootNavProp>();
 
-  function handleModalAction(action: string) {
-    setModalVisible(false);
+  function openModal() {
+    setModalStep("root");
+    setModalVisible(true);
+  }
+
+  // "Legg til" bytter til type-valg i selve arket — vi unngår en Alert like etter
+  // at arket lukkes, som iOS kan droppe stille. "Start økt" navigerer direkte.
+  function handleModalAction(action: ModalAction) {
     if (action === "add") {
-      Alert.alert(t("nav.addTitle"), t("nav.selectType"), [
-        {
-          text: t("collections.type.puslespill"),
-          onPress: () => navigation.navigate("AddItem", { type: "puslespill" }),
-        },
-        {
-          text: t("collections.type.brettspill"),
-          onPress: () => navigation.navigate("AddItem", { type: "brettspill" }),
-        },
-        { text: t("common.cancel"), style: "cancel" },
-      ]);
-    } else if (action === "session") {
+      setModalStep("addType");
+    } else {
+      setModalVisible(false);
       navigation.navigate("NewSession", {});
     }
+  }
+
+  function handlePickType(type: ItemType) {
+    setModalVisible(false);
+    navigation.navigate("AddItem", { type });
   }
 
   const c = {
@@ -128,7 +137,7 @@ export default function AppNavigator() {
             tabBarLabel: t("nav.tabNewSession"),
             tabBarButton: () => (
               <TouchableOpacity
-                onPress={() => setModalVisible(true)}
+                onPress={openModal}
                 style={{
                   flex: 1,
                   alignItems: "center",
@@ -177,50 +186,79 @@ export default function AppNavigator() {
       </Tab.Navigator>
 
       {/* + modal — bottom sheet */}
-      <Modal
+      <BottomSheet
         visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
+        onClose={() => setModalVisible(false)}
+        closeLabel={t("nav.closeMenu")}
+        contentClassName="px-6"
       >
-        <Pressable
-          className="flex-1 bg-black/50"
-          onPress={() => setModalVisible(false)}
-          accessibilityRole="button"
-          accessibilityLabel={t("nav.closeMenu")}
-        />
-        <View className="absolute bottom-0 left-0 right-0 bg-surface dark:bg-surface-dark rounded-t-[20px] p-6 pb-12">
-          {/* Drag handle */}
-          <View className="w-9 h-1 rounded-full bg-border dark:bg-border-dark self-center mb-5" />
-          <Text className="text-content dark:text-content-dark text-lg font-semibold mb-4">
-            {t("nav.modalTitle")}
-          </Text>
+        {modalStep === "root" ? (
+          <>
+            <Text className="text-content dark:text-content-dark text-lg font-semibold mb-4">
+              {t("nav.modalTitle")}
+            </Text>
 
-          {MODAL_ITEMS.map((item) => (
-            <TouchableOpacity
-              key={item.action}
-              onPress={() => handleModalAction(item.action)}
-              accessibilityRole="button"
-              accessibilityLabel={t(item.titleKey)}
-              accessibilityHint={t(item.subtitleKey)}
-              className="flex-row items-center bg-surface-secondary dark:bg-surface-dark-secondary rounded-xl p-4 mb-2.5"
-            >
-              <View className="w-10 h-10 rounded-[10px] bg-surface dark:bg-surface-dark items-center justify-center mr-3.5">
-                <Ionicons name={item.icon} size={22} color={c.accent} />
-              </View>
-              <View className="flex-1">
-                <Text className="text-content dark:text-content-dark font-semibold text-base">
-                  {t(item.titleKey)}
+            {MODAL_ITEMS.map((item) => (
+              <TouchableOpacity
+                key={item.action}
+                onPress={() => handleModalAction(item.action)}
+                accessibilityRole="button"
+                accessibilityLabel={t(item.titleKey)}
+                accessibilityHint={t(item.subtitleKey)}
+                className="flex-row items-center bg-surface-secondary dark:bg-surface-dark-secondary rounded-xl p-4 mb-2.5"
+              >
+                <View className="w-10 h-10 rounded-[10px] bg-surface dark:bg-surface-dark items-center justify-center mr-3.5">
+                  <Ionicons name={item.icon} size={22} color={c.accent} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-content dark:text-content-dark font-semibold text-base">
+                    {t(item.titleKey)}
+                  </Text>
+                  <Text className="text-content-secondary dark:text-content-secondary-dark text-sm">
+                    {t(item.subtitleKey)}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={c.inactive} />
+              </TouchableOpacity>
+            ))}
+          </>
+        ) : (
+          <>
+            <View className="flex-row items-center mb-4">
+              <TouchableOpacity
+                onPress={() => setModalStep("root")}
+                accessibilityRole="button"
+                accessibilityLabel={t("common.back")}
+                hitSlop={8}
+                className="mr-2 -ml-1 p-1"
+              >
+                <Ionicons name="chevron-back" size={22} color={c.text} />
+              </TouchableOpacity>
+              <Text className="text-content dark:text-content-dark text-lg font-semibold">
+                {t("nav.selectType")}
+              </Text>
+            </View>
+
+            {(["puslespill", "brettspill"] as const).map((type) => (
+              <TouchableOpacity
+                key={type}
+                onPress={() => handlePickType(type)}
+                accessibilityRole="button"
+                accessibilityLabel={t(`collections.type.${type}`)}
+                className="flex-row items-center bg-surface-secondary dark:bg-surface-dark-secondary rounded-xl p-4 mb-2.5"
+              >
+                <View className="w-10 h-10 rounded-[10px] bg-surface dark:bg-surface-dark items-center justify-center mr-3.5">
+                  <Ionicons name={ITEM_ICONS[type]} size={22} color={c.accent} />
+                </View>
+                <Text className="flex-1 text-content dark:text-content-dark font-semibold text-base">
+                  {t(`collections.type.${type}`)}
                 </Text>
-                <Text className="text-content-secondary dark:text-content-secondary-dark text-sm">
-                  {t(item.subtitleKey)}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={c.inactive} />
-            </TouchableOpacity>
-          ))}
-        </View>
-      </Modal>
+                <Ionicons name="chevron-forward" size={18} color={c.inactive} />
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
+      </BottomSheet>
     </>
   );
 }
