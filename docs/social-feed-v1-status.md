@@ -1,10 +1,10 @@
 # Social Feed v1 — status & handoff (START HERE)
 
-**Updated:** 2026-07-08 · **Branch/merge state:** `main` = `feat/social-feed-v1`
-= commit `a9e6dd3`, pushed to origin. Working tree clean. Everything below is
-**merged to `main`**. (A separate `feat/friends-hardening` branch exists for
-unrelated work; other agents may branch off the feed work — this doc is the
-single source of truth for what's done and what's next.)
+**Updated:** 2026-07-08 · **Branch/merge state:** everything below is **merged to
+`main`** (feed work + friends-hardening; merge `7698746`). All feature branches
+(`feat/social-feed-v1`, `feat/friends-hardening`, `feat/feed-phase2-f`) have been
+**deleted** — only `main` remains. **Social Feed v1 (Phases 1 + 2 D/E/F) is
+complete and device-verified on iOS simulator.**
 
 Detailed specs live in `docs/social-feed-v1-phase2-db.md` (SQL + F spec) and
 `docs/profile-collections-model-c.md` (Profile/Collections IA).
@@ -28,15 +28,24 @@ Detailed specs live in `docs/social-feed-v1-phase2-db.md` (SQL + F spec) and
 - **Phase 2-D — reactions** (`session_reactions`): quick-react bar
   (👍 ❤️ 🎉 🧩) on session feed cards; optimistic toggle. `utils/reactions.ts`
   - unit tests.
+- **Phase 2-F — participant progress photos** (`session_participants`):
+  non-owner registered participants add photo-only via `AddPhotoSheet`; owner
+  registers accepted friends via `FriendParticipantPicker` (New/Edit session);
+  free-text guests retained; participant pills pressable to that friend. Extra
+  additive DB paste: owner-manages `session_participants` INSERT/DELETE policies.
+- **Friends hardening** (separate but merged) — unfriend, invite-code rotation,
+  logged-out deep-link invites, i18n'd RPC errors; `regenerate_invite_code()` +
+  reshaped `accept_invite` on the shared DB. See `docs/friends-hardening.md`.
 
-Gate (all green, **39 tests**): `npm run typecheck && npm run lint && npm run format:check && npm test`.
-**Not device-tested** — E covers and D reactions especially want a sim tap-through.
+Gate (all green, **43 tests**): `npm run typecheck && npm run lint && npm run format:check && npm test`.
+**Device-verified on iOS simulator** (all of D/E/F + friends).
 
 ---
 
-## ▶️ NEXT — Phase 2-F: participants can add progress photos
+## ✅ Phase 2-F — DONE
 
-The last Phase 2 item. Full spec + SQL: `docs/social-feed-v1-phase2-db.md` §F.
+Was the last Phase 2 item; now shipped + verified (see the Shipped list above).
+Full spec + SQL: `docs/social-feed-v1-phase2-db.md` §F.
 
 **FIRST verify the DB (don't assume):** D/E/F SQL was reportedly applied
 2026-07-08, but confirm in the Supabase dashboard before writing client code:
@@ -111,11 +120,11 @@ xcrun simctl openurl booted "exp://127.0.0.1:8081"
   it reads once at mount (still null then). Derive the value or sync via effect.
   Seeding `coverDisplay` from the async `initialCoverUrl` silently wiped covers
   on edit; fixed by deriving from a `coverTouched` flag.
-- **Merge flow:** work on `feat/social-feed-v1`, run the full gate, commit, then
-  fast-forward `main` **without checking it out** (safe when other agents share
-  the working tree): `git branch -f main <sha> && git push origin main`. Never
-  merge with a dirty working tree. To commit to a non-checked-out branch while
-  another agent uses the repo, use `git worktree add`.
+- **Merge flow (as used this cycle):** cut a `feat/*` branch, implement, run the
+  full gate, commit + push the branch, device-verify on the simulator, then merge
+  into `main` (`--no-ff`), re-run the gate on the merge, push `main`, and delete
+  the branch (local + remote). The owner is doing simultaneous work in the tree —
+  never stage untracked/unrelated files (e.g. a WIP `docs/*.md`) into a merge.
 
 ---
 

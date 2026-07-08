@@ -83,6 +83,10 @@ end;
 $$;
 
 -- 1e. Redeem someone's code → become friends. Code never leaves the server.
+-- ⚠️ SUPERSEDED (2026-07-08, friends-hardening): the live accept_invite now returns
+-- (friend_id, full_name, avatar_url, already_friends) and raises stable error tokens
+-- ('invalid_code' / 'self_add') instead of the Norwegian literals below. A sibling
+-- regenerate_invite_code() RPC was also added. See docs/friends-hardening.md.
 create or replace function accept_invite(p_code text)
 returns table (friend_id uuid, full_name text, avatar_url text)
 language plpgsql security definer set search_path = public as $$

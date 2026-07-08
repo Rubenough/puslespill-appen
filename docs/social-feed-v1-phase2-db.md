@@ -1,9 +1,11 @@
 # Social Feed v1 — Phase 2 (needs a DB step)
 
-**Status:** ✅ **D, E, F applied (2026-07-08)** + `gen:types` regenerated
-(`session_reactions`, `items.cover_url`). Phase 1 (photo feed, friends' active
-sessions, deep-link invite) is already on `feat/social-feed-v1` and needed no DB
-change. Client work per item is tracked in the sections below.
+**Status:** ✅ **D, E, F all applied, client-work done, device-verified, and
+merged to `main` (2026-07-08)** + `gen:types` regenerated (`session_reactions`,
+`items.cover_url`). Phase 1 (photo feed, friends' active sessions, deep-link
+invite) needed no DB change. A later additive paste (F) added owner-manages
+`session_participants` policies. Per-item detail below. **All feature branches
+deleted — this is history now.**
 
 Apply order doesn't matter; D and E are independent. F is two pastes (INSERT
 policy + the additive storage-read rewrite in section F). After applying, run:
@@ -93,11 +95,10 @@ create policy "delete own reactions" on public.session_reactions
 
 ## E. Item cover images — `items.cover_url`
 
-**Client work: ✅ DONE (2026-07-08, on `feat/social-feed-v1`, unpushed).** Cover
+**Client work: ✅ DONE + merged to `main`, device-verified (2026-07-08).** Cover
 picker in `ItemForm` (Add + Edit, upload-then-write + orphan/old-file cleanup);
 covers signed and shown on `CollectionDetailScreen` rows and `added` `FeedCard`s;
-`Item` type + feed/detail selects carry `cover_url`. Typecheck/lint/format/tests
-green. Not yet device-tested.
+`Item` type + feed/detail selects carry `cover_url`.
 
 Show a puzzle/box cover on Collections rows and on `added` feed cards, reusing
 the signed-URL image pipeline (`utils/sessionImages.ts`).
@@ -134,9 +135,9 @@ batch-sign for parity when convenient.
 
 ## F. Registered participants can add progress photos
 
-**Client work: ✅ DONE + device-verified on iOS simulator (2026-07-08, branch
-`feat/feed-phase2-f`, pushed, unmerged).** Scope was expanded (approved) because F
-was otherwise unreachable — nothing registered a non-owner as a participant. Built:
+**Client work: ✅ DONE + device-verified + MERGED to `main` (2026-07-08); branch
+`feat/feed-phase2-f` deleted.** Scope was expanded (approved) because F was
+otherwise unreachable — nothing registered a non-owner as a participant. Built:
 
 - **`SessionDetailScreen`** — `isParticipant` (fetch `session_participants`);
   participant (non-owner) gets a sticky **"Legg til bilde"** bar + `AddPhotoSheet`

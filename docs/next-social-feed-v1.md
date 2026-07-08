@@ -1,7 +1,9 @@
 # Next up — Social Feed v1 (agentic-team prompt)
 
 **Created:** 2026-07-07 · **Owner:** @rubenough
-**Status:** queued — not started. Run in a fresh session with an agent team.
+**Status:** ✅ COMPLETED (2026-07-08) — Social Feed v1 (Phases 1 + 2 D/E/F) shipped,
+device-verified, and merged to `main`. This was the kickoff prompt; kept as a
+historical record. Current state lives in `docs/social-feed-v1-status.md`.
 
 ## Why
 
