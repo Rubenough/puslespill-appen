@@ -20,6 +20,8 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { ITEM_ICONS, type ItemType } from "../utils/collections";
 import { uploadSessionImage, removeSessionImages } from "../utils/sessionImages";
+import { fetchFriends, type Friend } from "../utils/friends";
+import FriendParticipantPicker from "../components/FriendParticipantPicker";
 import { RootStackParamList } from "../navigation/RootNavigator";
 
 type NewSessionRouteProp = RouteProp<RootStackParamList, "NewSession">;
@@ -47,6 +49,9 @@ export default function NewSessionScreen() {
   );
   const [guestNames, setGuestNames] = useState<string[]>([]);
   const [nameInput, setNameInput] = useState("");
+  // Registrerte venne-deltakere valgt ved opprettelse (session_participants).
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [selectedFriendIds, setSelectedFriendIds] = useState<Set<string>>(new Set());
   const [completed, setCompleted] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
@@ -70,6 +75,22 @@ export default function NewSessionScreen() {
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
+
+  useEffect(() => {
+    if (user)
+      fetchFriends(user.id)
+        .then(setFriends)
+        .catch(() => setFriends([]));
+  }, [user]);
+
+  function toggleFriend(friendId: string) {
+    setSelectedFriendIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(friendId)) next.delete(friendId);
+      else next.add(friendId);
+      return next;
+    });
+  }
 
   function addGuestName() {
     const trimmed = nameInput.trim();
@@ -127,9 +148,17 @@ export default function NewSessionScreen() {
       // Økten peker nå på bildet — ikke rydd det bort om deltaker-innsettingen feiler.
       uploadedPath = null;
 
+      // Registrer skaperen + eventuelle valgte venne-deltakere.
+      const participantRows = [
+        { session_id: session.id, profile_id: user!.id },
+        ...[...selectedFriendIds].map((profile_id) => ({
+          session_id: session.id,
+          profile_id,
+        })),
+      ];
       const { error: participantError } = await supabase
         .from("session_participants")
-        .insert({ session_id: session.id, profile_id: user!.id });
+        .insert(participantRows);
 
       if (participantError) throw participantError;
 
@@ -250,12 +279,15 @@ export default function NewSessionScreen() {
           </View>
         )}
 
-        {/* Deltakere */}
+        {/* Deltakere — fritekst for folk som ikke er i appen */}
         <Text
           accessibilityRole="header"
-          className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2"
+          className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-1"
         >
           {t("sessionForm.participantsHeader")}
+        </Text>
+        <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mb-3">
+          {t("sessionForm.guestsHint")}
         </Text>
         {guestNames.length > 0 && (
           <View className="flex-row flex-wrap gap-2 mb-3">
@@ -311,6 +343,22 @@ export default function NewSessionScreen() {
             />
           </TouchableOpacity>
         </View>
+
+        {/* Registrerte venne-deltakere (kan legge til fremgangsbilder) */}
+        <Text
+          accessibilityRole="header"
+          className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-1"
+        >
+          {t("sessionForm.friendsHeader")}
+        </Text>
+        <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mb-3">
+          {t("sessionForm.friendsHint")}
+        </Text>
+        <FriendParticipantPicker
+          friends={friends}
+          selectedIds={selectedFriendIds}
+          onToggle={toggleFriend}
+        />
 
         {/* Fullført */}
         <View className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-4 mb-6 flex-row items-center justify-between">
