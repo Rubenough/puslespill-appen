@@ -30,6 +30,7 @@ import { piecesLabel, playersLabel, difficultyLabel } from "../utils/collectionL
 import { RootStackParamList } from "../navigation/RootNavigator";
 import PuzzleProgressIcon, { progressToFilled } from "../components/PuzzleProgressIcon";
 import ProgressSheet from "../components/ProgressSheet";
+import BottomSheet from "../components/BottomSheet";
 import {
   uploadSessionImage,
   removeSessionImages,
@@ -618,86 +619,61 @@ export default function SessionDetailScreen() {
         onCancel={() => setProgressSheetVisible(false)}
       />
 
-      {/* Handlingsark (···-meny) */}
-      <Modal
+      {/* Handlingsark (···-meny) — delt BottomSheet (dra/bakteppe for å lukke) */}
+      <BottomSheet
         visible={menuVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setMenuVisible(false)}
+        onClose={() => setMenuVisible(false)}
+        closeLabel={t("session.closeMenu")}
       >
-        <Pressable
-          className="flex-1 bg-black/40"
-          onPress={() => setMenuVisible(false)}
-          accessibilityRole="button"
-          accessibilityLabel={t("session.closeMenu")}
-        />
-        <View
-          className="bg-surface dark:bg-surface-dark rounded-t-3xl px-4 pt-2"
-          style={{ paddingBottom: insets.bottom + 16 }}
-        >
-          <View className="w-10 h-1 bg-border dark:bg-border-dark rounded-full self-center mb-4" />
-
-          <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl overflow-hidden mb-3">
-            <TouchableOpacity
-              onPress={() => {
-                setMenuVisible(false);
-                navigation.navigate("EditSession", {
-                  sessionId: session.id,
-                  guestNames: session.guest_names,
-                  notes: session.notes,
-                });
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t("session.editParticipants")}
-              className="flex-row items-center px-4 py-4 border-b border-border dark:border-border-dark"
-            >
-              <Ionicons
-                name="pencil-outline"
-                size={22}
-                color="#1D9E75"
-                accessible={false}
-              />
-              <Text className="text-content dark:text-content-dark text-base ml-3">
-                {t("session.editParticipants")}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleDelete}
-              disabled={deleting}
-              accessibilityRole="button"
-              accessibilityLabel={t("session.deleteSession")}
-              accessibilityState={{ disabled: deleting }}
-              className="flex-row items-center px-4 py-4"
-            >
-              {deleting ? (
-                <ActivityIndicator size="small" color="#EF4444" />
-              ) : (
-                <Ionicons
-                  name="trash-outline"
-                  size={22}
-                  color="#EF4444"
-                  accessible={false}
-                />
-              )}
-              <Text className="text-red-500 text-base ml-3">
-                {t("session.deleteSession")}
-              </Text>
-            </TouchableOpacity>
-          </View>
+        <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl overflow-hidden">
+          <TouchableOpacity
+            onPress={() => {
+              setMenuVisible(false);
+              navigation.navigate("EditSession", {
+                sessionId: session.id,
+                guestNames: session.guest_names,
+                notes: session.notes,
+              });
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={t("session.editParticipants")}
+            className="flex-row items-center px-4 py-4 border-b border-border dark:border-border-dark"
+          >
+            <Ionicons
+              name="pencil-outline"
+              size={22}
+              color="#1D9E75"
+              accessible={false}
+            />
+            <Text className="text-content dark:text-content-dark text-base ml-3">
+              {t("session.editParticipants")}
+            </Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => setMenuVisible(false)}
+            onPress={handleDelete}
+            disabled={deleting}
             accessibilityRole="button"
-            accessibilityLabel={t("common.cancel")}
-            className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center"
+            accessibilityLabel={t("session.deleteSession")}
+            accessibilityState={{ disabled: deleting }}
+            className="flex-row items-center px-4 py-4"
           >
-            <Text className="text-content dark:text-content-dark font-semibold text-base">
-              {t("common.cancel")}
+            {deleting ? (
+              <ActivityIndicator size="small" color="#EF4444" />
+            ) : (
+              <Ionicons
+                name="trash-outline"
+                size={22}
+                color="#EF4444"
+                accessible={false}
+              />
+            )}
+            <Text className="text-red-500 text-base ml-3">
+              {t("session.deleteSession")}
             </Text>
           </TouchableOpacity>
         </View>
-      </Modal>
+      </BottomSheet>
 
       {/* Fullskjerm-bilde modal */}
       <Modal
