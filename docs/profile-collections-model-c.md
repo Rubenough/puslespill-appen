@@ -1,6 +1,8 @@
 # Profile / Collections IA — Model C
 
-**Created:** 2026-07-08 · **Owner:** @rubenough · **Status:** planned — not started
+**Created:** 2026-07-08 · **Owner:** @rubenough · **Status:** implemented on
+`feat/social-feed-v1` (unmerged, awaiting on-device test) — per-item history and
+rich stats remain future work (see "Out of scope").
 
 ## Context / problem
 
