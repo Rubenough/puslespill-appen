@@ -174,7 +174,10 @@
     "imagePlaceholder": "Bilde",
     "dayProgress": "Dag {{day}} · {{when}}",
     "sessionCardA11y": "{{owner}}: {{title}}, dag {{day}}, {{when}}",
-    "sessionCardHint": "Trykk for å se økt-detaljer"
+    "sessionCardHint": "Trykk for å se økt-detaljer",
+    "reactionAdd": "Reager med {{emoji}}",
+    "reactionRemove": "Fjern {{emoji}}-reaksjon",
+    "reactionError": "Kunne ikke oppdatere reaksjon."
   },
   "collectionDetail": {
     "backA11y": "Tilbake til samlinger",

@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -20,6 +21,12 @@ import { useAuth } from "../context/AuthContext";
 import { type ItemType } from "../utils/collections";
 import { getDayNumber, getRelativeDayLabel } from "../utils/date";
 import { getSignedUrls } from "../utils/sessionImages";
+import {
+  fetchReactionsBySession,
+  toggleReaction,
+  applyToggle,
+  type Reaction,
+} from "../utils/reactions";
 
 // ─── Typer ───────────────────────────────────────────────────────────────────
 
@@ -359,6 +366,8 @@ export default function FeedScreen() {
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [feedError, setFeedError] = useState(false);
+  // Reaksjoner per økt-ID (kun økt-hendelser i feeden har reaksjoner).
+  const [reactions, setReactions] = useState<Map<string, Reaction[]>>(new Map());
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -419,14 +428,49 @@ export default function FeedScreen() {
     if (!user) return;
     setLoadingFeed(true);
     try {
-      setFeedItems(await fetchFeedItems(user.id));
+      const items = await fetchFeedItems(user.id);
+      setFeedItems(items);
       setFeedError(false);
+
+      // Reaksjoner for økt-hendelsene (started/completed bærer en sessionId).
+      const sessionIds: string[] = [];
+      for (const it of items) {
+        if (it.type === "started" || it.type === "completed")
+          sessionIds.push(it.sessionId);
+      }
+      setReactions(await fetchReactionsBySession(sessionIds, user.id));
     } catch {
       setFeedError(true);
     } finally {
       setLoadingFeed(false);
     }
   }, [user]);
+
+  // Optimistisk av/på-reaksjon: oppdater lokalt straks, rull tilbake ved feil.
+  const handleReact = useCallback(
+    async (sessionId: string, emoji: string) => {
+      if (!user) return;
+      const currentList = reactions.get(sessionId) ?? [];
+      const mine = currentList.find((r) => r.emoji === emoji)?.mine ?? false;
+      const snapshot = reactions; // for tilbakerulling ved feil
+
+      // Funksjonell oppdatering: bygg alltid på nyeste tilstand, så samtidige trykk
+      // (ulike emoji/økter) ikke overskriver hverandre før neste render.
+      setReactions((prev) => {
+        const next = new Map(prev);
+        next.set(sessionId, applyToggle(prev.get(sessionId) ?? [], emoji, mine));
+        return next;
+      });
+
+      try {
+        await toggleReaction(sessionId, emoji, user.id, mine);
+      } catch {
+        setReactions(snapshot); // rull tilbake til forrige tilstand
+        Alert.alert(t("common.somethingWrong"), t("feed.reactionError"));
+      }
+    },
+    [reactions, user, t],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -558,6 +602,12 @@ export default function FeedScreen() {
                 item.type === "completed" ||
                 item.type === "added"
                   ? { imageUrl: item.imageUrl }
+                  : {})}
+                {...(item.type === "started" || item.type === "completed"
+                  ? {
+                      reactions: reactions.get(item.sessionId),
+                      onReact: (emoji: string) => handleReact(item.sessionId, emoji),
+                    }
                   : {})}
                 {...(item.type === "started" ? { withUsers: item.withUsers } : {})}
                 {...(item.type === "loaned" ? { loanedTo: item.loanedTo } : {})}

@@ -174,7 +174,10 @@
     "imagePlaceholder": "Image",
     "dayProgress": "Day {{day}} · {{when}}",
     "sessionCardA11y": "{{owner}}: {{title}}, day {{day}}, {{when}}",
-    "sessionCardHint": "Tap to see session details"
+    "sessionCardHint": "Tap to see session details",
+    "reactionAdd": "React with {{emoji}}",
+    "reactionRemove": "Remove {{emoji}} reaction",
+    "reactionError": "Could not update reaction."
   },
   "collectionDetail": {
     "backA11y": "Back to collections",

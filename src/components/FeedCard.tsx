@@ -6,6 +6,7 @@ import type { TFunction } from "i18next";
 import UserAvatar from "./UserAvatar";
 import { type ItemType, ITEM_ICONS } from "../utils/collections";
 import { itemTypeLabel } from "../utils/collectionLabels";
+import { REACTION_EMOJIS, type Reaction } from "../utils/reactions";
 
 type BaseCard = {
   userName: string;
@@ -16,6 +17,9 @@ type BaseCard = {
   // Signert URL til siste progresjonsbilde; når null vises kategori-ikonet.
   imageUrl?: string | null;
   onPress?: () => void;
+  // Reaksjoner vises kun for økt-hendelser (started/completed) som har en sessionId.
+  reactions?: Reaction[];
+  onReact?: (emoji: string) => void;
 };
 
 type AddedCard = BaseCard & { type: "added" };
@@ -62,7 +66,7 @@ function getBadgeLabel(type: Props["type"], t: TFunction): string | null {
 
 export default function FeedCard(props: Props) {
   const { t } = useTranslation();
-  const { userName, avatarUrl, itemType, itemTitle, imageUrl, onPress } = props;
+  const { userName, avatarUrl, itemType, itemTitle, imageUrl, onPress, onReact } = props;
   const actionText = getActionText(props, t);
   const badge = getBadgeLabel(props.type, t);
   const a11yLabel = t("feed.cardA11y", {
@@ -133,23 +137,76 @@ export default function FeedCard(props: Props) {
     </>
   );
 
-  if (onPress) {
-    return (
-      <TouchableOpacity
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={a11yLabel}
-        accessibilityHint={t("feed.cardHint")}
-        className={cardClass}
-      >
-        {body}
-      </TouchableOpacity>
-    );
-  }
-
+  // Trykk-flaten (navigasjon) og reaksjonslinja er søsken, ikke nøstet — slik at et
+  // trykk på en emoji ikke også utløser kort-navigasjonen.
   return (
-    <View accessible accessibilityLabel={a11yLabel} className={cardClass}>
-      {body}
+    <View className={cardClass}>
+      {onPress ? (
+        <TouchableOpacity
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel={a11yLabel}
+          accessibilityHint={t("feed.cardHint")}
+        >
+          {body}
+        </TouchableOpacity>
+      ) : (
+        <View accessible accessibilityLabel={a11yLabel}>
+          {body}
+        </View>
+      )}
+      {onReact && <ReactionBar reactions={props.reactions} onReact={onReact} t={t} />}
+    </View>
+  );
+}
+
+function ReactionBar({
+  reactions,
+  onReact,
+  t,
+}: {
+  reactions?: Reaction[];
+  onReact: (emoji: string) => void;
+  t: TFunction;
+}) {
+  return (
+    <View className="flex-row items-center gap-2 px-4 pb-3">
+      {REACTION_EMOJIS.map((emoji) => {
+        const r = reactions?.find((x) => x.emoji === emoji);
+        const count = r?.count ?? 0;
+        const mine = r?.mine ?? false;
+        return (
+          <TouchableOpacity
+            key={emoji}
+            onPress={() => onReact(emoji)}
+            accessibilityRole="button"
+            accessibilityLabel={
+              mine
+                ? t("feed.reactionRemove", { emoji })
+                : t("feed.reactionAdd", { emoji })
+            }
+            accessibilityState={{ selected: mine }}
+            className={`flex-row items-center rounded-full px-2.5 py-1 border ${
+              mine
+                ? "bg-accent/10 dark:bg-accent-dark/10 border-accent dark:border-accent-dark"
+                : "bg-surface-secondary dark:bg-surface-dark-secondary border-border dark:border-border-dark"
+            }`}
+          >
+            <Text className="text-sm">{emoji}</Text>
+            {count > 0 && (
+              <Text
+                className={`text-xs font-semibold ml-1 ${
+                  mine
+                    ? "text-accent dark:text-accent-dark"
+                    : "text-content-secondary dark:text-content-secondary-dark"
+                }`}
+              >
+                {count}
+              </Text>
+            )}
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }

@@ -20,7 +20,11 @@ sessions you can already see (your own or a friend's).
 
 ## D. Reactions — `session_reactions`
 
-**Client work: ⏭️ NEXT — not started.** DB applied + typed.
+**Client work: ✅ DONE.** `utils/reactions.ts` (`fetchReactionsBySession`,
+`toggleReaction`, pure `applyToggle` + unit test); a quick-react bar
+(`REACTION_EMOJIS`) on `FeedCard` session cards, rendered as a sibling of the
+tap-to-navigate area; optimistic toggle in `FeedScreen` (functional setState,
+revert on error). i18n `feed.reaction*` in both locales.
 
 A tap-to-react row on feed session cards (👍 ❤️ 🎉 …). One row per
 (session, user, emoji); a second tap of the same emoji removes the row.
