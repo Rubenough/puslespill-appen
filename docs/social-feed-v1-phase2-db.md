@@ -115,6 +115,57 @@ bucket or storage policy needed.
 
 ---
 
+## F. Registered participants can add progress photos
+
+**Why:** on `SessionDetail`, edit/delete/update are now owner-only (a friend
+opening a session from the feed gets a read-only view). We want a middle tier:
+a **registered participant** (`session_participants.profile_id = auth.uid()`,
+not just a free-text `guest_name`) should be able to **add a progress photo** —
+but **not** change progress %, complete, edit, or delete. Those stay owner-only.
+
+**Blocked on RLS + one design call.** Current policies
+(`docs/phase1-friend-graph.md`) make `sessions` UPDATE and `session_images`
+INSERT owner-only, and the `session-images` storage read policy is scoped by
+**path owner** (`<uid>/…`). Two things must change:
+
+```sql
+-- 1) Let participants insert progress-photo rows (owner still allowed)
+create policy "participants insert session_images" on public.session_images
+  for insert to authenticated
+  with check (
+    exists (
+      select 1 from public.sessions s
+      where s.id = session_images.session_id
+        and (
+          s.created_by = auth.uid()
+          or exists (
+            select 1 from public.session_participants p
+            where p.session_id = s.id and p.profile_id = auth.uid()
+          )
+        )
+    )
+  );
+```
+
+2. **Storage read scoping (decision needed).** A participant uploads under their
+   own `<their-uid>/…` folder, so the existing path-owner read policy only lets
+   _their_ friends see it — not everyone who can see the session. Pick one:
+   - **(a, recommended)** Re-scope the `session-images` storage SELECT policy to
+     "can you read the parent session?" via a join on `session_images` instead
+     of the path-owner check. Cleaner, but touches the storage policy.
+   - **(b)** Keep path-owner scoping and have participants upload under the
+     **session owner's** folder — requires loosening the storage INSERT policy
+     too, and is messier. Not recommended.
+
+**Client work (after the policy is applied):** in `SessionDetailScreen`, compute
+`isParticipant` (fetch `session_participants` for `user.id`) and show a
+**photo-only** update path for participants — a trimmed `ProgressSheet` (or a
+small "add photo + note" sheet) that inserts a `session_images` row **without**
+touching `sessions.progress_pct` / `completed_at`. Keep the sticky Update bar
+owner-only for progress/completion.
+
+---
+
 ## Manual test checklist (after applying + client work lands)
 
 - **D:** react to a friend's session → row appears; tap again → removed; a
@@ -122,3 +173,7 @@ bucket or storage policy needed.
 - **E:** add an item with a cover → shows on the Collections row and its
   `added` feed card; a friend sees the same cover; an item without a cover
   falls back to the category icon.
+- **F:** as a registered participant (not the owner), add a progress photo →
+  it appears for the owner and other session viewers; progress %, complete,
+  edit and delete remain hidden. As a non-participant friend, the session
+  stays read-only.
