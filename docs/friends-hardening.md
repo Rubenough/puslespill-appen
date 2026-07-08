@@ -1,6 +1,9 @@
 # Friends — hardening punch list
 
-**Status:** 🚧 In progress on `feat/friends-hardening` (cut from `feat/social-feed-v1` @ `a9e6dd3`).
+**Status:** ✅ Done + **device-verified on iOS simulator** (incl. F3 deep-link
+landing). On `feat/friends-hardening` @ `491a58f` (cut from `feat/social-feed-v1`
+@ `a9e6dd3`), pushed to origin, **not merged**. DB (`regenerate_invite_code` +
+combined `accept_invite`) applied to the shared Supabase project.
 **Created:** 2026-07-08 · **Owner:** @rubenough
 
 Honest review of the friends feature surfaced the gaps below. This doc is the
