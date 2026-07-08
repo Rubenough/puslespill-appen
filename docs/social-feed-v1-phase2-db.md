@@ -134,8 +134,45 @@ batch-sign for parity when convenient.
 
 ## F. Registered participants can add progress photos
 
-**Client work: ⏭️ NEXT — not started.** DB applied (INSERT policy + additive
-storage-read rewrite). Touches the most sensitive screen; do after D.
+**Client work: ✅ DONE + device-verified on iOS simulator (2026-07-08, branch
+`feat/feed-phase2-f`, pushed, unmerged).** Scope was expanded (approved) because F
+was otherwise unreachable — nothing registered a non-owner as a participant. Built:
+
+- **`SessionDetailScreen`** — `isParticipant` (fetch `session_participants`);
+  participant (non-owner) gets a sticky **"Legg til bilde"** bar + `AddPhotoSheet`
+  (photo required + optional note) that inserts a `session_images` row **only**
+  (never touches `progress_pct` / `completed_at`); registered participants shown
+  as accent chips in the participants section. Owner update bar unchanged.
+- **Enabler — friend-participant picker** (`FriendParticipantPicker`) in
+  **`NewSessionScreen`** (insert selected friends at create) and
+  **`EditSessionScreen`** (diff add/remove `session_participants`). Owner picks
+  accepted friends as registered participants alongside free-text `guest_names`.
+
+**⚠️ Needs one more DB paste (owner-manages-participants).** The existing
+`session_participants` INSERT/DELETE policies (self-scoped per the phase-1 matrix)
+do **not** let the owner add/remove a _friend's_ `profile_id`. Additive policies
+required (no `gen:types` — policies don't change generated types):
+
+```sql
+-- Session owner may add/remove REGISTERED participants on their own session.
+-- Additive: any existing self-scoped policies still apply (permissive = OR'd).
+create policy "owner adds session_participants" on public.session_participants
+  for insert to authenticated
+  with check (
+    exists (select 1 from public.sessions s
+            where s.id = session_participants.session_id and s.created_by = auth.uid())
+  );
+
+create policy "owner removes session_participants" on public.session_participants
+  for delete to authenticated
+  using (
+    exists (select 1 from public.sessions s
+            where s.id = session_participants.session_id and s.created_by = auth.uid())
+  );
+```
+
+Original spec below (DB parts — INSERT policy + additive storage-read — already
+applied earlier in this doc's session).
 
 **Why:** on `SessionDetail`, edit/delete/update are now owner-only (a friend
 opening a session from the feed gets a read-only view). We want a middle tier:

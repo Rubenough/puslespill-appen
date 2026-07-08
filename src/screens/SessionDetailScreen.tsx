@@ -30,6 +30,7 @@ import { piecesLabel, playersLabel, difficultyLabel } from "../utils/collectionL
 import { RootStackParamList } from "../navigation/RootNavigator";
 import PuzzleProgressIcon, { progressToFilled } from "../components/PuzzleProgressIcon";
 import ProgressSheet from "../components/ProgressSheet";
+import AddPhotoSheet from "../components/AddPhotoSheet";
 import BottomSheet from "../components/BottomSheet";
 import {
   uploadSessionImage,
@@ -91,9 +92,16 @@ export default function SessionDetailScreen() {
   const [boardMenuVisible, setBoardMenuVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [progressSheetVisible, setProgressSheetVisible] = useState(false);
+  const [addPhotoVisible, setAddPhotoVisible] = useState(false);
+  // Registrerte deltakere (session_participants.profile_id) — inkl. eieren, for isParticipant.
+  const [participantIds, setParticipantIds] = useState<string[]>([]);
+  // Registrerte venne-deltakere for visning (utenom eieren) — trykkbare til vennen.
+  const [participantProfiles, setParticipantProfiles] = useState<
+    { id: string; name: string | null; avatarUrl: string | null }[]
+  >([]);
 
   const fetchData = useCallback(async () => {
-    const [sessionRes, imagesRes] = await Promise.all([
+    const [sessionRes, imagesRes, participantsRes] = await Promise.all([
       supabase
         .from("sessions")
         .select(
@@ -106,16 +114,45 @@ export default function SessionDetailScreen() {
         .select("id, image_url, captured_at, note")
         .eq("session_id", sessionId)
         .order("captured_at", { ascending: false }),
+      supabase
+        .from("session_participants")
+        .select("profile_id")
+        .eq("session_id", sessionId),
     ]);
 
     const sessionData = sessionRes.data as unknown as SessionDetail | null;
     const imageRows = (imagesRes.data as SessionImage[] | null) ?? [];
 
-    // Bytt lagringsstier mot kortlivde signerte URL-er for visning (cover + fremgangsbilder).
-    const signed = await getSignedUrls([
-      sessionData?.image_url ?? null,
-      ...imageRows.map((img) => img.image_url),
+    // Registrerte deltakere til visning (utenom eieren OG deg selv — din egen «pille»
+    // skal ikke lenke til en venne-samling av deg selv). pIds beholdes for isParticipant.
+    const pIds = (participantsRes.data ?? []).map((r) => r.profile_id);
+    const displayIds = pIds.filter(
+      (id) => id !== sessionData?.created_by && id !== user?.id,
+    );
+
+    // Deltaker-profiler og bilde-signering er uavhengige — kjør i parallell.
+    const [profs, signed] = await Promise.all([
+      displayIds.length > 0
+        ? supabase
+            .from("profiles")
+            .select("id, full_name, avatar_url")
+            .in("id", displayIds)
+            .then((r) => r.data)
+        : Promise.resolve(
+            [] as { id: string; full_name: string | null; avatar_url: string | null }[],
+          ),
+      getSignedUrls([
+        sessionData?.image_url ?? null,
+        ...imageRows.map((img) => img.image_url),
+      ]),
     ]);
+
+    const profiles = displayIds.map((id) => {
+      const p = (profs ?? []).find((x) => x.id === id);
+      return { id, name: p?.full_name ?? null, avatarUrl: p?.avatar_url ?? null };
+    });
+    setParticipantIds(pIds);
+    setParticipantProfiles(profiles);
 
     if (sessionData) {
       setSession({
@@ -132,7 +169,7 @@ export default function SessionDetailScreen() {
       })),
     );
     setLoading(false);
-  }, [sessionId]);
+  }, [sessionId, user?.id]);
 
   useFocusEffect(
     useCallback(() => {
@@ -198,6 +235,34 @@ export default function SessionDetailScreen() {
       Alert.alert(
         t("common.somethingWrong"),
         err instanceof Error ? err.message : t("session.updateError"),
+      );
+    } finally {
+      setUpdating(false);
+    }
+  }
+
+  // F: registrert deltaker (ikke eier) legger til KUN et fremgangsbilde (+ notat på
+  // bilde-raden). Rører aldri sessions.progress_pct / completed_at — det er eier-only.
+  async function handleAddParticipantPhoto(imageUri: string, note: string | null) {
+    setAddPhotoVisible(false);
+    setUpdating(true);
+    // Lagringssti holdes utenfor try slik at foreldreløst bilde kan ryddes ved feil.
+    let uploadedPath: string | null = null;
+    try {
+      uploadedPath = `${user!.id}/${sessionId}/${Date.now()}.jpg`;
+      const imagePath = await uploadSessionImage(uploadedPath, imageUri);
+      const { error } = await supabase
+        .from("session_images")
+        .insert({ session_id: sessionId, image_url: imagePath, note });
+      if (error) throw error;
+      // Raden peker nå på filen — ikke rydd den bort.
+      uploadedPath = null;
+      await fetchData();
+    } catch (err) {
+      if (uploadedPath) await removeSessionImages([uploadedPath]).catch(() => {});
+      Alert.alert(
+        t("common.somethingWrong"),
+        err instanceof Error ? err.message : t("session.addPhotoError"),
       );
     } finally {
       setUpdating(false);
@@ -320,6 +385,8 @@ export default function SessionDetailScreen() {
   // Kun eieren kan redigere/slette/oppdatere. Venner som åpner økten fra feeden
   // ser en ren lesevisning (RLS blokkerer uansett skriving fra ikke-eiere).
   const isOwner = session.created_by === user?.id;
+  // F: en registrert deltaker (ikke eier) kan legge til fremgangsbilder.
+  const isParticipant = !isOwner && !!user && participantIds.includes(user.id);
 
   // Bygg metadata-undertekst
   const metaParts: string[] = [];
@@ -552,8 +619,8 @@ export default function SessionDetailScreen() {
           </View>
         )}
 
-        {/* Deltakere */}
-        {session.guest_names.length > 0 && (
+        {/* Deltakere — registrerte venner (trykkbare, kan legge til bilder) + fritekst-gjester */}
+        {(participantProfiles.length > 0 || session.guest_names.length > 0) && (
           <View className="px-4 mt-5">
             <Text
               accessibilityRole="header"
@@ -562,6 +629,36 @@ export default function SessionDetailScreen() {
               {t("session.participantsHeader")}
             </Text>
             <View className="flex-row flex-wrap gap-2">
+              {participantProfiles.map((p) => {
+                const name = p.name ?? t("common.unknownUser");
+                return (
+                  <TouchableOpacity
+                    key={p.id}
+                    onPress={() =>
+                      navigation.navigate("FriendCollection", {
+                        friendId: p.id,
+                        friendName: name,
+                        avatarUrl: p.avatarUrl,
+                      })
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={t("session.registeredParticipantA11y", { name })}
+                    accessibilityHint={t("friends.openCollectionHint")}
+                    className="flex-row items-center bg-accent/10 dark:bg-accent-dark/10 border border-accent dark:border-accent-dark rounded-full px-3 py-1.5"
+                  >
+                    <Ionicons
+                      name="person"
+                      size={12}
+                      color="#1D9E75"
+                      accessible={false}
+                      style={{ marginRight: 5 }}
+                    />
+                    <Text className="text-accent dark:text-accent-dark text-sm">
+                      {name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
               {session.guest_names.map((name) => (
                 <View
                   key={name}
@@ -623,12 +720,54 @@ export default function SessionDetailScreen() {
         </View>
       )}
 
+      {/* F: deltaker (ikke eier) — sticky «Legg til bilde» (kun bilde, ikke fremgang) */}
+      {isParticipant && !isCompleted && (
+        <View
+          className="px-4 bg-surface-secondary dark:bg-surface-dark-secondary border-t border-border dark:border-border-dark"
+          style={{ paddingBottom: insets.bottom + 16, paddingTop: 12 }}
+        >
+          <TouchableOpacity
+            onPress={() => setAddPhotoVisible(true)}
+            disabled={updating}
+            accessibilityRole="button"
+            accessibilityLabel={t("session.addPhotoA11y")}
+            accessibilityState={{ disabled: updating }}
+            className="bg-accent dark:bg-accent-dark rounded-2xl py-4 flex-row items-center justify-center"
+          >
+            {updating ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <>
+                <Ionicons
+                  name="camera-outline"
+                  size={20}
+                  color="white"
+                  accessible={false}
+                  style={{ marginRight: 8 }}
+                />
+                <Text className="text-white text-base font-semibold">
+                  {t("session.addPhoto")}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* ProgressSheet */}
       <ProgressSheet
         visible={progressSheetVisible}
         currentProgress={session.progress_pct}
         onSelect={handleProgressSelect}
         onCancel={() => setProgressSheetVisible(false)}
+      />
+
+      {/* F: deltaker legger til bilde */}
+      <AddPhotoSheet
+        visible={addPhotoVisible}
+        saving={updating}
+        onSubmit={handleAddParticipantPhoto}
+        onCancel={() => setAddPhotoVisible(false)}
       />
 
       {/* Brettspill-oppdatering — delt BottomSheet (erstatter native Alert) */}
