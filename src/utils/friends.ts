@@ -13,7 +13,9 @@ export async function fetchFriends(userId: string): Promise<Friend[]> {
   const { data: rows, error } = await supabase
     .from("friendships")
     .select("id, requester_id, addressee_id")
-    .eq("status", "accepted");
+    .eq("status", "accepted")
+    // Defense-in-depth: begrens til rader der brukeren er part (RLS håndhever også).
+    .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
   if (error) throw error;
 
   // Motparten i hvert vennskap er den som ikke er meg.

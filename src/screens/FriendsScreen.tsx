@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -25,11 +25,22 @@ import { RootStackParamList } from "../navigation/RootNavigator";
 import { type TabParamList } from "../navigation/AppNavigator";
 import UserAvatar from "../components/UserAvatar";
 import { fetchFriends, type Friend } from "../utils/friends";
+import { clearPendingInviteCode } from "../utils/pendingInvite";
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 // Dyplenke-koden (puslespill://join?code=…) leveres som ruteparameter på Venner-fanen.
 const inviteLinkFor = (code: string) => `puslespill://join?code=${code}`;
+
+// Stabile feiltokens fra accept_invite (F4 tier 2) → i18n-nøkkel. Faller tilbake
+// på errGeneric for alt annet. Vi beholder de norske literalene under som belte-
+// og-bukseseler, i tilfelle en gammel DB-versjon fortsatt reiser dem verbatim.
+const TOKEN_TO_KEY: Record<string, string> = {
+  invalid_code: "friends.errInvalidCode",
+  self_add: "friends.errSelfAdd",
+  "Ugyldig invitasjonskode": "friends.errInvalidCode",
+  "Du kan ikke legge til deg selv": "friends.errSelfAdd",
+};
 
 export default function FriendsScreen() {
   const insets = useSafeAreaInsets();
@@ -39,38 +50,83 @@ export default function FriendsScreen() {
   const { user } = useAuth();
 
   const [inviteCode, setInviteCode] = useState<string | null>(null);
+  // Speiler inviteCode slik at fetchCode kan beholde en allerede vist kode ved en
+  // forbigående feil (uten å ta inviteCode inn i fetchCode sine deps).
+  const inviteCodeRef = useRef<string | null>(null);
+  useEffect(() => {
+    inviteCodeRef.current = inviteCode;
+  }, [inviteCode]);
+  const [codeError, setCodeError] = useState(false);
+  const [rotating, setRotating] = useState(false);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
 
   const [redeemInput, setRedeemInput] = useState("");
   const [redeeming, setRedeeming] = useState(false);
+  // Banner over «LEGG TIL VENN» når vi kom hit via en invitasjonslenke.
+  const [fromInviteLink, setFromInviteLink] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    if (!user) return;
-
+  // Henter kun invitasjonskoden (F5: egen feiltilstand + retry i kortet).
+  const fetchCode = useCallback(async (isActive: () => boolean = () => true) => {
     const codeRes = await supabase.rpc("get_my_invite_code");
-    if (codeRes.data) setInviteCode(codeRes.data);
-
-    try {
-      setFriends(await fetchFriends(user.id));
-      setFetchError(false);
-    } catch {
-      setFetchError(true);
+    if (!isActive()) return;
+    if (codeRes.data) {
+      setInviteCode(codeRes.data);
+      setCodeError(false);
+    } else if (!inviteCodeRef.current) {
+      // Ingen kjent kode å vise → vis feil. Har vi allerede en kode (forbigående
+      // feil ved refokus), behold den stille i stedet for å skjule den bak feilen.
+      setCodeError(true);
     }
-    setLoading(false);
-  }, [user]);
+  }, []);
+
+  // Henter kun vennelisten (brukt av fetchData og etter unfriend, uten å røre koden).
+  const fetchFriendsList = useCallback(
+    async (isActive: () => boolean = () => true) => {
+      if (!user) return;
+      try {
+        const list = await fetchFriends(user.id);
+        if (!isActive()) return;
+        setFriends(list);
+        setFetchError(false);
+      } catch {
+        if (!isActive()) return;
+        setFetchError(true);
+      }
+    },
+    [user],
+  );
+
+  const fetchData = useCallback(
+    async (isActive: () => boolean = () => true) => {
+      if (!user) return;
+      await fetchCode(isActive);
+      await fetchFriendsList(isActive);
+      if (isActive()) setLoading(false);
+    },
+    [user, fetchCode, fetchFriendsList],
+  );
 
   useFocusEffect(
     useCallback(() => {
-      fetchData();
+      let active = true;
+      fetchData(() => active);
+      return () => {
+        active = false;
+      };
     }, [fetchData]),
   );
 
-  // Kom hit via en invitasjonslenke? Forhåndsutfyll koden så brukeren bare trykker «Legg til».
+  // Kom hit via en invitasjonslenke? Forhåndsutfyll koden så brukeren bare trykker
+  // «Legg til», vis banneret, og tøm den ventende koden i SecureStore (F3).
   useEffect(() => {
     const code = route.params?.code;
-    if (code) setRedeemInput(code.toUpperCase());
+    if (code) {
+      setRedeemInput(code.toUpperCase());
+      setFromInviteLink(true);
+      clearPendingInviteCode();
+    }
   }, [route.params?.code]);
 
   async function shareInvite() {
@@ -83,6 +139,63 @@ export default function FriendsScreen() {
     });
   }
 
+  // F2: bekreft (destruktivt — gamle lenker slutter å virke), roter via RPC,
+  // vis spinner i kode-slotten mens det pågår.
+  function confirmRotate() {
+    Alert.alert(t("friends.rotateConfirmTitle"), t("friends.rotateConfirmBody"), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("friends.rotateConfirmCta"),
+        style: "destructive",
+        onPress: rotateCode,
+      },
+    ]);
+  }
+
+  async function rotateCode() {
+    setRotating(true);
+    const { data, error } = await supabase.rpc("regenerate_invite_code");
+    setRotating(false);
+    if (error || !data) {
+      Alert.alert(t("friends.rotateFailed"));
+      return;
+    }
+    setInviteCode(data);
+    setCodeError(false);
+    Alert.alert(t("friends.rotated"));
+  }
+
+  // F1: bekreft (destruktivt, gjensidig), slett vennskapet, refetch.
+  function confirmRemove(friend: Friend) {
+    const name = friend.name ?? t("common.unknownUser");
+    Alert.alert(
+      t("friends.removeConfirmTitle", { name }),
+      t("friends.removeConfirmBody", { name }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("friends.removeConfirmCta"),
+          style: "destructive",
+          onPress: () => removeFriend(friend),
+        },
+      ],
+    );
+  }
+
+  async function removeFriend(friend: Friend) {
+    const { error } = await supabase
+      .from("friendships")
+      .delete()
+      .eq("id", friend.friendshipId);
+    if (error) {
+      Alert.alert(t("common.somethingWrong"), error.message);
+      return;
+    }
+    // Unfriend endrer kun vennelisten — ikke kjør invitasjonskode-RPC-en på nytt.
+    await fetchFriendsList();
+    Alert.alert(t("friends.removed", { name: friend.name ?? t("common.unknownUser") }));
+  }
+
   async function handleRedeem() {
     const code = redeemInput.trim().toUpperCase();
     if (!code) return;
@@ -92,18 +205,25 @@ export default function FriendsScreen() {
     setRedeeming(false);
 
     if (error) {
-      Alert.alert(t("friends.addFailed"), error.message);
+      // F4: kart stabile tokens (invalid_code/self_add) → i18n, fallback errGeneric.
+      Alert.alert(t(TOKEN_TO_KEY[error.message] ?? "friends.errGeneric"));
       return;
     }
 
     const friend = data?.[0];
     setRedeemInput("");
-    Alert.alert(
-      t("friends.added"),
-      friend?.full_name
-        ? t("friends.addedNamed", { name: friend.full_name })
-        : t("friends.addedUnnamed"),
-    );
+    setFromInviteLink(false);
+    if (friend?.already_friends) {
+      // F9: allerede venner — egen melding i stedet for «Lagt til!».
+      Alert.alert(t("friends.alreadyFriendsTitle"));
+    } else {
+      Alert.alert(
+        t("friends.added"),
+        friend?.full_name
+          ? t("friends.addedNamed", { name: friend.full_name })
+          : t("friends.addedUnnamed"),
+      );
+    }
     fetchData();
   }
 
@@ -132,29 +252,90 @@ export default function FriendsScreen() {
           {t("friends.shareHint")}
         </Text>
         <View className="flex-row items-center justify-between">
-          <Text
-            accessibilityLabel={
-              inviteCode
-                ? t("friends.codeA11y", { code: inviteCode })
-                : t("friends.codeLoading")
-            }
-            className="text-content dark:text-content-dark text-2xl font-semibold tracking-[4px]"
-          >
-            {inviteCode ?? "········"}
-          </Text>
+          {codeError ? (
+            // F5: koden kunne ikke lastes — vis feil + retry i selve kortet.
+            <View className="flex-1 mr-3">
+              <Text className="text-content dark:text-content-dark text-sm mb-1">
+                {t("friends.codeLoadError")}
+              </Text>
+              <TouchableOpacity
+                onPress={() => fetchCode()}
+                accessibilityRole="button"
+                accessibilityLabel={t("common.retry")}
+              >
+                <Text className="text-accent dark:text-accent-dark text-sm font-semibold">
+                  {t("common.retry")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : rotating ? (
+            <ActivityIndicator color="#1D9E75" style={{ paddingVertical: 6 }} />
+          ) : (
+            <Text
+              accessibilityLabel={
+                inviteCode
+                  ? t("friends.codeA11y", { code: inviteCode })
+                  : t("friends.codeLoading")
+              }
+              className="text-content dark:text-content-dark text-2xl font-semibold tracking-[4px]"
+            >
+              {inviteCode ?? "········"}
+            </Text>
+          )}
           <TouchableOpacity
             onPress={shareInvite}
-            disabled={!inviteCode}
+            disabled={!inviteCode || rotating}
             accessibilityRole="button"
             accessibilityLabel={t("friends.shareA11y")}
-            accessibilityState={{ disabled: !inviteCode }}
+            accessibilityState={{ disabled: !inviteCode || rotating }}
             className="flex-row items-center gap-1.5 bg-accent dark:bg-accent-dark rounded-xl px-4 py-2.5"
           >
             <Ionicons name="share-outline" size={16} color="white" accessible={false} />
             <Text className="text-white font-semibold text-sm">{t("friends.share")}</Text>
           </TouchableOpacity>
         </View>
+
+        {/* F2: roter koden — stille, underordnet handling under kode-raden. */}
+        <TouchableOpacity
+          onPress={confirmRotate}
+          disabled={!inviteCode || rotating}
+          accessibilityRole="button"
+          accessibilityLabel={t("friends.rotateA11y")}
+          accessibilityHint={t("friends.rotateHint")}
+          accessibilityState={{ disabled: !inviteCode || rotating }}
+          className="flex-row items-center gap-1.5 mt-3 self-start"
+        >
+          <Ionicons
+            name="refresh-outline"
+            size={16}
+            color={inviteCode && !rotating ? "#1D9E75" : "#A8A29E"}
+            accessible={false}
+          />
+          <Text
+            className={`text-sm font-semibold ${
+              inviteCode && !rotating
+                ? "text-accent dark:text-accent-dark"
+                : "text-content-secondary dark:text-content-secondary-dark"
+            }`}
+          >
+            {t("friends.rotate")}
+          </Text>
+        </TouchableOpacity>
       </View>
+
+      {/* F3: kom hit via en invitasjonslenke — vis engangs-banner over feltet. */}
+      {fromInviteLink && (
+        <View
+          accessible
+          accessibilityRole="text"
+          accessibilityLabel={t("friends.inviteLandingBanner")}
+          className="mx-4 mb-4 bg-accent/10 dark:bg-accent-dark/10 rounded-2xl px-4 py-3"
+        >
+          <Text className="text-content dark:text-content-dark text-sm">
+            {t("friends.inviteLandingBanner")}
+          </Text>
+        </View>
+      )}
 
       {/* Legg til venn */}
       <Text
@@ -231,37 +412,53 @@ export default function FriendsScreen() {
         </View>
       ) : (
         <View className="mx-4 mb-8 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden">
-          {friends.map((friend, i) => (
-            <TouchableOpacity
-              key={friend.friendshipId}
-              onPress={() =>
-                navigation.navigate("FriendCollection", {
-                  friendId: friend.id,
-                  friendName: friend.name ?? t("common.unknownUser"),
-                  avatarUrl: friend.avatarUrl,
-                })
-              }
-              accessibilityRole="button"
-              accessibilityLabel={friend.name ?? t("common.unknownUser")}
-              accessibilityHint={t("friends.openCollectionHint")}
-              className={`flex-row items-center px-4 py-3 ${
-                i < friends.length - 1
-                  ? "border-b border-border dark:border-border-dark"
-                  : ""
-              }`}
-            >
-              <UserAvatar name={friend.name} avatarUrl={friend.avatarUrl} size={44} />
-              <Text className="flex-1 ml-3 text-content dark:text-content-dark font-medium">
-                {friend.name ?? t("common.unknownUser")}
-              </Text>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color="#A8A29E"
-                accessible={false}
-              />
-            </TouchableOpacity>
-          ))}
+          {friends.map((friend, i) => {
+            const name = friend.name ?? t("common.unknownUser");
+            return (
+              <View
+                key={friend.friendshipId}
+                className={`flex-row items-center pl-4 ${
+                  i < friends.length - 1
+                    ? "border-b border-border dark:border-border-dark"
+                    : ""
+                }`}
+              >
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate("FriendCollection", {
+                      friendId: friend.id,
+                      friendName: name,
+                      avatarUrl: friend.avatarUrl,
+                    })
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel={name}
+                  accessibilityHint={t("friends.openCollectionHint")}
+                  className="flex-1 flex-row items-center py-3"
+                >
+                  <UserAvatar name={friend.name} avatarUrl={friend.avatarUrl} size={44} />
+                  <Text className="flex-1 ml-3 text-content dark:text-content-dark font-medium">
+                    {name}
+                  </Text>
+                </TouchableOpacity>
+                {/* F1: overflow — åpner bekreftelse for å fjerne vennen. */}
+                <TouchableOpacity
+                  onPress={() => confirmRemove(friend)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("friends.rowMenuA11y", { name })}
+                  accessibilityHint={t("friends.rowMenuHint")}
+                  className="w-11 h-11 items-center justify-center mr-1"
+                >
+                  <Ionicons
+                    name="ellipsis-horizontal"
+                    size={20}
+                    color="#A8A29E"
+                    accessible={false}
+                  />
+                </TouchableOpacity>
+              </View>
+            );
+          })}
         </View>
       )}
     </ScrollView>
