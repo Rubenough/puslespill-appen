@@ -134,9 +134,9 @@ batch-sign for parity when convenient.
 
 ## F. Registered participants can add progress photos
 
-**Client work: ✅ DONE (2026-07-08, branch `feat/feed-phase2-f`).** Scope was
-expanded (approved) because F was otherwise unreachable — nothing registered a
-non-owner as a participant. Built:
+**Client work: ✅ DONE + device-verified on iOS simulator (2026-07-08, branch
+`feat/feed-phase2-f`, pushed, unmerged).** Scope was expanded (approved) because F
+was otherwise unreachable — nothing registered a non-owner as a participant. Built:
 
 - **`SessionDetailScreen`** — `isParticipant` (fetch `session_participants`);
   participant (non-owner) gets a sticky **"Legg til bilde"** bar + `AddPhotoSheet`
