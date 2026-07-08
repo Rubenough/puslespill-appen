@@ -411,6 +411,7 @@ export type Database = {
       accept_invite: {
         Args: { p_code: string }
         Returns: {
+          already_friends: boolean
           avatar_url: string
           friend_id: string
           full_name: string
@@ -502,6 +503,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      regenerate_invite_code: { Args: never; Returns: string }
       request_to_borrow: {
         Args: { p_item_id: string; p_message?: string }
         Returns: {

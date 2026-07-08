@@ -17,6 +17,7 @@ import {
   useFocusEffect,
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useColorScheme } from "nativewind";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
@@ -63,6 +64,10 @@ export default function FriendCollectionScreen() {
   const route = useRoute<FriendCollectionRouteProp>();
   const { friendId, friendName, avatarUrl } = route.params;
   const { user } = useAuth();
+  // App-styrt fargeskjema (ikke OS) — brukes til den imperative chevron-fargen.
+  const { colorScheme } = useColorScheme();
+  // content-secondary (#78716C) feiler kontrast på mørk flate; bruk content-dark-secondary der.
+  const chevronColor = colorScheme === "dark" ? "#A8A29E" : "#78716C";
 
   const [items, setItems] = useState<FriendItem[]>([]);
   // item_id → id på den ventende forespørselen, slik at vi kan avbryte den herfra.
@@ -74,30 +79,39 @@ export default function FriendCollectionScreen() {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchItems = useCallback(async () => {
-    const [itemsRes, requestsRes] = await Promise.all([
-      supabase
-        .from("items")
-        .select("id, title, brand, piece_count, player_count, difficulty, status, type")
-        .eq("owner_id", friendId)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("borrow_requests")
-        .select("id, item_id")
-        .eq("requester_id", user!.id)
-        .eq("owner_id", friendId)
-        .eq("status", "pending"),
-    ]);
+  const fetchItems = useCallback(
+    async (isActive: () => boolean = () => true) => {
+      const [itemsRes, requestsRes] = await Promise.all([
+        supabase
+          .from("items")
+          .select("id, title, brand, piece_count, player_count, difficulty, status, type")
+          .eq("owner_id", friendId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("borrow_requests")
+          .select("id, item_id")
+          .eq("requester_id", user!.id)
+          .eq("owner_id", friendId)
+          .eq("status", "pending"),
+      ]);
 
-    setFetchError(!!itemsRes.error);
-    setItems((itemsRes.data ?? []) as FriendItem[]);
-    setPendingByItem(new Map((requestsRes.data ?? []).map((r) => [r.item_id, r.id])));
-    setLoading(false);
-  }, [friendId, user]);
+      // Skjermen kan ha mistet fokus mens hentingen pågikk — ikke oppdater da.
+      if (!isActive()) return;
+      setFetchError(!!itemsRes.error);
+      setItems((itemsRes.data ?? []) as FriendItem[]);
+      setPendingByItem(new Map((requestsRes.data ?? []).map((r) => [r.item_id, r.id])));
+      setLoading(false);
+    },
+    [friendId, user],
+  );
 
   useFocusEffect(
     useCallback(() => {
-      fetchItems();
+      let active = true;
+      fetchItems(() => active);
+      return () => {
+        active = false;
+      };
     }, [fetchItems]),
   );
 
@@ -157,7 +171,12 @@ export default function FriendCollectionScreen() {
           accessibilityLabel={t("common.back")}
           className="mr-3"
         >
-          <Ionicons name="chevron-back" size={24} color="#78716C" accessible={false} />
+          <Ionicons
+            name="chevron-back"
+            size={24}
+            color={chevronColor}
+            accessible={false}
+          />
         </TouchableOpacity>
         <UserAvatar name={friendName} avatarUrl={avatarUrl} size={36} />
         <Text
