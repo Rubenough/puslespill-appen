@@ -54,6 +54,7 @@ type SessionImage = {
 
 type SessionDetail = {
   id: string;
+  created_by: string;
   started_at: string;
   completed_at: string | null;
   progress_pct: number | null;
@@ -87,6 +88,7 @@ export default function SessionDetailScreen() {
   const [updating, setUpdating] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState<SessionImage | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [boardMenuVisible, setBoardMenuVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [progressSheetVisible, setProgressSheetVisible] = useState(false);
 
@@ -95,7 +97,7 @@ export default function SessionDetailScreen() {
       supabase
         .from("sessions")
         .select(
-          "id, started_at, completed_at, progress_pct, guest_names, notes, image_url, item:items!inner(id, title, type, brand, piece_count, player_count, difficulty)",
+          "id, created_by, started_at, completed_at, progress_pct, guest_names, notes, image_url, item:items!inner(id, title, type, brand, piece_count, player_count, difficulty)",
         )
         .eq("id", sessionId)
         .single(),
@@ -207,31 +209,23 @@ export default function SessionDetailScreen() {
       setProgressSheetVisible(true);
       return;
     }
+    // Brettspill: valgark (delt BottomSheet, ikke native Alert)
+    setBoardMenuVisible(true);
+  }
 
-    // Brettspill: valgark
-    Alert.alert(t("session.updateSheetTitle"), undefined, [
-      { text: t("common.cancel"), style: "cancel" },
-      {
-        text: t("session.addImage"),
-        onPress: () => setProgressSheetVisible(true),
-      },
-      {
-        text: t("session.completeSession"),
-        onPress: async () => {
-          setUpdating(true);
-          const { error } = await supabase
-            .from("sessions")
-            .update({ completed_at: new Date().toISOString() })
-            .eq("id", sessionId);
-          setUpdating(false);
-          if (error) {
-            Alert.alert(t("common.somethingWrong"), error.message);
-            return;
-          }
-          navigation.goBack();
-        },
-      },
-    ]);
+  async function completeBoardSession() {
+    setBoardMenuVisible(false);
+    setUpdating(true);
+    const { error } = await supabase
+      .from("sessions")
+      .update({ completed_at: new Date().toISOString() })
+      .eq("id", sessionId);
+    setUpdating(false);
+    if (error) {
+      Alert.alert(t("common.somethingWrong"), error.message);
+      return;
+    }
+    navigation.goBack();
   }
 
   function handleDelete() {
@@ -323,6 +317,9 @@ export default function SessionDetailScreen() {
 
   const dayNumber = getDayNumber(session.started_at);
   const isCompleted = session.completed_at !== null;
+  // Kun eieren kan redigere/slette/oppdatere. Venner som åpner økten fra feeden
+  // ser en ren lesevisning (RLS blokkerer uansett skriving fra ikke-eiere).
+  const isOwner = session.created_by === user?.id;
 
   // Bygg metadata-undertekst
   const metaParts: string[] = [];
@@ -357,20 +354,22 @@ export default function SessionDetailScreen() {
         >
           {session.item.title}
         </Text>
-        <TouchableOpacity
-          onPress={() => setMenuVisible(true)}
-          accessibilityRole="button"
-          accessibilityLabel={t("session.moreActions")}
-          accessibilityHint={t("session.moreActionsHint")}
-          className="w-9 h-9 rounded-full bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center"
-        >
-          <Ionicons
-            name="ellipsis-horizontal"
-            size={20}
-            color={isDark ? "#FAFAF9" : "#1C1917"}
-            accessible={false}
-          />
-        </TouchableOpacity>
+        {isOwner && (
+          <TouchableOpacity
+            onPress={() => setMenuVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t("session.moreActions")}
+            accessibilityHint={t("session.moreActionsHint")}
+            className="w-9 h-9 rounded-full bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center"
+          >
+            <Ionicons
+              name="ellipsis-horizontal"
+              size={20}
+              color={isDark ? "#FAFAF9" : "#1C1917"}
+              accessible={false}
+            />
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -472,6 +471,19 @@ export default function SessionDetailScreen() {
                 {metaSubtitle}
               </Text>
             ) : null}
+            {isCompleted && (
+              <View className="flex-row items-center gap-1 mt-1.5 self-start bg-accent/10 dark:bg-accent-dark/10 rounded-full px-2 py-0.5">
+                <Ionicons
+                  name="checkmark-circle"
+                  size={13}
+                  color="#1D9E75"
+                  accessible={false}
+                />
+                <Text className="text-accent dark:text-accent-dark text-xs font-semibold">
+                  {t("session.completedBadge")}
+                </Text>
+              </View>
+            )}
           </View>
           {isPuzzle && (
             <View className="items-center ml-2">
@@ -586,8 +598,8 @@ export default function SessionDetailScreen() {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* Oppdater-knapp — sticky bunn (skjul for fullførte økter) */}
-      {!isCompleted && (
+      {/* Oppdater-knapp — sticky bunn (kun eier, skjul for fullførte økter) */}
+      {isOwner && !isCompleted && (
         <View
           className="px-4 bg-surface-secondary dark:bg-surface-dark-secondary border-t border-border dark:border-border-dark"
           style={{ paddingBottom: insets.bottom + 16, paddingTop: 12 }}
@@ -618,6 +630,50 @@ export default function SessionDetailScreen() {
         onSelect={handleProgressSelect}
         onCancel={() => setProgressSheetVisible(false)}
       />
+
+      {/* Brettspill-oppdatering — delt BottomSheet (erstatter native Alert) */}
+      <BottomSheet
+        visible={boardMenuVisible}
+        onClose={() => setBoardMenuVisible(false)}
+        closeLabel={t("session.closeMenu")}
+      >
+        <Text className="text-content dark:text-content-dark text-base font-semibold mb-3 px-1">
+          {t("session.updateSheetTitle")}
+        </Text>
+        <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl overflow-hidden">
+          <TouchableOpacity
+            onPress={() => {
+              setBoardMenuVisible(false);
+              setProgressSheetVisible(true);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={t("session.addImage")}
+            className="flex-row items-center px-4 py-4 border-b border-border dark:border-border-dark"
+          >
+            <Ionicons name="image-outline" size={22} color="#1D9E75" accessible={false} />
+            <Text className="text-content dark:text-content-dark text-base ml-3">
+              {t("session.addImage")}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={completeBoardSession}
+            accessibilityRole="button"
+            accessibilityLabel={t("session.completeSession")}
+            className="flex-row items-center px-4 py-4"
+          >
+            <Ionicons
+              name="checkmark-circle-outline"
+              size={22}
+              color="#1D9E75"
+              accessible={false}
+            />
+            <Text className="text-content dark:text-content-dark text-base ml-3">
+              {t("session.completeSession")}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </BottomSheet>
 
       {/* Handlingsark (···-meny) — delt BottomSheet (dra/bakteppe for å lukke) */}
       <BottomSheet

@@ -203,6 +203,7 @@
     "noImagesYet": "No images yet",
     "dayStarted": "Day {{day}} · Started {{start}}",
     "completedAppendix": "· Completed {{end}}",
+    "completedBadge": "Completed",
     "progressPctA11y": "{{pct}} percent",
     "coverFullscreenA11y": "Show box photo fullscreen",
     "progressHeader": "PROGRESS",

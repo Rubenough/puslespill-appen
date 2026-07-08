@@ -203,6 +203,7 @@
     "noImagesYet": "Ingen bilder ennå",
     "dayStarted": "Dag {{day}} · Startet {{start}}",
     "completedAppendix": "· Fullført {{end}}",
+    "completedBadge": "Fullført",
     "progressPctA11y": "{{pct}} prosent",
     "coverFullscreenA11y": "Vis bilde av boksen i fullskjerm",
     "progressHeader": "FREMGANG",
