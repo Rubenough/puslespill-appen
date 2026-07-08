@@ -121,6 +121,7 @@ export type Database = {
       items: {
         Row: {
           brand: string | null
+          cover_url: string | null
           created_at: string | null
           difficulty: string | null
           id: string
@@ -134,6 +135,7 @@ export type Database = {
         }
         Insert: {
           brand?: string | null
+          cover_url?: string | null
           created_at?: string | null
           difficulty?: string | null
           id?: string
@@ -147,6 +149,7 @@ export type Database = {
         }
         Update: {
           brand?: string | null
+          cover_url?: string | null
           created_at?: string | null
           difficulty?: string | null
           id?: string
@@ -306,6 +309,45 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_reactions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

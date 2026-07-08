@@ -27,4 +27,5 @@ export type Item = {
   player_count: number | null;
   difficulty: Difficulty | null;
   status: ItemStatus | null;
+  cover_url: string | null;
 };

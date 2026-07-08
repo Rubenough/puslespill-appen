@@ -6,9 +6,11 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Image,
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { type ItemType, type Difficulty, DIFFICULTY_OPTIONS } from "../utils/collections";
@@ -20,6 +22,10 @@ export type ItemFormValues = {
   pieceCount: string;
   playerCount: string;
   difficulty: Difficulty | "";
+  // Nytt lokalt omslagsbilde valgt av brukeren (skal lastes opp), ellers null.
+  coverUri: string | null;
+  // Sant hvis brukeren fjernet et eksisterende omslag uten å velge et nytt.
+  coverCleared: boolean;
 };
 
 type ItemFormProps = {
@@ -28,6 +34,8 @@ type ItemFormProps = {
   saveLabel: string;
   saveAccessibilityLabel: string;
   initialValues?: Partial<ItemFormValues>;
+  // Signert URL for et eksisterende omslag (kun visning i redigering).
+  initialCoverUrl?: string | null;
   saving: boolean;
   onSave: (values: ItemFormValues) => void;
   onClose: () => void;
@@ -39,6 +47,7 @@ export default function ItemForm({
   saveLabel,
   saveAccessibilityLabel,
   initialValues,
+  initialCoverUrl,
   saving,
   onSave,
   onClose,
@@ -51,13 +60,48 @@ export default function ItemForm({
   const [pieceCount, setPieceCount] = useState(initialValues?.pieceCount ?? "");
   const [playerCount, setPlayerCount] = useState(initialValues?.playerCount ?? "");
   const [difficulty, setDifficulty] = useState(initialValues?.difficulty ?? "");
+  // Omslag: `pickedUri` settes kun når brukeren velger et NYTT bilde som må lastes opp.
+  // `coverTouched` skiller "urørt" fra at brukeren har valgt/fjernet et bilde. Det som vises
+  // utledes: urørt → det eksisterende omslaget (initialCoverUrl lastes ASYNC etter mount, så
+  // det kan ikke seedes via useState — da ville et eksisterende omslag aldri vises og bli
+  // feilaktig nullstilt ved lagring); rørt → brukerens valg (pickedUri, eller null hvis fjernet).
+  const [pickedUri, setPickedUri] = useState<string | null>(null);
+  const [coverTouched, setCoverTouched] = useState(false);
+  const coverDisplay = coverTouched ? pickedUri : (initialCoverUrl ?? null);
+
+  async function pickCover() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setCoverTouched(true);
+      setPickedUri(result.assets[0].uri);
+    }
+  }
+
+  function removeCover() {
+    setCoverTouched(true);
+    setPickedUri(null);
+  }
 
   function handleSave() {
     if (!title.trim()) {
       Alert.alert(t("itemForm.missingTitleTitle"), t("itemForm.missingTitleBody"));
       return;
     }
-    onSave({ title, brand, pieceCount, playerCount, difficulty });
+    onSave({
+      title,
+      brand,
+      pieceCount,
+      playerCount,
+      difficulty,
+      coverUri: pickedUri,
+      // Hadde omslag, men det er nå borte og intet nytt er valgt → nullstill i DB.
+      coverCleared: !!initialCoverUrl && coverDisplay === null,
+    });
   }
 
   return (
@@ -85,6 +129,44 @@ export default function ItemForm({
         contentContainerStyle={{ padding: 16 }}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Omslag (valgfritt) */}
+        <Text
+          accessibilityRole="header"
+          className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2"
+        >
+          {t("itemForm.coverLabel")}
+        </Text>
+        {coverDisplay ? (
+          <View className="relative mb-6">
+            <Image
+              source={{ uri: coverDisplay }}
+              className="w-full rounded-2xl"
+              style={{ height: 180 }}
+              accessible={false}
+            />
+            <TouchableOpacity
+              onPress={removeCover}
+              accessibilityRole="button"
+              accessibilityLabel={t("itemForm.coverRemove")}
+              className="absolute top-2 right-2 bg-black/50 rounded-full p-1"
+            >
+              <Ionicons name="close" size={20} color="white" accessible={false} />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            onPress={pickCover}
+            accessibilityRole="button"
+            accessibilityLabel={t("itemForm.coverPickA11y")}
+            className="bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark p-6 items-center mb-6"
+          >
+            <Ionicons name="image-outline" size={32} color="#78716C" accessible={false} />
+            <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mt-2">
+              {t("itemForm.coverPick")}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* Tittel */}
         <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mb-2">
           {t("itemForm.titleLabel")}

@@ -9,6 +9,7 @@ import {
   Alert,
   TextInput,
   Switch,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -34,6 +35,7 @@ import { RootStackParamList } from "../navigation/RootNavigator";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { fetchFriends, type Friend } from "../utils/friends";
+import { getSignedUrls } from "../utils/sessionImages";
 import UserAvatar from "../components/UserAvatar";
 import BottomSheet from "../components/BottomSheet";
 
@@ -50,6 +52,8 @@ export default function CollectionDetailScreen() {
   const { user } = useAuth();
 
   const [items, setItems] = useState<Item[]>([]);
+  // Kart fra cover_url (lagringssti) → kortlivd signert URL for visning.
+  const [coverUrls, setCoverUrls] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -76,7 +80,9 @@ export default function CollectionDetailScreen() {
       if (isRefresh) setRefreshing(true);
       const { data, error } = await supabase
         .from("items")
-        .select("id, title, brand, piece_count, player_count, difficulty, status")
+        .select(
+          "id, title, brand, piece_count, player_count, difficulty, status, cover_url",
+        )
         .eq("owner_id", user!.id)
         .eq("type", type)
         .order("created_at", { ascending: false });
@@ -85,8 +91,12 @@ export default function CollectionDetailScreen() {
         setFetchError(error.message);
       } else {
         // DB lagrer difficulty/status som text; vi smalner til app-unionene her.
-        setItems((data ?? []) as Item[]);
+        const rows = (data ?? []) as Item[];
+        setItems(rows);
         setFetchError(null);
+        // Signer omslag ved henting og legg de signerte URL-ene i state (som feeden).
+        const covers = rows.map((r) => r.cover_url).filter((c): c is string => !!c);
+        setCoverUrls(covers.length > 0 ? await getSignedUrls(covers) : new Map());
       }
       setLoading(false);
       setRefreshing(false);
@@ -343,8 +353,16 @@ export default function CollectionDetailScreen() {
                       : ""
                   }`}
                 >
-                  <View className="w-10 h-10 rounded-xl bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-4">
-                    <Ionicons name={ITEM_ICONS[type]} size={20} color="#1D9E75" />
+                  <View className="w-10 h-10 rounded-xl bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-4 overflow-hidden">
+                    {item.cover_url && coverUrls.get(item.cover_url) ? (
+                      <Image
+                        source={{ uri: coverUrls.get(item.cover_url) }}
+                        className="w-10 h-10"
+                        accessible={false}
+                      />
+                    ) : (
+                      <Ionicons name={ITEM_ICONS[type]} size={20} color="#1D9E75" />
+                    )}
                   </View>
                   <View className="flex-1">
                     <Text className="text-content dark:text-content-dark font-medium">

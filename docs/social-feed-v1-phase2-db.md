@@ -1,11 +1,12 @@
 # Social Feed v1 — Phase 2 (needs a DB step)
 
-**Status:** SQL ready — **not applied.** Phase 1 (photo feed, friends' active
-sessions, deep-link invite) is already on `feat/social-feed-v1` and needs no DB
-change. The two items below each need you to paste SQL into the Supabase
-dashboard and then run `npm run gen:types`, before the client code is written.
+**Status:** ✅ **D, E, F applied (2026-07-08)** + `gen:types` regenerated
+(`session_reactions`, `items.cover_url`). Phase 1 (photo feed, friends' active
+sessions, deep-link invite) is already on `feat/social-feed-v1` and needed no DB
+change. Client work per item is tracked in the sections below.
 
-Apply order doesn't matter; D and E are independent. After each, run:
+Apply order doesn't matter; D and E are independent. F is two pastes (INSERT
+policy + the additive storage-read rewrite in section F). After applying, run:
 
 ```bash
 supabase login && npm run gen:types   # project ref mzcppyhxikbkawmyrkrh
@@ -18,6 +19,8 @@ sessions you can already see (your own or a friend's).
 ---
 
 ## D. Reactions — `session_reactions`
+
+**Client work: ⏭️ NEXT — not started.** DB applied + typed.
 
 A tap-to-react row on feed session cards (👍 ❤️ 🎉 …). One row per
 (session, user, emoji); a second tap of the same emoji removes the row.
@@ -86,6 +89,12 @@ create policy "delete own reactions" on public.session_reactions
 
 ## E. Item cover images — `items.cover_url`
 
+**Client work: ✅ DONE (2026-07-08, on `feat/social-feed-v1`, unpushed).** Cover
+picker in `ItemForm` (Add + Edit, upload-then-write + orphan/old-file cleanup);
+covers signed and shown on `CollectionDetailScreen` rows and `added` `FeedCard`s;
+`Item` type + feed/detail selects carry `cover_url`. Typecheck/lint/format/tests
+green. Not yet device-tested.
+
 Show a puzzle/box cover on Collections rows and on `added` feed cards, reusing
 the signed-URL image pipeline (`utils/sessionImages.ts`).
 
@@ -113,9 +122,16 @@ bucket or storage policy needed.
 - Feed: extend `fetchFeedItems` to select `cover_url` on the items query and
   batch-sign alongside the session images already signed there.
 
+**Follow-up (not done):** `FriendCollectionScreen` still shows the category icon,
+not covers — out of the original E scope. Add `cover_url` to its items select +
+batch-sign for parity when convenient.
+
 ---
 
 ## F. Registered participants can add progress photos
+
+**Client work: ⏭️ NEXT — not started.** DB applied (INSERT policy + additive
+storage-read rewrite). Touches the most sensitive screen; do after D.
 
 **Why:** on `SessionDetail`, edit/delete/update are now owner-only (a friend
 opening a session from the feed gets a read-only view). We want a middle tier:
@@ -123,10 +139,9 @@ a **registered participant** (`session_participants.profile_id = auth.uid()`,
 not just a free-text `guest_name`) should be able to **add a progress photo** —
 but **not** change progress %, complete, edit, or delete. Those stay owner-only.
 
-**Blocked on RLS + one design call.** Current policies
-(`docs/phase1-friend-graph.md`) make `sessions` UPDATE and `session_images`
-INSERT owner-only, and the `session-images` storage read policy is scoped by
-**path owner** (`<uid>/…`). Two things must change:
+Current policies (`docs/phase1-friend-graph.md`) make `sessions` UPDATE and
+`session_images` INSERT owner-only, and the `session-images` storage read policy
+is scoped by **path owner** (`<uid>/…`). Two pastes were applied:
 
 ```sql
 -- 1) Let participants insert progress-photo rows (owner still allowed)
@@ -147,15 +162,35 @@ create policy "participants insert session_images" on public.session_images
   );
 ```
 
-2. **Storage read scoping (decision needed).** A participant uploads under their
-   own `<their-uid>/…` folder, so the existing path-owner read policy only lets
-   _their_ friends see it — not everyone who can see the session. Pick one:
-   - **(a, recommended)** Re-scope the `session-images` storage SELECT policy to
-     "can you read the parent session?" via a join on `session_images` instead
-     of the path-owner check. Cleaner, but touches the storage policy.
-   - **(b)** Keep path-owner scoping and have participants upload under the
-     **session owner's** folder — requires loosening the storage INSERT policy
-     too, and is messier. Not recommended.
+2. **Storage read scoping — additive rewrite (applied).** A participant uploads
+   under their own `<their-uid>/…` folder, so the existing path-owner read
+   policy only let _their_ friends see it — not everyone who can see the session.
+   The fix keeps the path-owner branch (**required** — session covers
+   `sessions.image_url` and item covers `items.cover_url` in section E live in
+   this same bucket and are read by path owner, **not** as `session_images`
+   rows) and **adds** a "can you read the parent session?" branch. Replacing the
+   path-owner check instead of extending it would break every cover image.
+
+```sql
+drop policy "read own or friends session-images" on storage.objects;
+
+create policy "read own or friends session-images" on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'session-images' and (
+      -- covers (sessions.image_url, items.cover_url) + own uploads + their friends
+      (storage.foldername(name))[1] = auth.uid()::text
+      or are_friends(auth.uid(), ((storage.foldername(name))[1])::uuid)
+      -- OR: a progress photo attached to a session you can already read
+      or exists (
+        select 1 from public.session_images si
+        join public.sessions s on s.id = si.session_id
+        where si.image_url = storage.objects.name
+          and (s.created_by = auth.uid() or are_friends(auth.uid(), s.created_by))
+      )
+    )
+  );
+```
 
 **Client work (after the policy is applied):** in `SessionDetailScreen`, compute
 `isParticipant` (fetch `session_participants` for `user.id`) and show a

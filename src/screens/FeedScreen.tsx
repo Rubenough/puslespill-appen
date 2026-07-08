@@ -80,6 +80,7 @@ type FeedItem =
       itemTitle: string;
       ownerId: string;
       isOwn: boolean;
+      imageUrl: string | null;
     }
   | {
       id: string;
@@ -121,6 +122,7 @@ type ItemRow = {
   type: string;
   created_at: string;
   owner_id: string;
+  cover_url: string | null;
 };
 type LoanRow = {
   id: string;
@@ -188,7 +190,7 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
     // Gjenstander lagt til siste 14 dager
     supabase
       .from("items")
-      .select("id, title, type, created_at, owner_id")
+      .select("id, title, type, created_at, owner_id, cover_url")
       .gt("created_at", twoWeeksAgo)
       .order("created_at", { ascending: false })
       .limit(20),
@@ -246,7 +248,12 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
     const path = latestImg.get(s.id) ?? s.image_url;
     if (path) imagePathBySession.set(s.id, path);
   }
-  const signedByPath = await getSignedUrls([...imagePathBySession.values()]);
+  // Sign økt-bilder + gjenstands-omslag i ett kall (begge i session-images-bucketen).
+  const coverPaths = itemRows.map((i) => i.cover_url).filter((c): c is string => !!c);
+  const signedByPath = await getSignedUrls([
+    ...imagePathBySession.values(),
+    ...coverPaths,
+  ]);
 
   const feedItems: FeedItem[] = [];
 
@@ -294,6 +301,7 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
       itemTitle: item.title,
       ownerId: item.owner_id,
       isOwn: item.owner_id === userId,
+      imageUrl: item.cover_url ? (signedByPath.get(item.cover_url) ?? null) : null,
     });
   }
 
@@ -546,7 +554,9 @@ export default function FeedScreen() {
                 itemType={item.itemType}
                 itemTitle={item.itemTitle}
                 onPress={feedItemPress(item)}
-                {...(item.type === "started" || item.type === "completed"
+                {...(item.type === "started" ||
+                item.type === "completed" ||
+                item.type === "added"
                   ? { imageUrl: item.imageUrl }
                   : {})}
                 {...(item.type === "started" ? { withUsers: item.withUsers } : {})}
