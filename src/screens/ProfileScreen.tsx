@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -17,17 +18,19 @@ import { useProfil } from "../context/ProfilContext";
 import UserAvatar from "../components/UserAvatar";
 import { type ItemType, ITEM_ICONS } from "../utils/collections";
 import { getRelativeDayOrWeekLabel } from "../utils/date";
+import { getSignedUrls } from "../utils/sessionImages";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { Ionicons } from "@expo/vector-icons";
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
-type LoanHistoryItem = {
+type PastSession = {
   id: string;
-  borrower_name: string;
-  loaned_at: string;
-  returned_at: string | null;
-  items: { title: string; type: ItemType } | null;
+  completed_at: string;
+  progress_pct: number | null;
+  itemTitle: string;
+  itemType: ItemType | undefined;
+  thumbUrl: string | null;
 };
 
 export default function ProfileScreen() {
@@ -41,35 +44,76 @@ export default function ProfileScreen() {
   // content-secondary (#78716C) feiler kontrast på mørk flate; bruk content-dark-secondary der.
   const gearColor = colorScheme === "dark" ? "#A8A29E" : "#78716C";
 
-  const [loans, setLoans] = useState<LoanHistoryItem[]>([]);
-  const [loadingLoans, setLoadingLoans] = useState(true);
-  const [loansError, setLoansError] = useState(false);
+  const [sessions, setSessions] = useState<PastSession[]>([]);
+  const [loadingSessions, setLoadingSessions] = useState(true);
+  const [sessionsError, setSessionsError] = useState(false);
 
-  const fetchLoans = useCallback(async () => {
+  const fetchSessions = useCallback(async () => {
     if (!user) return;
-    setLoadingLoans(true);
+    setLoadingSessions(true);
 
+    // Fullførte økter jeg eier — Profil er den varige historikken (feeden er 14 dager).
     const { data, error } = await supabase
-      .from("loans")
-      .select("id, borrower_name, loaned_at, returned_at, items(title, type)")
-      .eq("owner_id", user.id)
-      .order("loaned_at", { ascending: false })
+      .from("sessions")
+      .select("id, completed_at, progress_pct, items(title, type)")
+      .eq("created_by", user.id)
+      .not("completed_at", "is", null)
+      .order("completed_at", { ascending: false })
       .limit(20);
 
-    setLoansError(!!error);
-    setLoans((data as unknown as LoanHistoryItem[]) ?? []);
-    setLoadingLoans(false);
-  }, [user]);
+    if (error) {
+      setSessionsError(true);
+      setLoadingSessions(false);
+      return;
+    }
+
+    type Row = {
+      id: string;
+      completed_at: string;
+      progress_pct: number | null;
+      items: { title: string; type: string } | null;
+    };
+    const rows = (data as unknown as Row[]) ?? [];
+
+    // Hent siste progresjonsbilde per økt som thumbnail, og signér i én batch.
+    const ids = rows.map((r) => r.id);
+    const latest = new Map<string, string>();
+    if (ids.length > 0) {
+      const { data: imgs } = await supabase
+        .from("session_images")
+        .select("session_id, image_url, captured_at")
+        .in("session_id", ids)
+        .order("captured_at", { ascending: false });
+      for (const im of (imgs ?? []) as { session_id: string; image_url: string }[]) {
+        if (!latest.has(im.session_id)) latest.set(im.session_id, im.image_url);
+      }
+    }
+    const signed = await getSignedUrls([...latest.values()]);
+
+    setSessionsError(false);
+    setSessions(
+      rows.map((r) => {
+        const path = latest.get(r.id);
+        return {
+          id: r.id,
+          completed_at: r.completed_at,
+          progress_pct: r.progress_pct,
+          itemTitle: r.items?.title ?? t("common.unknownItem"),
+          itemType: r.items?.type as ItemType | undefined,
+          thumbUrl: path ? (signed.get(path) ?? null) : null,
+        };
+      }),
+    );
+    setLoadingSessions(false);
+  }, [user, t]);
 
   useFocusEffect(
     useCallback(() => {
-      fetchLoans();
-    }, [fetchLoans]),
+      fetchSessions();
+    }, [fetchSessions]),
   );
 
   const fallbackName = t("common.unknownUser");
-  const activeLoans = loans.filter((l) => l.returned_at === null);
-  const returnedLoans = loans.filter((l) => l.returned_at !== null);
 
   return (
     <ScrollView
@@ -108,23 +152,23 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Utlånshistorikk */}
+      {/* Tidligere økter — varig historikk over fullførte økter */}
       <Text
         accessibilityRole="header"
         className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest px-4 pb-3"
       >
-        {t("profile.myLoans")}
+        {t("profile.pastSessions")}
       </Text>
 
-      {loadingLoans ? (
+      {loadingSessions ? (
         <ActivityIndicator color="#1D9E75" style={{ marginVertical: 24 }} />
-      ) : loansError ? (
+      ) : sessionsError ? (
         <View className="mx-4 bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-2xl p-4 items-center">
           <Text className="text-content dark:text-content-dark text-sm text-center mb-3">
             {t("profile.loadError")}
           </Text>
           <TouchableOpacity
-            onPress={() => fetchLoans()}
+            onPress={() => fetchSessions()}
             accessibilityRole="button"
             accessibilityLabel={t("common.retry")}
             className="bg-accent dark:bg-accent-dark rounded-xl px-5 py-2"
@@ -132,108 +176,80 @@ export default function ProfileScreen() {
             <Text className="text-white font-semibold text-sm">{t("common.retry")}</Text>
           </TouchableOpacity>
         </View>
-      ) : loans.length === 0 ? (
+      ) : sessions.length === 0 ? (
         <Text className="text-content-secondary dark:text-content-secondary-dark text-sm px-4">
-          {t("profile.noLoans")}
+          {t("profile.pastSessionsEmpty")}
         </Text>
       ) : (
         <View className="mx-4 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden">
-          {/* Aktive utlån */}
-          {activeLoans.map((loan, i) => (
-            <LoanRow
-              key={loan.id}
-              loan={loan}
-              isLast={i === activeLoans.length - 1 && returnedLoans.length === 0}
-            />
-          ))}
+          {sessions.map((s, i) => {
+            const when = getRelativeDayOrWeekLabel(s.completed_at);
+            return (
+              <TouchableOpacity
+                key={s.id}
+                onPress={() => navigation.navigate("SessionDetail", { sessionId: s.id })}
+                accessibilityRole="button"
+                accessibilityLabel={t("profile.sessionRowA11y", {
+                  title: s.itemTitle,
+                  when,
+                })}
+                accessibilityHint={t("profile.sessionRowHint")}
+                className={`flex-row items-center px-4 py-3 ${
+                  i < sessions.length - 1
+                    ? "border-b border-border dark:border-border-dark"
+                    : ""
+                }`}
+              >
+                {s.thumbUrl ? (
+                  <Image
+                    source={{ uri: s.thumbUrl }}
+                    style={{ width: 44, height: 44, borderRadius: 8 }}
+                    resizeMode="cover"
+                    accessible={false}
+                    className="mr-3"
+                  />
+                ) : (
+                  <View className="w-11 h-11 rounded-lg bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-3">
+                    {s.itemType ? (
+                      <Ionicons
+                        name={ITEM_ICONS[s.itemType]}
+                        size={20}
+                        color="#78716C"
+                        accessible={false}
+                      />
+                    ) : null}
+                  </View>
+                )}
 
-          {/* Skillinje mellom aktive og returnerte */}
-          {activeLoans.length > 0 && returnedLoans.length > 0 && (
-            <View className="px-4 py-2 bg-surface-secondary dark:bg-surface-dark-secondary border-y border-border dark:border-border-dark">
-              <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold">
-                {t("profile.returnedSection")}
-              </Text>
-            </View>
-          )}
+                <View className="flex-1">
+                  <Text
+                    className="text-content dark:text-content-dark text-sm font-medium"
+                    numberOfLines={1}
+                  >
+                    {s.itemTitle}
+                  </Text>
+                  <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-0.5">
+                    {t("profile.sessionCompletedWhen", { when })}
+                  </Text>
+                </View>
 
-          {/* Returnerte utlån */}
-          {returnedLoans.map((loan, i) => (
-            <LoanRow key={loan.id} loan={loan} isLast={i === returnedLoans.length - 1} />
-          ))}
+                {s.progress_pct != null && (
+                  <Text className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold ml-2">
+                    {s.progress_pct}%
+                  </Text>
+                )}
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color="#A8A29E"
+                  accessible={false}
+                  style={{ marginLeft: 8 }}
+                />
+              </TouchableOpacity>
+            );
+          })}
         </View>
       )}
     </ScrollView>
-  );
-}
-
-type LoanRowProps = { loan: LoanHistoryItem; isLast: boolean };
-
-function LoanRow({ loan, isLast }: LoanRowProps) {
-  const { t } = useTranslation();
-  const isActive = loan.returned_at === null;
-  const itemType = loan.items?.type as ItemType | undefined;
-  const title = loan.items?.title ?? t("common.unknownItem");
-  const subtitle = isActive
-    ? t("profile.loanedTo", {
-        name: loan.borrower_name,
-        when: getRelativeDayOrWeekLabel(loan.loaned_at),
-      })
-    : t("profile.returnedTo", {
-        name: loan.borrower_name,
-        when: getRelativeDayOrWeekLabel(loan.returned_at!),
-      });
-
-  return (
-    <View
-      accessible
-      accessibilityLabel={[title, subtitle].join(", ")}
-      className={`flex-row items-center px-4 py-3 ${
-        !isLast ? "border-b border-border dark:border-border-dark" : ""
-      }`}
-    >
-      {/* Kategoriikon */}
-      <View className="w-9 h-9 rounded-lg bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-3">
-        {itemType ? (
-          <Ionicons
-            name={ITEM_ICONS[itemType]}
-            size={18}
-            color="#78716C"
-            accessible={false}
-          />
-        ) : null}
-      </View>
-
-      {/* Tittel og låntaker */}
-      <View className="flex-1">
-        <Text
-          className="text-content dark:text-content-dark text-sm font-medium"
-          numberOfLines={1}
-        >
-          {title}
-        </Text>
-        <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-0.5">
-          {subtitle}
-        </Text>
-      </View>
-
-      {/* Statusbadge */}
-      <View
-        className={`px-2 py-0.5 rounded-full ml-2 ${
-          isActive
-            ? "bg-accent/10 dark:bg-accent-dark/10"
-            : "bg-surface-secondary dark:bg-surface-dark-secondary"
-        }`}
-      >
-        <Text
-          className={`text-xs font-semibold ${
-            isActive
-              ? "text-accent dark:text-accent-dark"
-              : "text-content-secondary dark:text-content-secondary-dark"
-          }`}
-        >
-          {isActive ? t("profile.statusLoaned") : t("profile.statusReturned")}
-        </Text>
-      </View>
-    </View>
   );
 }

@@ -591,6 +591,23 @@ export default function CollectionsScreen() {
             </View>
           </>
         )}
+
+        {/* Lånehistorikk — leverte lån (aktive vises over i UTLÅNT NÅ) */}
+        <TouchableOpacity
+          onPress={() => navigation.navigate("LoanHistory")}
+          accessibilityRole="button"
+          accessibilityLabel={t("collections.loanHistory")}
+          accessibilityHint={t("collections.loanHistoryHint")}
+          className="mx-4 mb-8 flex-row items-center bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-4"
+        >
+          <View className="w-10 h-10 rounded-xl bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-4">
+            <Ionicons name="time-outline" size={20} color="#1D9E75" accessible={false} />
+          </View>
+          <Text className="flex-1 text-content dark:text-content-dark font-medium">
+            {t("collections.loanHistory")}
+          </Text>
+          <Ionicons name="chevron-forward" size={18} color="#78716C" accessible={false} />
+        </TouchableOpacity>
       </ScrollView>
 
       {/* Be om retur-modal (eier) */}

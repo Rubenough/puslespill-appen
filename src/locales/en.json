@@ -20,6 +20,8 @@
     "sectionCollections": "COLLECTIONS",
     "sectionLoanedNow": "ON LOAN NOW",
     "sectionBorrowingNow": "BORROWING NOW",
+    "loanHistory": "Loan history",
+    "loanHistoryHint": "Tap to see returned loans",
     "borrowedFromWhen": "from {{name}} · {{when}}",
     "borrowedA11y": "{{item}}, borrowed from {{name}}, {{when}}",
     "markReturned": "Mark as returned",
@@ -69,15 +71,21 @@
   },
   "profile": {
     "signOut": "Sign out",
-    "myLoans": "MY LOANS",
-    "noLoans": "No loans registered yet",
-    "loadError": "Could not load loans.",
-    "returnedSection": "Returned",
-    "statusLoaned": "On loan",
+    "loadError": "Could not load content.",
     "statusReturned": "Returned",
     "toBorrower": "to {{name}}",
     "returnedTo": "to {{name}} · returned {{when}}",
-    "loanedTo": "to {{name}} · {{when}}"
+    "pastSessions": "PAST SESSIONS",
+    "pastSessionsEmpty": "No completed sessions yet",
+    "sessionCompletedWhen": "Completed {{when}}",
+    "sessionRowA11y": "{{title}}, completed {{when}}",
+    "sessionRowHint": "Tap to view the session"
+  },
+  "loanHistory": {
+    "title": "Loan history",
+    "backA11y": "Back to collections",
+    "empty": "No returned loans yet",
+    "loadError": "Could not load loan history."
   },
   "language": {
     "no": "Norsk",

@@ -20,6 +20,8 @@
     "sectionCollections": "SAMLINGER",
     "sectionLoanedNow": "UTLÅNT NÅ",
     "sectionBorrowingNow": "DU LÅNER NÅ",
+    "loanHistory": "Lånehistorikk",
+    "loanHistoryHint": "Trykk for å se leverte lån",
     "borrowedFromWhen": "fra {{name}} · {{when}}",
     "borrowedA11y": "{{item}}, lånt fra {{name}}, {{when}}",
     "markReturned": "Marker som levert",
@@ -69,15 +71,21 @@
   },
   "profile": {
     "signOut": "Logg ut",
-    "myLoans": "MINE UTLÅN",
-    "noLoans": "Ingen utlån registrert ennå",
-    "loadError": "Kunne ikke laste utlån.",
-    "returnedSection": "Returnerte",
-    "statusLoaned": "Utlånt",
+    "loadError": "Kunne ikke laste innhold.",
     "statusReturned": "Returnert",
     "toBorrower": "til {{name}}",
     "returnedTo": "til {{name}} · returnert {{when}}",
-    "loanedTo": "til {{name}} · {{when}}"
+    "pastSessions": "TIDLIGERE ØKTER",
+    "pastSessionsEmpty": "Ingen fullførte økter ennå",
+    "sessionCompletedWhen": "Fullført {{when}}",
+    "sessionRowA11y": "{{title}}, fullført {{when}}",
+    "sessionRowHint": "Trykk for å se økten"
+  },
+  "loanHistory": {
+    "title": "Lånehistorikk",
+    "backA11y": "Tilbake til samlinger",
+    "empty": "Ingen leverte lån ennå",
+    "loadError": "Kunne ikke laste lånehistorikk."
   },
   "language": {
     "no": "Norsk",
