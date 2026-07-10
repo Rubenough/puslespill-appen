@@ -24,18 +24,15 @@ import {
 
 SplashScreen.preventAutoHideAsync();
 
-// Dyplenke: puslespill://join?code=XYZ åpner Venner-fanen med koden forhåndsutfylt.
-// Bruker det eksisterende app.json-skjemaet «puslespill» (samme som OAuth), så
-// ingen native-endring/ombygging trengs — dette er ren JS-ruting.
+// Dyplenke: puslespill://join?code=XYZ åpner Venner-skjermen (rot-ruten "Friends",
+// pushet over Bibliotek-fanen) med koden forhåndsutfylt. Bruker det eksisterende
+// app.json-skjemaet «puslespill» (samme som OAuth), så ingen native-endring/
+// ombygging trengs — dette er ren JS-ruting.
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ["puslespill://"],
   config: {
     screens: {
-      Tabs: {
-        screens: {
-          Venner: "join",
-        },
-      },
+      Friends: "join",
     },
   },
 };
@@ -73,11 +70,12 @@ function AppContent() {
   }, [loading, themeReady]);
 
   // Når navigatoren er klar (mountes først etter innlogging): rut en eventuell
-  // ventende invitasjonskode til Venner. FriendsScreen forhåndsutfyller og tømmer den.
+  // ventende invitasjonskode til Venner-skjermen. FriendsScreen forhåndsutfyller
+  // og tømmer den.
   function handleNavReady() {
     getPendingInviteCode()
       .then((code) => {
-        if (code) navigationRef.navigate("Tabs", { screen: "Venner", params: { code } });
+        if (code) navigationRef.navigate("Friends", { code });
       })
       .catch(() => {});
   }

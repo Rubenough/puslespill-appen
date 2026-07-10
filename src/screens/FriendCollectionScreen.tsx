@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TextInput,
   Alert,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,6 +29,7 @@ import {
   playersLabel,
   difficultyLabel,
 } from "../utils/collectionLabels";
+import { getSignedUrls } from "../utils/sessionImages";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import UserAvatar from "../components/UserAvatar";
 import BottomSheet from "../components/BottomSheet";
@@ -44,6 +46,7 @@ type FriendItem = {
   difficulty: string | null;
   status: string | null;
   type: ItemType;
+  cover_url: string | null;
 };
 
 function subtitleFor(item: FriendItem): string | null {
@@ -70,6 +73,8 @@ export default function FriendCollectionScreen() {
   const chevronColor = colorScheme === "dark" ? "#A8A29E" : "#78716C";
 
   const [items, setItems] = useState<FriendItem[]>([]);
+  // Kart fra cover_url (lagringssti) → kortlivd signert URL for visning.
+  const [coverUrls, setCoverUrls] = useState<Map<string, string>>(new Map());
   // item_id → id på den ventende forespørselen, slik at vi kan avbryte den herfra.
   const [pendingByItem, setPendingByItem] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -84,7 +89,9 @@ export default function FriendCollectionScreen() {
       const [itemsRes, requestsRes] = await Promise.all([
         supabase
           .from("items")
-          .select("id, title, brand, piece_count, player_count, difficulty, status, type")
+          .select(
+            "id, title, brand, piece_count, player_count, difficulty, status, type, cover_url",
+          )
           .eq("owner_id", friendId)
           .order("created_at", { ascending: false }),
         supabase
@@ -95,10 +102,16 @@ export default function FriendCollectionScreen() {
           .eq("status", "pending"),
       ]);
 
+      const rows = (itemsRes.data ?? []) as FriendItem[];
+      // Signer omslag ved henting og legg de signerte URL-ene i state (som feeden).
+      const covers = rows.map((r) => r.cover_url).filter((c): c is string => !!c);
+      const signed = covers.length > 0 ? await getSignedUrls(covers) : new Map();
+
       // Skjermen kan ha mistet fokus mens hentingen pågikk — ikke oppdater da.
       if (!isActive()) return;
       setFetchError(!!itemsRes.error);
-      setItems((itemsRes.data ?? []) as FriendItem[]);
+      setItems(rows);
+      setCoverUrls(signed);
       setPendingByItem(new Map((requestsRes.data ?? []).map((r) => [r.item_id, r.id])));
       setLoading(false);
     },
@@ -255,13 +268,21 @@ export default function FriendCollectionScreen() {
                         : ""
                     }`}
                   >
-                    <View className="w-10 h-10 rounded-xl bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-4">
-                      <Ionicons
-                        name={ITEM_ICONS[item.type]}
-                        size={20}
-                        color="#1D9E75"
-                        accessible={false}
-                      />
+                    <View className="w-10 h-10 rounded-xl bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-4 overflow-hidden">
+                      {item.cover_url && coverUrls.get(item.cover_url) ? (
+                        <Image
+                          source={{ uri: coverUrls.get(item.cover_url) }}
+                          className="w-10 h-10"
+                          accessible={false}
+                        />
+                      ) : (
+                        <Ionicons
+                          name={ITEM_ICONS[item.type]}
+                          size={20}
+                          color="#1D9E75"
+                          accessible={false}
+                        />
+                      )}
                     </View>
                     <View className="flex-1">
                       <Text className="text-content dark:text-content-dark font-medium">

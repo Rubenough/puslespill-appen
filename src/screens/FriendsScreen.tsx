@@ -18,18 +18,18 @@ import {
   type RouteProp,
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useColorScheme } from "nativewind";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { RootStackParamList } from "../navigation/RootNavigator";
-import { type TabParamList } from "../navigation/AppNavigator";
 import UserAvatar from "../components/UserAvatar";
 import { fetchFriends, type Friend } from "../utils/friends";
 import { clearPendingInviteCode } from "../utils/pendingInvite";
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
-// Dyplenke-koden (puslespill://join?code=…) leveres som ruteparameter på Venner-fanen.
+// Dyplenke-koden (puslespill://join?code=…) leveres som ruteparameter på Venner-skjermen.
 const inviteLinkFor = (code: string) => `puslespill://join?code=${code}`;
 
 // Stabile feiltokens fra accept_invite (F4 tier 2) → i18n-nøkkel. Faller tilbake
@@ -45,9 +45,13 @@ const TOKEN_TO_KEY: Record<string, string> = {
 export default function FriendsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavProp>();
-  const route = useRoute<RouteProp<TabParamList, "Venner">>();
+  const route = useRoute<RouteProp<RootStackParamList, "Friends">>();
   const { t } = useTranslation();
   const { user } = useAuth();
+  // App-styrt fargeskjema (ikke OS) — brukes til den imperative chevron-fargen.
+  const { colorScheme } = useColorScheme();
+  // content-secondary (#78716C) feiler kontrast på mørk flate; bruk lysere token der.
+  const chevronColor = colorScheme === "dark" ? "#A8A29E" : "#78716C";
 
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   // Speiler inviteCode slik at fetchCode kan beholde en allerede vist kode ved en
@@ -233,12 +237,28 @@ export default function FriendsScreen() {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      <Text
-        className="text-content dark:text-content-dark text-2xl font-medium px-4 pb-6"
+      {/* Skjermen pushes fra Bibliotek — egen tilbakeknapp i topraden. */}
+      <View
+        className="flex-row items-center px-4 pb-6"
         style={{ paddingTop: insets.top + 16 }}
       >
-        {t("friends.title")}
-      </Text>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.back")}
+          className="mr-3"
+        >
+          <Ionicons
+            name="chevron-back"
+            size={24}
+            color={chevronColor}
+            accessible={false}
+          />
+        </TouchableOpacity>
+        <Text className="text-content dark:text-content-dark text-2xl font-medium flex-1">
+          {t("friends.title")}
+        </Text>
+      </View>
 
       {/* Min invitasjon */}
       <Text
