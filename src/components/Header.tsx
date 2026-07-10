@@ -48,12 +48,12 @@ export default function Header() {
           Fordriv
         </Text>
         <TouchableOpacity
-          onPress={() => navigation.navigate("Requests")}
+          onPress={() => navigation.navigate("LoansHub")}
           accessibilityRole="button"
           accessibilityLabel={
             hasUnread
-              ? `${t("requests.title")}, ${t("requests.badgeA11y", { count: pendingCount })}`
-              : t("requests.title")
+              ? `${t("loansHub.title")}, ${t("requests.badgeA11y", { count: pendingCount })}`
+              : t("loansHub.title")
           }
         >
           <Ionicons
