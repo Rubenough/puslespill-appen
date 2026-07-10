@@ -52,6 +52,9 @@
     "emptyType": "No {{type}} in the collection yet.\nUse + to add one.",
     "friendEmpty": "{{name}} has no items in their collection yet.",
     "collectionCount": "COLLECTION · {{count}} ITEMS",
+    "emptyAll": "Nothing in your collection yet.",
+    "emptyAllCta": "Add item",
+    "emptyAllCtaHint": "Opens the add item form",
     "openHint": "Tap to see the collection",
     "type": { "puslespill": "Puzzle", "brettspill": "Board game" },
     "typePlural": { "puslespill": "puzzles", "brettspill": "board games" },
@@ -79,7 +82,32 @@
     "pastSessionsEmpty": "No completed sessions yet",
     "sessionCompletedWhen": "Completed {{when}}",
     "sessionRowA11y": "{{title}}, completed {{when}}",
-    "sessionRowHint": "Tap to view the session"
+    "sessionRowHint": "Tap to view the session",
+    "editTitle": "Edit profile",
+    "editHint": "Change display name and profile picture",
+    "editClose": "Close profile editing",
+    "editNameLabel": "DISPLAY NAME",
+    "editNamePlaceholder": "e.g. Kari",
+    "editNameA11y": "Display name",
+    "editPickAvatar": "Choose photo",
+    "editPickAvatarHint": "Opens your photo library",
+    "editRemoveAvatar": "Remove photo",
+    "editSave": "Save",
+    "editMissingNameTitle": "Missing name",
+    "editMissingNameBody": "Enter a display name.",
+    "editSaveError": "Could not save the profile."
+  },
+  "onboarding": {
+    "title": "Get started",
+    "dismissA11y": "Hide the get started checklist",
+    "stepItems": "Add your first items",
+    "stepItemsHint": "Opens the add item form",
+    "stepFriends": "Invite your crew",
+    "stepFriendsHint": "Opens Friends with your invite code",
+    "stepDoneA11y": "{{label}}, completed",
+    "doneTitle": "All set!",
+    "doneBody": "Activity from you and your friends will show up here in the feed.",
+    "doneCta": "Got it"
   },
   "loanHistory": {
     "title": "Loan history",
@@ -172,13 +200,21 @@
     "rotated": "New code ready",
     "rotateFailed": "Couldn't generate a new code",
     "inviteLandingBanner": "Your code is ready — tap \"Add\" to become friends.",
-    "codeLoadError": "Couldn't load your code."
+    "codeLoadError": "Couldn't load your code.",
+    "qrShow": "Show QR code",
+    "qrHide": "Hide QR code",
+    "qrA11y": "QR code for your invite link, code {{code}}",
+    "qrHint": "Have a friend scan the code with their phone camera."
   },
   "feed": {
     "activeSessions": "ACTIVE SESSIONS",
     "feed": "FEED",
     "noActiveSessions": "No active sessions",
     "noActivity": "No activity in the last 14 days",
+    "emptyCtaInvite": "Invite a friend",
+    "emptyCtaInviteHint": "Opens Friends with your invite code",
+    "emptyCtaAdd": "Add item",
+    "emptyCtaAddHint": "Opens the add item form",
     "loadError": "Could not load content.",
     "added": "added to the collection · {{when}}",
     "startedWith": "started a session with {{users}} · {{when}}",
@@ -387,6 +423,8 @@
     "addSubtitle": "Puzzle, board game ...",
     "sessionTitle": "Start a new session",
     "sessionSubtitle": "Log an activity",
+    "inviteTitle": "Invite a friend",
+    "inviteSubtitle": "Share your invite code",
     "selectType": "Choose type"
   }
 }
