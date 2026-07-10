@@ -1,7 +1,7 @@
 # Fordriv — Fable review, 2026-07-10
 
 Review of code quality, feature completeness, store readiness, and roadmap to v1.0.
-Companion to `docs/fable-review-prompt.md`. Verified against the working tree at `7f5d970`.
+Verified against the working tree at `7f5d970`.
 UX/product follow-up (name, IA, flows, screens): [`ux-product-recommendations-2026-07-10.md`](./ux-product-recommendations-2026-07-10.md).
 
 ---
