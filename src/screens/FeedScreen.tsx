@@ -21,6 +21,9 @@ import { useAuth } from "../context/AuthContext";
 import { type ItemType } from "../utils/collections";
 import { getDayNumber, getRelativeDayLabel } from "../utils/date";
 import { getSignedUrls } from "../utils/sessionImages";
+import { resolveProfileAvatars } from "../utils/avatar";
+import OnboardingChecklist from "../components/OnboardingChecklist";
+import { useOnboardingChecklist } from "../hooks/useOnboardingChecklist";
 import {
   fetchReactionsBySession,
   toggleReaction,
@@ -244,9 +247,11 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
     .select("id, full_name, avatar_url")
     .in("id", [...userIds]);
 
-  const profilesById = new Map(
-    ((profilesData ?? []) as ProfileRow[]).map((p) => [p.id, p]),
+  // Opplastede avatarer er lagringsstier og må signeres; Google-URL-er passerer urørt.
+  const profilesWithAvatars = await resolveProfileAvatars(
+    (profilesData ?? []) as ProfileRow[],
   );
+  const profilesById = new Map(profilesWithAvatars.map((p) => [p.id, p]));
 
   // Signér siste progresjonsbilde (eller øktens omslag) for økt-hendelsene i ett kall.
   const latestImg = await latestImagePathsBySession(sessionRows.map((s) => s.id));
@@ -371,6 +376,11 @@ export default function FeedScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
 
+  // Kom i gang-sjekkliste (førstegangsbruk) — vises som kort øverst til den
+  // er fullført eller lukket. refresh er stabil (useCallback på user).
+  const checklist = useOnboardingChecklist();
+  const { refresh: refreshChecklist } = checklist;
+
   const fetchSessions = useCallback(async () => {
     if (!user) return;
     setLoadingSessions(true);
@@ -395,9 +405,11 @@ export default function FeedScreen() {
       .from("profiles")
       .select("id, full_name, avatar_url")
       .in("id", ownerIds);
-    const ownerById = new Map(
-      ((ownerProfiles ?? []) as ProfileRow[]).map((p) => [p.id, p]),
+    // Signer ev. opplastede avatar-stier for visning (Google-URL-er passerer urørt).
+    const ownersResolved = await resolveProfileAvatars(
+      (ownerProfiles ?? []) as ProfileRow[],
     );
+    const ownerById = new Map(ownersResolved.map((p) => [p.id, p]));
 
     // Bytt lagringsstier mot signerte URL-er for visning i øktkortene.
     const signed = await getSignedUrls(withImages.map((s) => s.image_url));
@@ -476,7 +488,8 @@ export default function FeedScreen() {
     useCallback(() => {
       fetchSessions();
       fetchFeed();
-    }, [fetchSessions, fetchFeed]),
+      refreshChecklist();
+    }, [fetchSessions, fetchFeed, refreshChecklist]),
   );
 
   const onRefresh = useCallback(async () => {
@@ -524,6 +537,18 @@ export default function FeedScreen() {
           />
         }
       >
+        {/* Kom i gang-sjekkliste — lett kort, ikke blokkerende modal */}
+        {checklist.visible && (
+          <OnboardingChecklist
+            hasItem={checklist.hasItem}
+            hasFriend={checklist.hasFriend}
+            complete={checklist.complete}
+            onAddItem={() => navigation.navigate("AddItem", { type: "puslespill" })}
+            onInviteFriend={() => navigation.navigate("Tabs", { screen: "Venner" })}
+            onDismiss={checklist.dismiss}
+          />
+        )}
+
         {/* Aktive økter */}
         <Text
           accessibilityRole="header"
@@ -583,9 +608,37 @@ export default function FeedScreen() {
         ) : feedError ? (
           <SectionError onRetry={fetchFeed} />
         ) : feedItems.length === 0 ? (
-          <Text className="text-content-secondary dark:text-content-secondary-dark text-sm px-4 pb-4">
-            {t("feed.noActivity")}
-          </Text>
+          // Tom feed skal ikke være en blindvei — pek videre til det som gir
+          // feeden innhold: venner og egne gjenstander.
+          <View className="mx-4 mb-4 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark p-5 items-center">
+            <Text className="text-content-secondary dark:text-content-secondary-dark text-sm text-center mb-4">
+              {t("feed.noActivity")}
+            </Text>
+            <View className="flex-row gap-2">
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Tabs", { screen: "Venner" })}
+                accessibilityRole="button"
+                accessibilityLabel={t("feed.emptyCtaInvite")}
+                accessibilityHint={t("feed.emptyCtaInviteHint")}
+                className="bg-accent dark:bg-accent-dark rounded-xl px-4 py-2.5"
+              >
+                <Text className="text-white font-semibold text-sm">
+                  {t("feed.emptyCtaInvite")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("AddItem", { type: "puslespill" })}
+                accessibilityRole="button"
+                accessibilityLabel={t("feed.emptyCtaAdd")}
+                accessibilityHint={t("feed.emptyCtaAddHint")}
+                className="border border-accent dark:border-accent-dark rounded-xl px-4 py-2.5"
+              >
+                <Text className="text-accent dark:text-accent-dark font-semibold text-sm">
+                  {t("feed.emptyCtaAdd")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         ) : (
           <View className="pt-2 pb-4">
             {feedItems.map((item) => (

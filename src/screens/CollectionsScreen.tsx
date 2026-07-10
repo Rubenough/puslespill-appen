@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { type ItemType, ITEM_ICONS } from "../utils/collections";
 import { itemTypeLabel } from "../utils/collectionLabels";
 import { CollectionsStackParamList } from "../navigation/CollectionsStack";
+import { RootStackParamList } from "../navigation/RootNavigator";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { getRelativeDayLabel, formatShortDate } from "../utils/date";
@@ -60,6 +61,8 @@ export default function CollectionsScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const navigation = useNavigation<NavProp>();
+  // Samme navigasjonsobjekt, typet mot rotstacken — navigate bobler opp til AddItem.
+  const rootNavigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user } = useAuth();
 
   const [collections, setCollections] = useState<CollectionSummary[]>(
@@ -68,6 +71,8 @@ export default function CollectionsScreen() {
   const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([]);
   const [borrowedLoans, setBorrowedLoans] = useState<BorrowedLoan[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  // Unngå at tom-samling-CTA-en blinker før første henting er ferdig.
+  const [loadedOnce, setLoadedOnce] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [returningId, setReturningId] = useState<string | null>(null);
   const [markingId, setMarkingId] = useState<string | null>(null);
@@ -118,6 +123,7 @@ export default function CollectionsScreen() {
       }
 
       setFetchError(null);
+      setLoadedOnce(true);
 
       const summaries = COLLECTION_TYPES.map((type) => {
         const ofType = itemsResult.data.filter((row) => row.type === type);
@@ -376,6 +382,26 @@ export default function CollectionsScreen() {
               />
             </TouchableOpacity>
           ))}
+
+          {/* Tom samling skal ikke være en blindvei — pek rett inn i AddItem. */}
+          {loadedOnce && !fetchError && collections.every((col) => col.count === 0) && (
+            <View className="px-4 py-4 border-t border-border dark:border-border-dark items-center">
+              <Text className="text-content-secondary dark:text-content-secondary-dark text-sm text-center mb-3">
+                {t("collections.emptyAll")}
+              </Text>
+              <TouchableOpacity
+                onPress={() => rootNavigation.navigate("AddItem", { type: "puslespill" })}
+                accessibilityRole="button"
+                accessibilityLabel={t("collections.emptyAllCta")}
+                accessibilityHint={t("collections.emptyAllCtaHint")}
+                className="bg-accent dark:bg-accent-dark rounded-xl px-5 py-2.5"
+              >
+                <Text className="text-white font-semibold text-sm">
+                  {t("collections.emptyAllCta")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         <Text

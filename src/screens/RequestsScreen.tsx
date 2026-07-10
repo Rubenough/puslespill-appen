@@ -17,6 +17,7 @@ import { useAuth } from "../context/AuthContext";
 import { ITEM_ICONS, type ItemType } from "../utils/collections";
 import { itemTypeLabel } from "../utils/collectionLabels";
 import { DUE_OPTIONS, dueAtFromKey } from "../utils/loans";
+import { resolveProfileAvatars } from "../utils/avatar";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import UserAvatar from "../components/UserAvatar";
 
@@ -85,7 +86,9 @@ export default function RequestsScreen() {
         .from("profiles")
         .select("id, full_name, avatar_url")
         .in("id", [...otherIds]);
-      profilesById = new Map((profiles ?? []).map((p) => [p.id, p]));
+      // Opplastede avatarer er lagringsstier og må signeres for visning.
+      const resolved = await resolveProfileAvatars(profiles ?? []);
+      profilesById = new Map(resolved.map((p) => [p.id, p]));
     }
 
     const enrich = (r: RequestRow, otherId: string): EnrichedRequest => {
