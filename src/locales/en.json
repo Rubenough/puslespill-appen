@@ -102,7 +102,15 @@
     "language": "LANGUAGE",
     "signOutConfirmTitle": "Sign out?",
     "signOutConfirmMessage": "Are you sure you want to sign out?",
-    "version": "Fordriv v{{version}}"
+    "version": "Fordriv v{{version}}",
+    "deleteAccount": "Delete account",
+    "deleteAccountHint": "Permanently deletes your account and all data",
+    "deleteAccountConfirmTitle": "Delete your account?",
+    "deleteAccountConfirmMessage": "This permanently deletes your account, your items, loans, sessions and all photos. This cannot be undone.",
+    "deleteAccountConfirmSecondTitle": "Are you absolutely sure?",
+    "deleteAccountConfirmSecondMessage": "Everything will be deleted for good. Do you want to continue?",
+    "deleteAccountConfirmAction": "Delete everything",
+    "deleteAccountError": "Could not delete the account. Try again or contact us."
   },
   "borrow": {
     "ask": "Ask to borrow",

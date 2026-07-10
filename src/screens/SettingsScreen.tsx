@@ -1,5 +1,12 @@
-import React from "react";
-import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -29,6 +36,8 @@ export default function SettingsScreen() {
   const build = Application.nativeBuildVersion;
   const versionLabel = build ? `${version} (${build})` : version;
 
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
   function confirmSignOut() {
     Alert.alert(t("settings.signOutConfirmTitle"), t("settings.signOutConfirmMessage"), [
       { text: t("common.cancel"), style: "cancel" },
@@ -40,6 +49,51 @@ export default function SettingsScreen() {
         },
       },
     ]);
+  }
+
+  // Kontosletting (App Store 5.1.1(v) / Play data-deletion): dobbel bekreftelse,
+  // deretter delete_account-Edge Function (service role) + lokal utlogging.
+  async function deleteAccount() {
+    setDeletingAccount(true);
+    try {
+      const { error } = await supabase.functions.invoke("delete_account", {
+        method: "POST",
+      });
+      if (error) throw error;
+      // Auth-brukeren finnes ikke lenger — rydd den lokale økten (server-kallet kan feile).
+      await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+    } catch {
+      Alert.alert(t("common.somethingWrong"), t("settings.deleteAccountError"));
+    } finally {
+      setDeletingAccount(false);
+    }
+  }
+
+  function confirmDeleteAccount() {
+    Alert.alert(
+      t("settings.deleteAccountConfirmTitle"),
+      t("settings.deleteAccountConfirmMessage"),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("settings.deleteAccount"),
+          style: "destructive",
+          onPress: () =>
+            Alert.alert(
+              t("settings.deleteAccountConfirmSecondTitle"),
+              t("settings.deleteAccountConfirmSecondMessage"),
+              [
+                { text: t("common.cancel"), style: "cancel" },
+                {
+                  text: t("settings.deleteAccountConfirmAction"),
+                  style: "destructive",
+                  onPress: () => deleteAccount(),
+                },
+              ],
+            ),
+        },
+      ],
+    );
   }
 
   return (
@@ -149,6 +203,25 @@ export default function SettingsScreen() {
           className="w-full bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-xl py-4 items-center"
         >
           <Text className="text-red-500 font-medium">{t("profile.signOut")}</Text>
+        </TouchableOpacity>
+
+        {/* Slett konto (permanent) */}
+        <TouchableOpacity
+          onPress={confirmDeleteAccount}
+          disabled={deletingAccount}
+          accessibilityRole="button"
+          accessibilityLabel={t("settings.deleteAccount")}
+          accessibilityHint={t("settings.deleteAccountHint")}
+          accessibilityState={{ disabled: deletingAccount }}
+          className="w-full bg-surface dark:bg-surface-dark border border-red-200 dark:border-red-900 rounded-xl py-4 items-center mt-3"
+        >
+          {deletingAccount ? (
+            <ActivityIndicator color="#EF4444" />
+          ) : (
+            <Text className="text-red-500 font-medium">
+              {t("settings.deleteAccount")}
+            </Text>
+          )}
         </TouchableOpacity>
 
         {/* Versjonsfot */}

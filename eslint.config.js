@@ -13,6 +13,10 @@ module.exports = [
       ".expo/*",
       "babel.config.js",
       "src/lib/database.types.ts",
+      // Deno-kode (Edge Functions) — egen runtime/lint-regler
+      "supabase/functions/*",
+      // Lokale agent-worktrees (Claude Code) — aldri en del av denne sjekken
+      ".claude/*",
     ],
   },
   {

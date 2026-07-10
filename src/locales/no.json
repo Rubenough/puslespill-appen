@@ -102,7 +102,15 @@
     "language": "SPRÅK",
     "signOutConfirmTitle": "Logg ut?",
     "signOutConfirmMessage": "Er du sikker på at du vil logge ut?",
-    "version": "Fordriv v{{version}}"
+    "version": "Fordriv v{{version}}",
+    "deleteAccount": "Slett konto",
+    "deleteAccountHint": "Sletter kontoen din og alle data permanent",
+    "deleteAccountConfirmTitle": "Slette kontoen?",
+    "deleteAccountConfirmMessage": "Dette sletter kontoen din, tingene dine, lån, økter og alle bilder permanent. Dette kan ikke angres.",
+    "deleteAccountConfirmSecondTitle": "Er du helt sikker?",
+    "deleteAccountConfirmSecondMessage": "Alt innhold slettes for godt. Vil du fortsette?",
+    "deleteAccountConfirmAction": "Slett alt",
+    "deleteAccountError": "Kunne ikke slette kontoen. Prøv igjen eller kontakt oss."
   },
   "borrow": {
     "ask": "Be om å låne",
