@@ -32,6 +32,13 @@ import PuzzleProgressIcon, { progressToFilled } from "../components/PuzzleProgre
 import ProgressSheet from "../components/ProgressSheet";
 import AddPhotoSheet from "../components/AddPhotoSheet";
 import BottomSheet from "../components/BottomSheet";
+import ReactionBar from "../components/ReactionBar";
+import {
+  fetchReactionsBySession,
+  toggleReaction,
+  applyToggle,
+  type Reaction,
+} from "../utils/reactions";
 import {
   uploadSessionImage,
   removeSessionImages,
@@ -99,6 +106,8 @@ export default function SessionDetailScreen() {
   const [participantProfiles, setParticipantProfiles] = useState<
     { id: string; name: string | null; avatarUrl: string | null }[]
   >([]);
+  // Hurtig-reaksjoner for denne økten (samme linje som på feed-kortene).
+  const [reactions, setReactions] = useState<Reaction[]>([]);
 
   const fetchData = useCallback(async () => {
     const [sessionRes, imagesRes, participantsRes] = await Promise.all([
