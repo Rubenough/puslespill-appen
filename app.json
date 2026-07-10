@@ -50,7 +50,14 @@
       ],
       "expo-localization",
       "expo-font",
-      "@sentry/react-native"
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "organization": "placeholder-org",
+          "project": "placeholder-project"
+        }
+      ]
     ],
     "extra": {
       "eas": {

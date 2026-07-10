@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
+import * as Sentry from "@sentry/react-native";
 
 type Props = { children: React.ReactNode };
 type State = { hasError: boolean; error: Error | null };
@@ -16,6 +17,13 @@ export default class ErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("[ErrorBoundary]", error.message, info.componentStack);
+    // Rapporter til Sentry når det er konfigurert (init i App.tsx krever samme
+    // env-var) — uten DSN er dette bevisst en no-op. Se docs/sentry-setup.md.
+    if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
+      Sentry.captureException(error, {
+        extra: { componentStack: info.componentStack },
+      });
+    }
   }
 
   reset = () => this.setState({ hasError: false, error: null });

@@ -93,7 +93,11 @@ export type BorrowRow = {
   responded_at: string | null;
   items: ItemJoin;
 };
-export type ProfileRow = { id: string; full_name: string | null; avatar_url: string | null };
+export type ProfileRow = {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+};
 
 export type BuildFeedItemsInput = {
   userId: string;

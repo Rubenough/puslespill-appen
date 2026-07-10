@@ -38,6 +38,7 @@ import { fetchFriends, type Friend } from "../utils/friends";
 import { getSignedUrls, removeSessionImages } from "../utils/sessionImages";
 import UserAvatar from "../components/UserAvatar";
 import BottomSheet from "../components/BottomSheet";
+import ItemFilterBar, { type StatusFilter } from "../components/ItemFilterBar";
 
 type CollectionDetailRouteProp = RouteProp<CollectionsStackParamList, "CollectionDetail">;
 type RootNavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -59,6 +60,10 @@ export default function CollectionDetailScreen() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Klientside-filtrering: søk på tittel + statuschips (Tilgjengelig / Utlånt).
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(null);
 
   // Utlåns-modal
   const [loanItem, setLoanItem] = useState<Item | null>(null);
@@ -291,6 +296,14 @@ export default function CollectionDetailScreen() {
       ? []
       : friends.filter((f) => (f.name ?? "").toLowerCase().includes(friendQuery));
 
+  // Filtrert visning av listen — selve items-listen røres ikke.
+  const itemQuery = searchQuery.trim().toLowerCase();
+  const visibleItems = items.filter(
+    (item) =>
+      (itemQuery === "" || item.title.toLowerCase().includes(itemQuery)) &&
+      (statusFilter === null || item.status === statusFilter),
+  );
+
   return (
     <>
       <ScrollView
@@ -328,73 +341,90 @@ export default function CollectionDetailScreen() {
             </Text>
           </View>
         ) : (
-          <View className="mx-4 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden mb-8">
-            {items.map((item, i) => {
-              const subtitle =
-                type === "puslespill" && item.piece_count
-                  ? `${piecesLabel(item.piece_count)}${item.difficulty ? ` · ${difficultyLabel(item.difficulty)}` : ""}`
-                  : type === "brettspill" && item.player_count
-                    ? playersLabel(item.player_count)
-                    : (item.brand ?? null);
+          <>
+            <ItemFilterBar
+              query={searchQuery}
+              onQueryChange={setSearchQuery}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+            />
+            {visibleItems.length === 0 ? (
+              <View className="mx-4 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark p-8 items-center mb-8">
+                <Ionicons name="search" size={28} color="#A8A29E" accessible={false} />
+                <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mt-3 text-center">
+                  {t("collectionDetail.noMatches")}
+                </Text>
+              </View>
+            ) : (
+              <View className="mx-4 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark overflow-hidden mb-8">
+                {visibleItems.map((item, i) => {
+                  const subtitle =
+                    type === "puslespill" && item.piece_count
+                      ? `${piecesLabel(item.piece_count)}${item.difficulty ? ` · ${difficultyLabel(item.difficulty)}` : ""}`
+                      : type === "brettspill" && item.player_count
+                        ? playersLabel(item.player_count)
+                        : (item.brand ?? null);
 
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  onPress={() => setSelectedItem(item)}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel={[
-                    item.title,
-                    subtitle,
-                    item.status === "Utlånt" ? t("collections.loaned") : null,
-                  ]
-                    .filter(Boolean)
-                    .join(", ")}
-                  accessibilityHint={t("collectionDetail.rowHint")}
-                  className={`flex-row items-center px-4 py-4 ${
-                    i < items.length - 1
-                      ? "border-b border-border dark:border-border-dark"
-                      : ""
-                  }`}
-                >
-                  <View className="w-10 h-10 rounded-xl bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-4 overflow-hidden">
-                    {item.cover_url && coverUrls.get(item.cover_url) ? (
-                      <Image
-                        source={{ uri: coverUrls.get(item.cover_url) }}
-                        className="w-10 h-10"
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      onPress={() => setSelectedItem(item)}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={[
+                        item.title,
+                        subtitle,
+                        item.status === "Utlånt" ? t("collections.loaned") : null,
+                      ]
+                        .filter(Boolean)
+                        .join(", ")}
+                      accessibilityHint={t("collectionDetail.rowHint")}
+                      className={`flex-row items-center px-4 py-4 ${
+                        i < visibleItems.length - 1
+                          ? "border-b border-border dark:border-border-dark"
+                          : ""
+                      }`}
+                    >
+                      <View className="w-10 h-10 rounded-xl bg-surface-secondary dark:bg-surface-dark-secondary items-center justify-center mr-4 overflow-hidden">
+                        {item.cover_url && coverUrls.get(item.cover_url) ? (
+                          <Image
+                            source={{ uri: coverUrls.get(item.cover_url) }}
+                            className="w-10 h-10"
+                            accessible={false}
+                          />
+                        ) : (
+                          <Ionicons name={ITEM_ICONS[type]} size={20} color="#1D9E75" />
+                        )}
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-content dark:text-content-dark font-medium">
+                          {item.title}
+                        </Text>
+                        {subtitle && (
+                          <Text className="text-content-secondary dark:text-content-secondary-dark text-xs">
+                            {subtitle}
+                          </Text>
+                        )}
+                      </View>
+                      {item.status === "Utlånt" && (
+                        <View className="bg-accent/10 dark:bg-accent-dark/10 px-2 py-1 rounded-full mr-2">
+                          <Text className="text-accent dark:text-accent-dark text-xs font-semibold">
+                            {t("collections.loaned")}
+                          </Text>
+                        </View>
+                      )}
+                      <Ionicons
+                        name="chevron-forward"
+                        size={16}
+                        color="#A8A29E"
                         accessible={false}
                       />
-                    ) : (
-                      <Ionicons name={ITEM_ICONS[type]} size={20} color="#1D9E75" />
-                    )}
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-content dark:text-content-dark font-medium">
-                      {item.title}
-                    </Text>
-                    {subtitle && (
-                      <Text className="text-content-secondary dark:text-content-secondary-dark text-xs">
-                        {subtitle}
-                      </Text>
-                    )}
-                  </View>
-                  {item.status === "Utlånt" && (
-                    <View className="bg-accent/10 dark:bg-accent-dark/10 px-2 py-1 rounded-full mr-2">
-                      <Text className="text-accent dark:text-accent-dark text-xs font-semibold">
-                        {t("collections.loaned")}
-                      </Text>
-                    </View>
-                  )}
-                  <Ionicons
-                    name="chevron-forward"
-                    size={16}
-                    color="#A8A29E"
-                    accessible={false}
-                  />
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
 
