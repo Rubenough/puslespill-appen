@@ -4,6 +4,11 @@ Review of code quality, feature completeness, store readiness, and roadmap to v1
 Verified against the working tree at `7f5d970`.
 UX/product follow-up (name, IA, flows, screens): [`ux-product-recommendations-2026-07-10.md`](./ux-product-recommendations-2026-07-10.md).
 
+> **Implementation status (2026-07-10):** everything achievable without a new native build or
+> store-console access is being implemented on the **`dev` branch** — DB batch (#5), account
+> deletion (#4), Sentry wiring (#10), tests (#11), onboarding (#9), and the UX-doc features.
+> Still open (need Apple account / native build / store ops): #1–#3, #6–#8, #12–#17.
+
 ---
 
 ## 0. Corrections to the review brief (the repo is ahead of it)
@@ -30,7 +35,7 @@ Stale in the other direction: `CollectionDetailScreen` is now **736** lines (not
 ### What will bite, in priority order
 
 1. **`ErrorBoundary` only `console.error`s** (`ErrorBoundary.tsx:18`). Production crashes are invisible. Sentry is a half-day with the config plugin; wire `componentDidCatch` to it. Do before real users, not after.
-2. **Missing DB constraints force boundary casts.** Six `as unknown as` sites (FeedScreen ×5, SessionDetail, Profile, Requests, LoanHistory) exist because `items.type/difficulty/status` are plain `text` and timestamps are nullable-with-default. One dashboard session (CHECK + NOT NULL, regen types) deletes them all. Batch with `delete_session`.
+2. **Missing DB constraints force boundary casts.** Nine `as unknown as` casts across five screens (FeedScreen ×5, SessionDetail, Profile, Requests, LoanHistory) exist because `items.type/difficulty/status` are plain `text` and timestamps are nullable-with-default. One dashboard session (CHECK + NOT NULL, regen types) deletes them all. Batch with `delete_session`.
 3. **`delete_session` cascade + cover-file orphan.** This is not just tidiness: orphaned storage files containing photos of people undermine the GDPR Art. 17 erasure story you built the private bucket for. The one-line cover cleanup in `CollectionDetailScreen.handleDelete` (noted in `social-feed-v1-status.md`) is the same category. Do both before launch.
 4. **God components** — `SessionDetailScreen` (933) and `CollectionDetailScreen` (736). Real risk is regressions during the Phase 3 React Query migration, since there are no screen tests to catch them. Don't refactor before submission; split them *as part of* the React Query migration (Phase 3), when each extraction gets a query hook anyway.
 5. **Data-fetch pattern** (`useFocusEffect` + manual loading/error state, re-signing URLs on each focus) — fine at friend-group scale. React Query stays Phase 3; adopting it now would delay the store gates for zero user-visible gain. When you do adopt it, **skip TD-12's separate `services/` layer** — the `src/queries/` hooks *are* the service layer; building both is double work.
@@ -101,7 +106,7 @@ What actually blocks a real launch (vs. store approval):
 | 2 | **Decide final name; rename `name`/`slug` in app.json; reserve in App Store Connect + Play Console** | Post-submission renames cause friction; do before the first production build | 0.5 d | #1 (ASC access) |
 | 3 | **Apple Sign-In** — plugin, Supabase provider, AuthScreen button, new dev build to verify | Guideline 4.8 hard gate | 1–2 d | #1 |
 | 4 | **Account deletion** — `delete_account` Edge Function (auth + data cascade + storage purge), Settings entry, web deletion page for Play | Guideline 5.1.1(v) + Play data-deletion policy; hard gate both stores | 1–2 d | — |
-| 5 | **DB batch (one dashboard session):** CHECK/NOT NULL constraints → regen types → delete remaining casts; `delete_session` cascade RPC; cover-file orphan cleanup | Data integrity + GDPR erasure; unblocks cast removal | 1 d | — |
+| 5 | **DB batch (one dashboard session):** CHECK/NOT NULL constraints → regen types → delete remaining casts; `delete_session` cascade RPC; cover-file orphan cleanup; RLS policy dedupe ([`db-cleanup.md`](./db-cleanup.md)); FriendCollectionScreen covers (open follow-up in [`social-feed-v1-status.md`](./social-feed-v1-status.md) this review missed) | Data integrity + GDPR erasure; unblocks cast removal | 1 d | — |
 | 6 | **Privacy policy** — write, publish on rubenvareide.no, link in Settings | Hard gate both stores; needed for #4's web page anyway | 0.5 d | — |
 | 7 | **Verify Google OAuth consent screen is Published** | Reviewer sign-in failure = instant rejection | 0.5 h | — |
 
