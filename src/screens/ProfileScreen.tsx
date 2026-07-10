@@ -67,13 +67,10 @@ export default function ProfileScreen() {
       return;
     }
 
-    type Row = {
-      id: string;
-      completed_at: string;
-      progress_pct: number | null;
-      items: { title: string; type: string } | null;
-    };
-    const rows = (data as unknown as Row[]) ?? [];
+    // .not("completed_at", "is", null) garanterer non-null; TS ser ikke filteret, så vi smalner her.
+    const rows = (data ?? []).filter(
+      (r): r is typeof r & { completed_at: string } => r.completed_at !== null,
+    );
 
     // Hent siste progresjonsbilde per økt som thumbnail, og signér i én batch.
     const ids = rows.map((r) => r.id);

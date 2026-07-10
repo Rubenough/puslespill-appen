@@ -24,7 +24,7 @@ export type Database = {
           owner_id: string
           requester_id: string
           responded_at: string | null
-          status: string
+          status: Database["public"]["Enums"]["borrow_request_status"]
         }
         Insert: {
           created_at?: string
@@ -35,7 +35,7 @@ export type Database = {
           owner_id: string
           requester_id: string
           responded_at?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["borrow_request_status"]
         }
         Update: {
           created_at?: string
@@ -46,7 +46,7 @@ export type Database = {
           owner_id?: string
           requester_id?: string
           responded_at?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["borrow_request_status"]
         }
         Relationships: [
           {
@@ -122,44 +122,44 @@ export type Database = {
         Row: {
           brand: string | null
           cover_url: string | null
-          created_at: string | null
-          difficulty: string | null
+          created_at: string
+          difficulty: Database["public"]["Enums"]["item_difficulty"] | null
           id: string
           image_url: string | null
           owner_id: string
           piece_count: number | null
           player_count: number | null
-          status: string | null
+          status: Database["public"]["Enums"]["item_status"]
           title: string
-          type: string
+          type: Database["public"]["Enums"]["item_type"]
         }
         Insert: {
           brand?: string | null
           cover_url?: string | null
-          created_at?: string | null
-          difficulty?: string | null
+          created_at?: string
+          difficulty?: Database["public"]["Enums"]["item_difficulty"] | null
           id?: string
           image_url?: string | null
           owner_id: string
           piece_count?: number | null
           player_count?: number | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["item_status"]
           title: string
-          type: string
+          type: Database["public"]["Enums"]["item_type"]
         }
         Update: {
           brand?: string | null
           cover_url?: string | null
-          created_at?: string | null
-          difficulty?: string | null
+          created_at?: string
+          difficulty?: Database["public"]["Enums"]["item_difficulty"] | null
           id?: string
           image_url?: string | null
           owner_id?: string
           piece_count?: number | null
           player_count?: number | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["item_status"]
           title?: string
-          type?: string
+          type?: Database["public"]["Enums"]["item_type"]
         }
         Relationships: [
           {
@@ -362,7 +362,7 @@ export type Database = {
           item_id: string
           notes: string | null
           progress_pct: number | null
-          started_at: string | null
+          started_at: string
         }
         Insert: {
           completed_at?: string | null
@@ -373,7 +373,7 @@ export type Database = {
           item_id: string
           notes?: string | null
           progress_pct?: number | null
-          started_at?: string | null
+          started_at?: string
         }
         Update: {
           completed_at?: string | null
@@ -384,7 +384,7 @@ export type Database = {
           item_id?: string
           notes?: string | null
           progress_pct?: number | null
-          started_at?: string | null
+          started_at?: string
         }
         Relationships: [
           {
@@ -428,7 +428,7 @@ export type Database = {
           owner_id: string
           requester_id: string
           responded_at: string | null
-          status: string
+          status: Database["public"]["Enums"]["borrow_request_status"]
         }
         SetofOptions: {
           from: "*"
@@ -449,7 +449,7 @@ export type Database = {
           owner_id: string
           requester_id: string
           responded_at: string | null
-          status: string
+          status: Database["public"]["Enums"]["borrow_request_status"]
         }
         SetofOptions: {
           from: "*"
@@ -469,7 +469,7 @@ export type Database = {
           owner_id: string
           requester_id: string
           responded_at: string | null
-          status: string
+          status: Database["public"]["Enums"]["borrow_request_status"]
         }
         SetofOptions: {
           from: "*"
@@ -515,7 +515,7 @@ export type Database = {
           owner_id: string
           requester_id: string
           responded_at: string | null
-          status: string
+          status: Database["public"]["Enums"]["borrow_request_status"]
         }
         SetofOptions: {
           from: "*"
@@ -549,7 +549,10 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      borrow_request_status: "pending" | "approved" | "declined" | "cancelled"
+      item_difficulty: "Lett" | "Middels" | "Vanskelig"
+      item_status: "Tilgjengelig" | "Utlånt"
+      item_type: "puslespill" | "brettspill"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -676,6 +679,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      borrow_request_status: ["pending", "approved", "declined", "cancelled"],
+      item_difficulty: ["Lett", "Middels", "Vanskelig"],
+      item_status: ["Tilgjengelig", "Utlånt"],
+      item_type: ["puslespill", "brettspill"],
+    },
   },
 } as const

@@ -120,7 +120,7 @@ export default function SessionDetailScreen() {
         .eq("session_id", sessionId),
     ]);
 
-    const sessionData = sessionRes.data as unknown as SessionDetail | null;
+    const sessionData: SessionDetail | null = sessionRes.data;
     const imageRows = (imagesRes.data as SessionImage[] | null) ?? [];
 
     // Registrerte deltakere til visning (utenom eieren OG deg selv — din egen «pille»

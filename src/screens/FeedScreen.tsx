@@ -228,10 +228,10 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
     sessionsRes.error ?? itemsRes.error ?? loansRes.error ?? borrowedRes.error;
   if (queryError) throw queryError;
 
-  const sessionRows = (sessionsRes.data ?? []) as unknown as SessionRow[];
-  const itemRows = (itemsRes.data ?? []) as unknown as ItemRow[];
-  const loanRows = (loansRes.data ?? []) as unknown as LoanRow[];
-  const borrowRows = (borrowedRes.data ?? []) as unknown as BorrowRow[];
+  const sessionRows: SessionRow[] = sessionsRes.data ?? [];
+  const itemRows: ItemRow[] = itemsRes.data ?? [];
+  const loanRows: LoanRow[] = loansRes.data ?? [];
+  const borrowRows: BorrowRow[] = borrowedRes.data ?? [];
 
   // Samle alle unike bruker-IDer fra sessions, items og lån-fra-eiere; hent profiler i ett kall
   const userIds = new Set<string>([userId]);
@@ -386,7 +386,7 @@ export default function FeedScreen() {
       .order("started_at", { ascending: false });
 
     setSessionsError(!!error);
-    const rows = (data as unknown as ActiveSessionRow[]) ?? [];
+    const rows: ActiveSessionRow[] = data ?? [];
     const withImages = await attachSessionImages(rows);
 
     // Hent eierprofiler for venners økter i ett kall (id → navn/avatar).

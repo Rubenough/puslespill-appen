@@ -35,7 +35,7 @@ import { RootStackParamList } from "../navigation/RootNavigator";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { fetchFriends, type Friend } from "../utils/friends";
-import { getSignedUrls } from "../utils/sessionImages";
+import { getSignedUrls, removeSessionImages } from "../utils/sessionImages";
 import UserAvatar from "../components/UserAvatar";
 import BottomSheet from "../components/BottomSheet";
 
@@ -240,6 +240,10 @@ export default function CollectionDetailScreen() {
             if (error) {
               Alert.alert(t("common.somethingWrong"), error.message);
               return;
+            }
+            // GDPR-sletting: fjern omslagsfilen fra storage så den ikke blir foreldreløs.
+            if (item.cover_url) {
+              await removeSessionImages([item.cover_url]).catch(() => {});
             }
             setItems((prev) => prev.filter((i) => i.id !== item.id));
           },

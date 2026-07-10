@@ -69,7 +69,7 @@ export default function RequestsScreen() {
       return;
     }
 
-    const rows = (data as unknown as RequestRow[]) ?? [];
+    const rows: RequestRow[] = data ?? [];
     // Motparten: for innkommende er det den som spør, for utgående er det eieren.
     const otherIds = new Set<string>();
     for (const r of rows) {
