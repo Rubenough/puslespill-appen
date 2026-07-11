@@ -7,11 +7,15 @@ import React, {
 } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./AuthContext";
+import { resolveAvatarUrl } from "../utils/avatar";
 
 type Profil = {
   id: string;
   full_name: string | null;
+  /** Rå DB-verdi: Google-URL (https) eller opplastet lagringssti. */
   avatar_url: string | null;
+  /** Visbar URL (signert sti eller passthrough) — bruk denne i UI. */
+  avatarDisplayUrl: string | null;
 };
 
 type ProfilContextType = {
@@ -50,7 +54,12 @@ export function ProfilProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (fetchError) throw fetchError;
-      if (data) setProfil(data);
+      if (data) {
+        // Opplastede avatarer lagres som stier og må signeres for visning;
+        // Google-URL-er passerer urørt.
+        const avatarDisplayUrl = await resolveAvatarUrl(data.avatar_url);
+        setProfil({ ...data, avatarDisplayUrl });
+      }
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Kunne ikke laste profil"));
       console.error("Profilhenting feilet:", err);

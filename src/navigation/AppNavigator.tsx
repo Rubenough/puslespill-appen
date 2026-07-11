@@ -27,7 +27,7 @@ export type TabParamList = {
   Profil: undefined;
 };
 
-type ModalAction = "add" | "session";
+type ModalAction = "add" | "session" | "invite";
 // Hvilket steg av +-arket som vises: rot-valg eller type-valg for "legg til".
 type ModalStep = "root" | "addType";
 
@@ -58,6 +58,12 @@ const MODAL_ITEMS: {
     subtitleKey: "nav.sessionSubtitle",
     action: "session",
   },
+  {
+    icon: "person-add-outline",
+    titleKey: "nav.inviteTitle",
+    subtitleKey: "nav.inviteSubtitle",
+    action: "invite",
+  },
 ];
 
 // Dummy-skjerm for +-tab — vises aldri
@@ -83,10 +89,14 @@ export default function AppNavigator() {
   }
 
   // "Legg til" bytter til type-valg i selve arket — vi unngår en Alert like etter
-  // at arket lukkes, som iOS kan droppe stille. "Start økt" navigerer direkte.
+  // at arket lukkes, som iOS kan droppe stille. "Start økt" og "Inviter en venn"
+  // navigerer direkte (invitasjonsflyten bor på Venner-skjermen, rot-ruten "Friends").
   function handleModalAction(action: ModalAction) {
     if (action === "add") {
       setModalStep("addType");
+    } else if (action === "invite") {
+      setModalVisible(false);
+      navigation.navigate("Friends");
     } else {
       setModalVisible(false);
       navigation.navigate("NewSession", {});

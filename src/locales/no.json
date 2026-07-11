@@ -54,6 +54,9 @@
     "emptyType": "Ingen {{type}} i samlingen ennå.\nBruk + for å legge til.",
     "friendEmpty": "{{name}} har ingen gjenstander i samlingen ennå.",
     "collectionCount": "SAMLING · {{count}} STK",
+    "emptyAll": "Ingenting i samlingen ennå.",
+    "emptyAllCta": "Legg til gjenstand",
+    "emptyAllCtaHint": "Åpner skjemaet for å legge til en gjenstand",
     "openHint": "Trykk for å se samlingen",
     "type": {
       "puslespill": "Puslespill",
@@ -91,7 +94,32 @@
     "pastSessionsEmpty": "Ingen fullførte økter ennå",
     "sessionCompletedWhen": "Fullført {{when}}",
     "sessionRowA11y": "{{title}}, fullført {{when}}",
-    "sessionRowHint": "Trykk for å se økten"
+    "sessionRowHint": "Trykk for å se økten",
+    "editTitle": "Rediger profil",
+    "editHint": "Endre visningsnavn og profilbilde",
+    "editClose": "Lukk profilredigering",
+    "editNameLabel": "VISNINGSNAVN",
+    "editNamePlaceholder": "f.eks. Kari",
+    "editNameA11y": "Visningsnavn",
+    "editPickAvatar": "Velg bilde",
+    "editPickAvatarHint": "Åpner bildebiblioteket",
+    "editRemoveAvatar": "Fjern bilde",
+    "editSave": "Lagre",
+    "editMissingNameTitle": "Mangler navn",
+    "editMissingNameBody": "Fyll inn et visningsnavn.",
+    "editSaveError": "Kunne ikke lagre profilen."
+  },
+  "onboarding": {
+    "title": "Kom i gang",
+    "dismissA11y": "Skjul kom i gang-listen",
+    "stepItems": "Legg til de første tingene dine",
+    "stepItemsHint": "Åpner skjemaet for å legge til en gjenstand",
+    "stepFriends": "Inviter gjengen",
+    "stepFriendsHint": "Åpner Venner med invitasjonskoden din",
+    "stepDoneA11y": "{{label}}, fullført",
+    "doneTitle": "Alt klart!",
+    "doneBody": "Aktivitet fra deg og vennene dine dukker opp her i feeden.",
+    "doneCta": "Den er grei"
   },
   "loanHistory": {
     "title": "Lånehistorikk",
@@ -187,7 +215,11 @@
     "rotated": "Ny kode klar",
     "rotateFailed": "Kunne ikke lage ny kode",
     "inviteLandingBanner": "Koden er klar – trykk «Legg til» for å bli venner.",
-    "codeLoadError": "Kunne ikke laste koden din."
+    "codeLoadError": "Kunne ikke laste koden din.",
+    "qrShow": "Vis QR-kode",
+    "qrHide": "Skjul QR-kode",
+    "qrA11y": "QR-kode for invitasjonslenken din, kode {{code}}",
+    "qrHint": "La en venn skanne koden med telefonkameraet."
   },
   "library": {
     "title": "Bibliotek",
@@ -205,6 +237,10 @@
     "feed": "FEED",
     "noActiveSessions": "Ingen aktive økter",
     "noActivity": "Ingen aktivitet de siste 14 dagene",
+    "emptyCtaInvite": "Inviter en venn",
+    "emptyCtaInviteHint": "Åpner Venner med invitasjonskoden din",
+    "emptyCtaAdd": "Legg til gjenstand",
+    "emptyCtaAddHint": "Åpner skjemaet for å legge til en gjenstand",
     "loadError": "Kunne ikke laste innhold.",
     "added": "la til i samlingen · {{when}}",
     "startedWith": "startet en økt med {{users}} · {{when}}",
@@ -419,6 +455,8 @@
     "addSubtitle": "Puslespill, brettspill ...",
     "sessionTitle": "Start ny økt",
     "sessionSubtitle": "Logg en aktivitet",
+    "inviteTitle": "Inviter en venn",
+    "inviteSubtitle": "Del invitasjonskoden din",
     "selectType": "Velg type"
   },
   "loansHub": {

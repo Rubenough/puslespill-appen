@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { resolveAvatarUrls } from "./avatar";
 
 export type Friend = {
   friendshipId: string;
@@ -38,6 +39,12 @@ export async function fetchFriends(userId: string): Promise<Friend[]> {
     profilesById = new Map((profiles ?? []).map((p) => [p.id, p]));
   }
 
+  // avatar_url kan være en Google-URL eller en opplastet lagringssti — løs opp
+  // til visbare URL-er i én batch, så alle konsumenter kan bruke verdien direkte.
+  const avatarByValue = await resolveAvatarUrls(
+    [...profilesById.values()].map((p) => p.avatar_url),
+  );
+
   const list: Friend[] = [];
   for (const [friendshipId, friendId] of friendIdByFriendship) {
     const profile = profilesById.get(friendId);
@@ -45,7 +52,9 @@ export async function fetchFriends(userId: string): Promise<Friend[]> {
       friendshipId,
       id: friendId,
       name: profile?.full_name ?? null,
-      avatarUrl: profile?.avatar_url ?? null,
+      avatarUrl: profile?.avatar_url
+        ? (avatarByValue.get(profile.avatar_url) ?? null)
+        : null,
     });
   }
   list.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", "nb"));

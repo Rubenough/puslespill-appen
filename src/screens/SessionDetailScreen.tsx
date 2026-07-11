@@ -46,6 +46,7 @@ import {
   getSignedUrls,
 } from "../utils/sessionImages";
 import { getDayNumber, formatShortDate } from "../utils/date";
+import { resolveProfileAvatars } from "../utils/avatar";
 
 type SessionDetailRouteProp = RouteProp<RootStackParamList, "SessionDetail">;
 type SessionDetailNavProp = NativeStackNavigationProp<
@@ -163,8 +164,10 @@ export default function SessionDetailScreen() {
         : Promise.resolve(new Map<string, Reaction[]>()),
     ]);
 
+    // Opplastede avatarer er lagringsstier og må signeres for visning.
+    const profsResolved = await resolveProfileAvatars(profs ?? []);
     const profiles = displayIds.map((id) => {
-      const p = (profs ?? []).find((x) => x.id === id);
+      const p = profsResolved.find((x) => x.id === id);
       return { id, name: p?.full_name ?? null, avatarUrl: p?.avatar_url ?? null };
     });
     setParticipantIds(pIds);

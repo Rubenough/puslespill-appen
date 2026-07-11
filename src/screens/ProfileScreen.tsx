@@ -16,6 +16,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { useProfil } from "../context/ProfilContext";
 import UserAvatar from "../components/UserAvatar";
+import ProfileEditSheet from "../components/ProfileEditSheet";
 import { type ItemType, ITEM_ICONS } from "../utils/collections";
 import { getRelativeDayOrWeekLabel } from "../utils/date";
 import { getSignedUrls } from "../utils/sessionImages";
@@ -43,10 +44,12 @@ export default function ProfileScreen() {
 
   // content-secondary (#78716C) feiler kontrast på mørk flate; bruk content-dark-secondary der.
   const gearColor = colorScheme === "dark" ? "#A8A29E" : "#78716C";
+  const accentColor = colorScheme === "dark" ? "#34D399" : "#1D9E75";
 
   const [sessions, setSessions] = useState<PastSession[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [sessionsError, setSessionsError] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const fetchSessions = useCallback(async () => {
     if (!user) return;
@@ -136,16 +139,34 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Avatar og navn */}
+        {/* Avatar og navn — avatarDisplayUrl er signert/visbar (rå avatar_url kan
+            være en lagringssti etter opplasting) */}
         <View className="items-center mb-8">
           <UserAvatar
             name={profil?.full_name ?? fallbackName}
-            avatarUrl={profil?.avatar_url}
+            avatarUrl={profil?.avatarDisplayUrl}
             size={72}
           />
           <Text className="text-content dark:text-content-dark text-xl font-semibold mt-3">
             {profil?.full_name ?? fallbackName}
           </Text>
+          <TouchableOpacity
+            onPress={() => setEditing(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t("profile.editTitle")}
+            accessibilityHint={t("profile.editHint")}
+            className="flex-row items-center gap-1.5 mt-2"
+          >
+            <Ionicons
+              name="pencil-outline"
+              size={14}
+              color={accentColor}
+              accessible={false}
+            />
+            <Text className="text-accent dark:text-accent-dark text-sm font-semibold">
+              {t("profile.editTitle")}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -247,6 +268,9 @@ export default function ProfileScreen() {
           })}
         </View>
       )}
+
+      {/* Rediger navn/avatar — bunn-ark */}
+      <ProfileEditSheet visible={editing} onClose={() => setEditing(false)} />
     </ScrollView>
   );
 }

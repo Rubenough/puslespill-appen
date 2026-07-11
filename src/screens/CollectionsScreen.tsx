@@ -26,7 +26,7 @@ export default function CollectionsScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const navigation = useNavigation<NavProp>();
-  // Lånehuben ligger i rot-stacken; navigasjonen bobler opp dit.
+  // Lånehuben og AddItem ligger i rot-stacken; navigasjonen bobler opp dit.
   const rootNavigation = useNavigation<RootNavProp>();
   const { user } = useAuth();
 
@@ -39,6 +39,8 @@ export default function CollectionsScreen() {
     requests: 0,
   });
   const [refreshing, setRefreshing] = useState(false);
+  // Unngå at tom-samling-CTA-en blinker før første henting er ferdig.
+  const [loadedOnce, setLoadedOnce] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fetchData = useCallback(
@@ -77,6 +79,7 @@ export default function CollectionsScreen() {
       }
 
       setFetchError(null);
+      setLoadedOnce(true);
 
       const items = itemsResult.data ?? [];
       const summaries = COLLECTION_TYPES.map((type) => {
@@ -200,6 +203,26 @@ export default function CollectionsScreen() {
             />
           </TouchableOpacity>
         ))}
+
+        {/* Tom samling skal ikke være en blindvei — pek rett inn i AddItem. */}
+        {loadedOnce && !fetchError && collections.every((col) => col.count === 0) && (
+          <View className="px-4 py-4 border-t border-border dark:border-border-dark items-center">
+            <Text className="text-content-secondary dark:text-content-secondary-dark text-sm text-center mb-3">
+              {t("collections.emptyAll")}
+            </Text>
+            <TouchableOpacity
+              onPress={() => rootNavigation.navigate("AddItem", { type: "puslespill" })}
+              accessibilityRole="button"
+              accessibilityLabel={t("collections.emptyAllCta")}
+              accessibilityHint={t("collections.emptyAllCtaHint")}
+              className="bg-accent dark:bg-accent-dark rounded-xl px-5 py-2.5"
+            >
+              <Text className="text-white font-semibold text-sm">
+                {t("collections.emptyAllCta")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       {/* Lån — kompakt inngang til lånehuben (forespørsler + aktive lån + historikk) */}
