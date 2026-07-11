@@ -10,19 +10,20 @@ import { useTranslation } from "react-i18next";
 import { RootStackParamList } from "./RootNavigator";
 import FeedScreen from "../screens/FeedScreen";
 import CollectionsStack, { type CollectionsStackParamList } from "./CollectionsStack";
-import FriendsScreen from "../screens/FriendsScreen";
+import LibraryScreen from "../screens/LibraryScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import BottomSheet from "../components/BottomSheet";
 import { ITEM_ICONS, type ItemType } from "../utils/collections";
 
 type IoniconsName = ComponentProps<typeof Ionicons>["name"];
 
-// Fanenavigatoren. "Venner" tar en valgfri kode fra dyplenke-invitasjonen.
+// Fanenavigatoren. Venneadministrasjon ligger nå på rot-ruten "Friends"
+// (pushes fra Bibliotek-skjermen); dyplenke-invitasjoner ruter dit.
 export type TabParamList = {
   Feed: undefined;
   Samlinger: NavigatorScreenParams<CollectionsStackParamList>;
   NyOkt: undefined;
-  Venner: { code?: string } | undefined;
+  Bibliotek: undefined;
   Profil: undefined;
 };
 
@@ -173,12 +174,12 @@ export default function AppNavigator() {
           }}
         />
         <Tab.Screen
-          name="Venner"
-          component={FriendsScreen}
+          name="Bibliotek"
+          component={LibraryScreen}
           options={{
-            tabBarLabel: t("nav.tabFriends"),
+            tabBarLabel: t("nav.tabLibrary"),
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="people-outline" size={size} color={color} />
+              <Ionicons name="book-outline" size={size} color={color} />
             ),
           }}
         />

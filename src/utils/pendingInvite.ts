@@ -2,7 +2,7 @@ import { deleteItemAsync, getItemAsync, setItemAsync } from "expo-secure-store";
 
 // Én ventende invitasjonskode fra en dyplenke som ble åpnet mens brukeren var
 // utlogget. Lagres kryptert (samme SecureStore som sesjonen) og hentes/tømmes av
-// Venner-fanen etter innlogging. Koder er korte (< 2048 bytes), så ingen chunking.
+// Venner-skjermen etter innlogging. Koder er korte (< 2048 bytes), så ingen chunking.
 const PENDING_INVITE_KEY = "pending_invite_code";
 
 // Trekker ut ?code=… fra en puslespill://join-dyplenke. Store bokstaver, som

@@ -182,6 +182,17 @@
     "inviteLandingBanner": "Your code is ready — tap \"Add\" to become friends.",
     "codeLoadError": "Couldn't load your code."
   },
+  "library": {
+    "title": "Library",
+    "searchPlaceholder": "Search by title …",
+    "searchA11y": "Search the library",
+    "clearSearchA11y": "Clear search",
+    "friendsHint": "Opens friends and invites",
+    "empty": "Nothing to show yet. Add friends to see what they own.",
+    "noResults": "No matches for “{{query}}”",
+    "loadError": "Could not load the library.",
+    "ownerA11y": "See {{name}}'s collection"
+  },
   "feed": {
     "activeSessions": "ACTIVE SESSIONS",
     "feed": "FEED",
@@ -386,7 +397,7 @@
   "nav": {
     "tabFeed": "Feed",
     "tabCollections": "Collections",
-    "tabFriends": "Friends",
+    "tabLibrary": "Library",
     "tabProfile": "Profile",
     "tabNewSession": "New session",
     "closeMenu": "Close menu",
