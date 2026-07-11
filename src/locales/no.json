@@ -142,7 +142,7 @@
     "language": "SPRÅK",
     "signOutConfirmTitle": "Logg ut?",
     "signOutConfirmMessage": "Er du sikker på at du vil logge ut?",
-    "version": "Fordriv v{{version}}",
+    "version": "Hylvo v{{version}}",
     "deleteAccount": "Slett konto",
     "deleteAccountHint": "Sletter kontoen din og alle data permanent",
     "deleteAccountConfirmTitle": "Slette kontoen?",
