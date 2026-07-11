@@ -2,6 +2,7 @@ import "./global.css";
 import "./src/lib/i18n";
 import React, { useEffect } from "react";
 import { Linking } from "react-native";
+import * as Sentry from "@sentry/react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   NavigationContainer,
@@ -23,6 +24,18 @@ import {
 } from "./src/utils/pendingInvite";
 
 SplashScreen.preventAutoHideAsync();
+
+// Sentry-krasjrapportering — aktiveres KUN når EXPO_PUBLIC_SENTRY_DSN er satt
+// (se docs/sentry-setup.md). Uten DSN er hele oppsettet en no-op, så utvikling
+// og CI fungerer uendret uten Sentry-konto.
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    // Ingen persondata utover det vi eksplisitt sender (GDPR-holdningen ellers i appen).
+    sendDefaultPii: false,
+  });
+}
 
 // Dyplenke: puslespill://join?code=XYZ åpner Venner-skjermen (rot-ruten "Friends",
 // pushet over Bibliotek-fanen) med koden forhåndsutfylt. Bruker det eksisterende
@@ -95,7 +108,7 @@ function AppContent() {
   );
 }
 
-export default function App() {
+function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ErrorBoundary>
@@ -108,3 +121,6 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
+
+// Sentry.wrap gir touch-/navigasjonskontekst på events; kun meningsfull med DSN.
+export default sentryDsn ? Sentry.wrap(App) : App;

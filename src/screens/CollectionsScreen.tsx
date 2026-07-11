@@ -20,17 +20,12 @@ import { CollectionsStackParamList } from "../navigation/CollectionsStack";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { getRelativeDayLabel, formatShortDate } from "../utils/date";
+import { isOverdue } from "../utils/loans";
 import BottomSheet from "../components/BottomSheet";
 
 type NavProp = NativeStackNavigationProp<CollectionsStackParamList, "CollectionsList">;
 
 const COLLECTION_TYPES: ItemType[] = ["puslespill", "brettspill"];
-
-// En date-verdi (YYYY-MM-DD) er forfalt hvis den er før dagens dato.
-function isOverdue(due: string | null): boolean {
-  if (!due) return false;
-  return due < new Date().toISOString().slice(0, 10);
-}
 
 type CollectionSummary = { type: ItemType; count: number; loaned: number };
 

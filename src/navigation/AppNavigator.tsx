@@ -126,7 +126,7 @@ export default function AppNavigator() {
           options={{
             tabBarLabel: t("nav.tabFeed"),
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="grid-outline" size={size} color={color} />
+              <Ionicons name="home-outline" size={size} color={color} />
             ),
           }}
         />
@@ -136,7 +136,7 @@ export default function AppNavigator() {
           options={{
             tabBarLabel: t("nav.tabCollections"),
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="menu-outline" size={size} color={color} />
+              <Ionicons name="library-outline" size={size} color={color} />
             ),
           }}
         />
