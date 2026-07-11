@@ -79,11 +79,11 @@ Not a blocking phase; keep these green/moving as you build.
 - [x] Session images: private bucket + signed URLs (GDPR).
 - [x] **Supabase-generated types** (`src/lib/database.types.ts`, via `npm run gen:types`) → client typed with `createClient<Database>`. Generated file is git-tracked but excluded from lint/format.
 - [x] **Regenerated types** — after the §C loan-lifecycle SQL landed, `npm run gen:types` reconciled `database.types.ts` (the earlier hand-edits matched the canonical output; only RPC ordering differed).
-- [ ] **Finish cast removal — needs DB constraints.** Generated types revealed the DB stores `items.type/difficulty/status` as plain `text` (→ `string`) and `sessions.started_at` / `items.created_at` as nullable-with-default. So the app's enum narrowing + non-null feed timestamps still need boundary casts. Proper fix: add `CHECK`/enum + `NOT NULL` constraints in the dashboard, regenerate, then delete the remaining `as any` in `FeedScreen` and `as unknown as` in `SessionDetailScreen` / `ProfileScreen`.
-- [ ] `delete_session(session_id)` RPC or `ON DELETE CASCADE` on `session_images` / `session_participants` → single-call delete; keep storage cleanup after.
+- [x] **Cast removal — DONE (2026-07-10 DB batch on dev).** `items.type/difficulty/status` + `borrow_requests.status` converted to real Postgres **enums** (CHECK on text wouldn't change generated types); `items.created_at`/`sessions.started_at` NOT NULL; types regenerated; all boundary casts deleted.
+- [x] `delete_session` cascade — was already satisfied by existing `ON DELETE CASCADE` FKs on `session_images`/`session_participants`/`session_reactions`; storage cleanup verified client-side.
 - [x] More tests as logic lands — `collections`, `AuthScreen` token-parse (extracted to pure `parseOAuthRedirect`). (Ongoing for future logic.)
 - [ ] npm-audit findings: all are Expo **dev-tooling** transitive deps (not shipped) — resolve at the next SDK bump, don't `--force`.
-- [ ] Optional DB dedupe — redundant RLS policies tagged in [`docs/db-cleanup.md`](./db-cleanup.md) (harmless; run whenever).
+- [x] DB dedupe — done in the 2026-07-10 DB batch, plus security hardening beyond the doc (session_participants write/read policies, profiles column grants hiding `invite_code`). See [`docs/db-cleanup.md`](./db-cleanup.md).
 
 ---
 

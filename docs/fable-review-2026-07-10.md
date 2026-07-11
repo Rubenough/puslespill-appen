@@ -4,10 +4,13 @@ Review of code quality, feature completeness, store readiness, and roadmap to v1
 Verified against the working tree at `7f5d970`.
 UX/product follow-up (name, IA, flows, screens): [`ux-product-recommendations-2026-07-10.md`](./ux-product-recommendations-2026-07-10.md).
 
-> **Implementation status (2026-07-10):** everything achievable without a new native build or
-> store-console access is being implemented on the **`dev` branch** — DB batch (#5), account
-> deletion (#4), Sentry wiring (#10), tests (#11), onboarding (#9), and the UX-doc features.
-> Still open (need Apple account / native build / store ops): #1–#3, #6–#8, #12–#17.
+> **Implementation status (2026-07-11): DONE on `dev`** — DB batch (#5, as real enums + RLS
+> hardening beyond the doc), account deletion (#4, Edge Function deployed), Sentry wiring
+> (#10, inert until DSN), tests (#11, 43 → 88), onboarding (#9), and all UX-doc features
+> (Bibliotek, Lån hub, QR invite, profile editing, polish). App display name → **Hylvo**
+> (slug/bundle IDs deferred). `delete_session` cascade was already satisfied by existing FK
+> CASCADEs. Still open (need Apple account / native build / store ops): #1–#3, #6–#8,
+> #12–#17 — plus device verification of `dev` on the Mac before any merge to `main`.
 
 ---
 

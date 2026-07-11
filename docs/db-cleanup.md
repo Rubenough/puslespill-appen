@@ -1,4 +1,9 @@
-# DB cleanup — optional, non-urgent
+# DB cleanup — ✅ DONE (2026-07-10, dev-branch DB batch)
+
+> Applied via the `v1_launch_db_batch_enums_notnull_policy_hardening` migration, which also
+> went further than this doc: `session_participants` legacy INSERT/SELECT policies dropped
+> (a `with_check(true)` hole), and `profiles` SELECT restricted to authenticated with
+> column-level grants that exclude `invite_code`. Kept below for the audit trail.
 
 Redundant RLS policies found during the Phase 1 Step 4 audit (2026-07-05). They're **harmless** (duplicates of rules that already exist), just clutter from earlier setup where policies were created twice with Norwegian + English names. Run whenever convenient; nothing depends on it.
 

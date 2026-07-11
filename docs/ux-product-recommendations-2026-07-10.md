@@ -5,10 +5,11 @@ This doc covers product/UX: name, IA, flows, screens, copy, and functionality.
 Grounded in the current code at `7f5d970` and `docs/screenshots/` (note: those screenshots
 predate item covers and reactions — judged against current code where they differ).
 
-> **Implementation status (2026-07-10):** all pure-JS items in §7 (Bibliotek, Lån hub, QR
-> invite, profile editing, filter chips, SessionDetail reactions, tab icons, feed identity,
-> due-date framing, onboarding) are being implemented on the **`dev` branch**. The app-name
-> decision (§1) is deferred to the owner; barcode scan stays post-v1.
+> **Implementation status (2026-07-11): DONE on `dev`** — all pure-JS items in §7 (Bibliotek,
+> Lån hub, QR invite, profile editing, filter chips, SessionDetail reactions, tab icons, feed
+> identity, due-date framing, onboarding) are merged. §1 name decision: **Hylvo** (in-app
+> display name applied; slug/bundle IDs + domain/ASC reservation deferred to pre-production).
+> Barcode scan stays post-v1.
 
 ---
 
