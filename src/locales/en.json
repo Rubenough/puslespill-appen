@@ -13,7 +13,13 @@
     "returnAction": "Return",
     "loanedToA11y": "{{item}}, on loan to {{name}}, {{when}}",
     "returnHint": "Tap to register a return",
-    "borrowerWhen": "{{name}} · {{when}}"
+    "borrowerWhen": "{{name}} · {{when}}",
+    "dueToday": "due today",
+    "dueTomorrow": "due tomorrow",
+    "dueInDays_one": "due in {{count}} day",
+    "dueInDays_other": "due in {{count}} days",
+    "overdueByDays_one": "{{count}} day overdue",
+    "overdueByDays_other": "{{count}} days overdue"
   },
   "collections": {
     "title": "My collections",
@@ -22,7 +28,6 @@
     "sectionBorrowingNow": "BORROWING NOW",
     "loanHistory": "Loan history",
     "loanHistoryHint": "Tap to see returned loans",
-    "borrowedFromWhen": "from {{name}} · {{when}}",
     "borrowedA11y": "{{item}}, borrowed from {{name}}, {{when}}",
     "markReturned": "Mark as returned",
     "markReturnedHint": "Tap to report that you've returned it",
@@ -30,8 +35,6 @@
     "markReturnedBody": "{{owner}} confirms once they've received it back.",
     "returnReported": "Return reported",
     "returnReportedA11y": "{{item}}, borrowed from {{name}}, return reported",
-    "dueBy": "due {{date}}",
-    "overdue": "overdue",
     "undoReturn": "Undo return report",
     "undoReturnTitle": "Undo return report?",
     "undoReturnBody": "“{{item}}” will no longer be marked as returned.",
@@ -48,14 +51,23 @@
     "available": "Available",
     "loadError": "Could not load collections.",
     "detailLoadError": "Could not load the collection.",
-    "nothingLoaned": "Nothing on loan right now",
     "emptyType": "No {{type}} in the collection yet.\nUse + to add one.",
     "friendEmpty": "{{name}} has no items in their collection yet.",
     "collectionCount": "COLLECTION · {{count}} ITEMS",
     "openHint": "Tap to see the collection",
-    "type": { "puslespill": "Puzzle", "brettspill": "Board game" },
-    "typePlural": { "puslespill": "puzzles", "brettspill": "board games" },
-    "difficulty": { "Lett": "Easy", "Middels": "Medium", "Vanskelig": "Hard" },
+    "type": {
+      "puslespill": "Puzzle",
+      "brettspill": "Board game"
+    },
+    "typePlural": {
+      "puslespill": "puzzles",
+      "brettspill": "board games"
+    },
+    "difficulty": {
+      "Lett": "Easy",
+      "Middels": "Medium",
+      "Vanskelig": "Hard"
+    },
     "pieces_one": "{{count}} piece",
     "pieces_other": "{{count}} pieces",
     "players_one": "{{count}} player",
@@ -83,7 +95,7 @@
   },
   "loanHistory": {
     "title": "Loan history",
-    "backA11y": "Back to collections",
+    "backA11y": "Back to loans",
     "empty": "No returned loans yet",
     "loadError": "Could not load loan history."
   },
@@ -125,16 +137,11 @@
     "failed": "Could not send request"
   },
   "requests": {
-    "title": "Requests",
-    "incoming": "INCOMING",
-    "outgoing": "OUTGOING",
-    "empty": "No requests",
     "approve": "Approve",
     "decline": "Decline",
     "cancel": "Cancel",
     "wantsToBorrow": "wants to borrow",
     "youAskedFor": "You asked to borrow",
-    "loadError": "Could not load requests.",
     "badgeA11y": "{{count}} new requests"
   },
   "friends": {
@@ -413,5 +420,19 @@
     "sessionTitle": "Start a new session",
     "sessionSubtitle": "Log an activity",
     "selectType": "Choose type"
+  },
+  "loansHub": {
+    "title": "Loans",
+    "sectionIncoming": "REQUESTS IN",
+    "sectionOutgoing": "REQUESTS OUT",
+    "sectionHistory": "HISTORY",
+    "empty": "No active loans or requests",
+    "loadError": "Could not load loans.",
+    "openHint": "Tap to see requests and active loans",
+    "fromOwner": "from {{name}}",
+    "summaryBorrowing": "borrowing {{count}}",
+    "summaryRequests_one": "{{count}} request",
+    "summaryRequests_other": "{{count}} requests",
+    "summaryEmpty": "No active loans"
   }
 }

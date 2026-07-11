@@ -15,9 +15,9 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { type ItemType, ITEM_ICONS } from "../utils/collections";
 import { getRelativeDayOrWeekLabel } from "../utils/date";
-import { CollectionsStackParamList } from "../navigation/CollectionsStack";
+import { RootStackParamList } from "../navigation/RootNavigator";
 
-type NavProp = NativeStackNavigationProp<CollectionsStackParamList, "LoanHistory">;
+type NavProp = NativeStackNavigationProp<RootStackParamList, "LoanHistory">;
 
 type ReturnedLoan = {
   id: string;

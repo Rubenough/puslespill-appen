@@ -9,7 +9,8 @@ import SessionDetailScreen from "../screens/SessionDetailScreen";
 import EditSessionScreen from "../screens/EditSessionScreen";
 import FriendCollectionScreen from "../screens/FriendCollectionScreen";
 import FriendsScreen from "../screens/FriendsScreen";
-import RequestsScreen from "../screens/RequestsScreen";
+import LoansHubScreen from "../screens/LoansHubScreen";
+import LoanHistoryScreen from "../screens/LoanHistoryScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import { type ItemType, type Item } from "../utils/collections";
 
@@ -24,7 +25,8 @@ export type RootStackParamList = {
   // Venneadministrasjon (pushes fra Bibliotek). Tar en valgfri kode fra
   // dyplenke-invitasjonen (puslespill://join?code=…).
   Friends: { code?: string } | undefined;
-  Requests: undefined;
+  LoansHub: undefined;
+  LoanHistory: undefined;
   Settings: undefined;
 };
 
@@ -57,7 +59,8 @@ export default function RootNavigator() {
       />
       <Stack.Screen name="FriendCollection" component={FriendCollectionScreen} />
       <Stack.Screen name="Friends" component={FriendsScreen} />
-      <Stack.Screen name="Requests" component={RequestsScreen} />
+      <Stack.Screen name="LoansHub" component={LoansHubScreen} />
+      <Stack.Screen name="LoanHistory" component={LoanHistoryScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
     </Stack.Navigator>
   );

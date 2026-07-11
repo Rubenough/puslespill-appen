@@ -13,7 +13,13 @@
     "returnAction": "Lever tilbake",
     "loanedToA11y": "{{item}}, utlånt til {{name}}, {{when}}",
     "returnHint": "Trykk for å registrere retur",
-    "borrowerWhen": "{{name}} · {{when}}"
+    "borrowerWhen": "{{name}} · {{when}}",
+    "dueToday": "forfaller i dag",
+    "dueTomorrow": "forfaller i morgen",
+    "dueInDays_one": "forfaller om {{count}} dag",
+    "dueInDays_other": "forfaller om {{count}} dager",
+    "overdueByDays_one": "{{count}} dag over fristen",
+    "overdueByDays_other": "{{count}} dager over fristen"
   },
   "collections": {
     "title": "Mine samlinger",
@@ -22,7 +28,6 @@
     "sectionBorrowingNow": "DU LÅNER NÅ",
     "loanHistory": "Lånehistorikk",
     "loanHistoryHint": "Trykk for å se leverte lån",
-    "borrowedFromWhen": "fra {{name}} · {{when}}",
     "borrowedA11y": "{{item}}, lånt fra {{name}}, {{when}}",
     "markReturned": "Marker som levert",
     "markReturnedHint": "Trykk for å melde at du har levert tilbake",
@@ -30,8 +35,6 @@
     "markReturnedBody": "{{owner}} bekrefter når hen har mottatt den tilbake.",
     "returnReported": "Retur meldt",
     "returnReportedA11y": "{{item}}, lånt fra {{name}}, retur meldt",
-    "dueBy": "skal leveres {{date}}",
-    "overdue": "på overtid",
     "undoReturn": "Angre retur-melding",
     "undoReturnTitle": "Angre retur-melding?",
     "undoReturnBody": "«{{item}}» blir ikke lenger markert som levert.",
@@ -48,14 +51,23 @@
     "available": "Tilgjengelig",
     "loadError": "Kunne ikke laste samlinger.",
     "detailLoadError": "Kunne ikke laste samlingen.",
-    "nothingLoaned": "Ingen ting utlånt for øyeblikket",
     "emptyType": "Ingen {{type}} i samlingen ennå.\nBruk + for å legge til.",
     "friendEmpty": "{{name}} har ingen gjenstander i samlingen ennå.",
     "collectionCount": "SAMLING · {{count}} STK",
     "openHint": "Trykk for å se samlingen",
-    "type": { "puslespill": "Puslespill", "brettspill": "Brettspill" },
-    "typePlural": { "puslespill": "puslespill", "brettspill": "brettspill" },
-    "difficulty": { "Lett": "Lett", "Middels": "Middels", "Vanskelig": "Vanskelig" },
+    "type": {
+      "puslespill": "Puslespill",
+      "brettspill": "Brettspill"
+    },
+    "typePlural": {
+      "puslespill": "puslespill",
+      "brettspill": "brettspill"
+    },
+    "difficulty": {
+      "Lett": "Lett",
+      "Middels": "Middels",
+      "Vanskelig": "Vanskelig"
+    },
     "pieces_one": "{{count}} brikke",
     "pieces_other": "{{count}} brikker",
     "players_one": "{{count}} spiller",
@@ -83,7 +95,7 @@
   },
   "loanHistory": {
     "title": "Lånehistorikk",
-    "backA11y": "Tilbake til samlinger",
+    "backA11y": "Tilbake til lån",
     "empty": "Ingen leverte lån ennå",
     "loadError": "Kunne ikke laste lånehistorikk."
   },
@@ -125,16 +137,11 @@
     "failed": "Kunne ikke sende forespørsel"
   },
   "requests": {
-    "title": "Forespørsler",
-    "incoming": "INNKOMMENDE",
-    "outgoing": "UTGÅENDE",
-    "empty": "Ingen forespørsler",
     "approve": "Godkjenn",
     "decline": "Avslå",
     "cancel": "Avbryt",
     "wantsToBorrow": "vil låne",
     "youAskedFor": "Du spurte om å låne",
-    "loadError": "Kunne ikke laste forespørsler.",
     "badgeA11y": "{{count}} nye forespørsler"
   },
   "friends": {
@@ -413,5 +420,19 @@
     "sessionTitle": "Start ny økt",
     "sessionSubtitle": "Logg en aktivitet",
     "selectType": "Velg type"
+  },
+  "loansHub": {
+    "title": "Lån",
+    "sectionIncoming": "FORESPØRSLER INN",
+    "sectionOutgoing": "FORESPØRSLER UT",
+    "sectionHistory": "HISTORIKK",
+    "empty": "Ingen aktive lån eller forespørsler",
+    "loadError": "Kunne ikke laste lån.",
+    "openHint": "Trykk for å se forespørsler og aktive lån",
+    "fromOwner": "fra {{name}}",
+    "summaryBorrowing": "{{count}} låner nå",
+    "summaryRequests_one": "{{count}} forespørsel",
+    "summaryRequests_other": "{{count}} forespørsler",
+    "summaryEmpty": "Ingen aktive lån"
   }
 }

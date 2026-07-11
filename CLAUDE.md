@@ -121,23 +121,25 @@ src/
 │   ├── ActiveSessionCard.tsx   # Card for active puzzle sessions
 │   ├── FeedCard.tsx            # Card for activity feed items
 │   ├── PuzzleProgressIcon.tsx  # Custom SVG: 4 puzzle pieces filled 0–4 (progress indicator)
-│   └── ProgressSheet.tsx       # Combined update flow: image picker + progress (5 steps) + note
+│   ├── ProgressSheet.tsx       # Combined update flow: image picker + progress (5 steps) + note
+│   └── loans/                  # LoansHub building blocks: LoanRow (due-date framing), RequestCard (quoted message + cover), DueDateChips
 ├── screens/
 │   ├── AuthScreen.tsx              # Google OAuth login
 │   ├── FeedScreen.tsx              # Active sessions + activity feed (both real Supabase)
-│   ├── CollectionsScreen.tsx       # Collection types + UTLÅNT NÅ (lent out) + DU LÅNER NÅ (borrowing), full return lifecycle
+│   ├── CollectionsScreen.tsx       # Collection types + compact "Lån" summary card (counts) → LoansHub
 │   ├── CollectionDetailScreen.tsx  # Items in a collection, loan/return actions (real Supabase)
 │   ├── AddItemScreen.tsx           # Add puzzle/board game form (real Supabase insert)
 │   ├── ProfileScreen.tsx           # User profile + loan history (real Supabase); gear top-right → Settings
 │   ├── SettingsScreen.tsx          # Appearance + Language + Sign out (confirm Alert) + version footer (pushed from Profile gear)
 │   ├── FriendsScreen.tsx           # Invite code + redeem + real friends list
 │   ├── FriendCollectionScreen.tsx  # Read-only view of a friend's collection
-│   ├── RequestsScreen.tsx          # Borrow requests (from Header bell): incoming approve/decline + outgoing cancel
+│   ├── LoansHubScreen.tsx          # "Lån" hub (from Header bell + Collections card): requests in/out, borrowing, lent out, history entry
+│   ├── LoanHistoryScreen.tsx       # Returned loans (pushed from LoansHub)
 │   ├── NewSessionScreen.tsx        # Start session: item → participants → box photo (puzzle) / image → notes
 │   ├── SessionDetailScreen.tsx     # View session: hero (latest progress or cover), metadata with cover thumbnail + progress icon, "Oppdater" flow, blur fullscreen modal
 │   └── EditSessionScreen.tsx       # Edit session participants + notes (modal)
 ├── navigation/
-│   ├── RootNavigator.tsx       # Stack: Tabs + AddItem + EditItem + NewSession + SessionDetail + EditSession + FriendCollection + Requests + Settings
+│   ├── RootNavigator.tsx       # Stack: Tabs + AddItem + EditItem + NewSession + SessionDetail + EditSession + FriendCollection + LoansHub + LoanHistory + Settings
 │   ├── AppNavigator.tsx        # Bottom tab navigator (5 tabs)
 │   └── CollectionsStack.tsx    # Stack: CollectionsList → CollectionDetail
 ├── context/
@@ -256,7 +258,8 @@ RootNavigator (Stack)
 ├── SessionDetail (Push) → SessionDetailScreen
 ├── EditSession (Modal) → EditSessionScreen
 ├── FriendCollection (Push) → FriendCollectionScreen
-├── Requests (Push) → RequestsScreen
+├── LoansHub (Push) → LoansHubScreen
+├── LoanHistory (Push) → LoanHistoryScreen
 └── Settings (Push) → SettingsScreen
 ```
 
@@ -303,14 +306,14 @@ Loans are **private by default** (`is_public = false`). Borrower identity must n
 | Screen                 | Data source                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | FeedScreen             | Real — active sessions (`sessions` + `session_images`) + feed (`sessions`/`items`/`loans` last 14 days, profiles joined), per-section error+retry                                                                                                                                                                                                                                                                                                                                               |
-| CollectionsScreen      | Real — `items` + `loans`. **UTLÅNT NÅ** (owner: tap → Be om retur/Registrer retur; "Retur meldt"/"Retur etterspurt" badges) + **DU LÅNER NÅ** (borrower: mark returned / undo; sees owner's return request; due dates, overdue red)                                                                                                                                                                                                                                                             |
+| CollectionsScreen      | Real — `items` + count queries (`loans` active lent/borrowing + `borrow_requests` pending). Collection type rows + a compact **"Lån"** summary card ("2 utlånt · 1 låner nå · 1 forespørsel") that opens LoansHub                                                                                                                                                                                                                                                                                |
 | CollectionDetailScreen | Real — `items` + `loans`, pull-to-refresh + focus-refresh, loan/return actions; lend modal has a **friend picker** (filters accepted friends via `utils/friends.ts` → sets `borrower_user_id`; free-text stays as `borrower_name` fallback for non-app people) + visibility + **due-date** (quick-pick chips → `loans.due_at`); lent item's action sheet also offers **Be om retur** (owner nudge → `owner_return_requested_at` + `owner_return_note`, matched by `item_id` on the active loan) |
 | AddItemScreen          | Real — inserts to `items`                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ProfileScreen          | Real — profile from Supabase, loan history from `loans` (error+retry); gear top-right → Settings                                                                                                                                                                                                                                                                                                                                                                                                |
 | SettingsScreen         | Stateless UI — Appearance (`useTheme`) + Language (`setLanguage`), Sign out (`supabase.auth.signOut` behind a confirm `Alert`), version footer (`expo-application`)                                                                                                                                                                                                                                                                                                                             |
 | FriendsScreen          | Real — invite code (`get_my_invite_code`), redeem (`accept_invite`), accepted friends from `friendships`                                                                                                                                                                                                                                                                                                                                                                                        |
 | FriendCollectionScreen | Real — a friend's `items`; tap → Be om å låne (`request_to_borrow`) / Avbryt forespørsel (`cancel_request`) when pending; shows Forespurt/Utlånt state                                                                                                                                                                                                                                                                                                                                          |
-| RequestsScreen         | Real — borrow requests from the Header bell: incoming (approve/decline) + outgoing (cancel) via RPCs                                                                                                                                                                                                                                                                                                                                                                                            |
+| LoansHubScreen         | Real — the whole lending loop (from Header bell + Collections card): **FORESPØRSLER INN** (approve w/ due-date chips + decline; requester message + signed cover thumbnail), **FORESPØRSLER UT** (cancel), **DU LÅNER NÅ** (mark returned / undo; owner's return note), **UTLÅNT NÅ** (tap → Be om retur/Registrer retur; badges), **HISTORIKK** row → LoanHistory. Due-date framing via `utils/loans.ts` `dueDateLabel` ("forfaller om 3 dager" / red "2 dager over fristen")                  |
 | NewSessionScreen       | Real — inserts to `sessions` + `session_participants`, uploads to `session-images` bucket                                                                                                                                                                                                                                                                                                                                                                                                       |
 | SessionDetailScreen    | Real — reads `sessions` (incl. `image_url` cover) + `session_images` + `items` metadata, progress icon in metadata card, "Oppdater" flow (image + progress + note via ProgressSheet), ··· menu (edit/delete), blur fullscreen modal                                                                                                                                                                                                                                                             |
 | EditSessionScreen      | Real — updates `sessions.guest_names` + `sessions.notes`                                                                                                                                                                                                                                                                                                                                                                                                                                        |

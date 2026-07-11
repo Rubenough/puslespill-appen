@@ -1,4 +1,12 @@
-import { DUE_OPTIONS, dueAtFromKey, isOverdue, toLocalDateString } from "../loans";
+import i18n from "../../lib/i18n";
+import {
+  DUE_OPTIONS,
+  dueAtFromKey,
+  isOverdue,
+  toLocalDateString,
+  daysUntilDue,
+  dueDateLabel,
+} from "../loans";
 
 // Frist-logikken bruker LOKALE kalenderdager. Testene injiserer `now` som lokale
 // Date-objekter (år, måned, dag, time) slik at de er deterministiske uavhengig av
@@ -112,5 +120,70 @@ describe("isOverdue", () => {
     const dueDates = ["2026-07-09", "2026-07-10", "2026-07-11", null, "2026-05-01"];
     const overdueCount = dueDates.filter((d) => isOverdue(d, NOW)).length;
     expect(overdueCount).toBe(2);
+  });
+});
+
+// ─── Frist-etiketter (deadline-innramming i lånehuben) ────────────────────────
+
+// Fast "nå" midt på dagen for deterministiske frist-etiketter.
+const LABEL_NOW = at(2026, 7, 4);
+
+function dateStr(daysFromNow: number): string {
+  const d = new Date(LABEL_NOW);
+  d.setDate(d.getDate() + daysFromNow);
+  return toLocalDateString(d);
+}
+
+afterEach(async () => {
+  await i18n.changeLanguage("no");
+});
+
+describe("daysUntilDue", () => {
+  it("regner på datonivå: i dag = 0, i morgen = 1, i går = -1", () => {
+    expect(daysUntilDue(dateStr(0), LABEL_NOW)).toBe(0);
+    expect(daysUntilDue(dateStr(1), LABEL_NOW)).toBe(1);
+    expect(daysUntilDue(dateStr(-1), LABEL_NOW)).toBe(-1);
+    expect(daysUntilDue(dateStr(14), LABEL_NOW)).toBe(14);
+  });
+});
+
+describe("dueDateLabel (no)", () => {
+  it("bruker frist-innramming for kommende frister", () => {
+    expect(dueDateLabel(dateStr(0), LABEL_NOW)).toEqual({
+      label: "forfaller i dag",
+      overdue: false,
+    });
+    expect(dueDateLabel(dateStr(1), LABEL_NOW)).toEqual({
+      label: "forfaller i morgen",
+      overdue: false,
+    });
+    expect(dueDateLabel(dateStr(3), LABEL_NOW)).toEqual({
+      label: "forfaller om 3 dager",
+      overdue: false,
+    });
+  });
+
+  it("markerer passerte frister som overdue med antall dager", () => {
+    expect(dueDateLabel(dateStr(-1), LABEL_NOW)).toEqual({
+      label: "1 dag over fristen",
+      overdue: true,
+    });
+    expect(dueDateLabel(dateStr(-2), LABEL_NOW)).toEqual({
+      label: "2 dager over fristen",
+      overdue: true,
+    });
+  });
+});
+
+describe("dueDateLabel (en)", () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("en");
+  });
+
+  it("oversetter frist-etikettene til engelsk", () => {
+    expect(dueDateLabel(dateStr(0), LABEL_NOW).label).toBe("due today");
+    expect(dueDateLabel(dateStr(1), LABEL_NOW).label).toBe("due tomorrow");
+    expect(dueDateLabel(dateStr(5), LABEL_NOW).label).toBe("due in 5 days");
+    expect(dueDateLabel(dateStr(-3), LABEL_NOW).label).toBe("3 days overdue");
   });
 });
