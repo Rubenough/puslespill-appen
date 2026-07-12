@@ -4,6 +4,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useColorScheme } from "nativewind";
 import { type ItemType, ITEM_ICONS } from "../../utils/collections";
 import { dueDateLabel } from "../../utils/loans";
 import { getRelativeDayLabel } from "../../utils/date";
@@ -106,6 +107,9 @@ export default function LoanRow({
   accessibilityHint,
   isLast,
 }: LoanRowProps) {
+  // #78716C feiler kontrast på mørk flate — velg token per skjema (CLAUDE.md).
+  const { colorScheme } = useColorScheme();
+  const trailingColor = colorScheme === "dark" ? "#A8A29E" : "#78716C";
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -135,7 +139,7 @@ export default function LoanRow({
         <Ionicons
           name="return-down-back-outline"
           size={20}
-          color="#78716C"
+          color={trailingColor}
           accessible={false}
         />
       )}

@@ -6,7 +6,9 @@ import { useAuth } from "../context/AuthContext";
 // «Sett»-flagget lagres kryptert (samme SecureStore som sesjonen). Fullføring
 // avledes live fra data (≥1 egen gjenstand / ≥1 vennskap), så listen huker av
 // seg selv uansett hvor stegene ble utført.
-const DISMISSED_KEY = "onboarding_checklist_dismissed";
+// Nøkkelen er per bruker — en ny konto på samme enhet skal se sjekklisten
+// selv om forrige bruker avviste den. (SecureStore tillater [A-Za-z0-9._-].)
+const dismissedKey = (userId: string) => `onboarding_checklist_dismissed_${userId}`;
 
 export type OnboardingChecklist = {
   /** Skal kortet vises øverst i feeden? */
@@ -31,7 +33,10 @@ export function useOnboardingChecklist(): OnboardingChecklist {
 
   useEffect(() => {
     let active = true;
-    getItemAsync(DISMISSED_KEY)
+    // Nullstill ved brukerbytte så forrige konto sitt flagg ikke lekker over.
+    setDismissed(null);
+    if (!user) return;
+    getItemAsync(dismissedKey(user.id))
       .then((value) => {
         if (active) setDismissed(value === "true");
       })
@@ -41,7 +46,7 @@ export function useOnboardingChecklist(): OnboardingChecklist {
     return () => {
       active = false;
     };
-  }, []);
+  }, [user]);
 
   const refresh = useCallback(async () => {
     if (!user) return;
@@ -69,8 +74,8 @@ export function useOnboardingChecklist(): OnboardingChecklist {
 
   const dismiss = useCallback(() => {
     setDismissed(true);
-    setItemAsync(DISMISSED_KEY, "true").catch(() => {});
-  }, []);
+    if (user) setItemAsync(dismissedKey(user.id), "true").catch(() => {});
+  }, [user]);
 
   const complete = hasItem && hasFriend;
 

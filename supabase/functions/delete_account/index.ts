@@ -1,17 +1,18 @@
 // delete_account — App Store 5.1.1(v) / Google Play data-deletion hard gate.
 //
-// Sletter innlogget brukers konto og ALT tilhørende innhold:
-//   1. Samler alle lagringsstier som blir foreldreløse (egen mappe, andres
-//      progresjonsbilder på egne økter, egne item-covers).
-//   2. Rydder loans-rader som har NO ACTION-FK til profiles (egne utlån slettes;
-//      borrower_user_id nulles der brukeren er låntaker — eierens frie tekstnavn
-//      er eierens egen notat og består).
-//   3. Sletter session_images-rader som peker på brukerens filer på ANDRES økter
-//      (filene fjernes i steg 4; radene ville ellers pekt i løse luften).
-//   4. Sletter auth-brukeren — profiles har ON DELETE CASCADE fra auth.users, og
-//      resten (items → loans/sessions → session_images/participants/reactions,
-//      borrow_requests, friendships) kaskaderer fra profiles/items.
-//   5. Fjerner de innsamlede filene fra session-images-bucketen (best effort).
+// Rekkefølgen er valgt så INGENTING destruktivt skjer før selve kontoslettingen:
+//   1. READ-ONLY: samle lagringsstier som blir foreldreløse (egen mappe, alle
+//      bilder på egne økter, egne item-covers) og ID-ene til egne bilderader på
+//      ANDRES økter. Eldre rader kan holde fulle URL-er — normaliseres med samme
+//      logikk som appens utils/sessionImages.toStoragePath.
+//   2. auth.admin.deleteUser — det atomiske punktet. profiles kaskaderer fra
+//      auth.users, og videre: items → loans (eier-lån via item-kaskaden;
+//      borrower_user_id er ON DELETE SET NULL siden 2026-07-12-migrasjonen),
+//      sessions → session_images/participants/reactions, borrow_requests,
+//      friendships. Feiler dette, er INGEN data rørt.
+//   3. Best effort etterpå: slett de innsamlede bilderadene på andres økter
+//      (kaskaderer ikke) og fjern filene fra bucketen. Feil logges — kontoen
+//      er uansett borte, og rester kan ryddes manuelt fra dashboardet.
 //
 // Deployes med verify_jwt=true; bruker-id leses fra JWT-en. Kjører med service role.
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
@@ -25,6 +26,16 @@ function json(body: unknown, status = 200): Response {
     status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+// Speiler appens utils/sessionImages.toStoragePath: godtar en ren sti ELLER en
+// eldre full (signert/offentlig) URL og gir tilbake stien i bucketen.
+function toStoragePath(value: string | null): string | null {
+  if (!value) return null;
+  const marker = `/${BUCKET}/`;
+  const raw = value.includes(marker) ? (value.split(marker)[1] ?? "") : value;
+  const path = raw.split("?")[0];
+  return path || null;
 }
 
 // Rekursiv listing av alle filer under et prefiks (list() er per «mappe»).
@@ -64,48 +75,52 @@ Deno.serve(async (req: Request) => {
   const uid = userData.user.id;
 
   try {
-    // 1. Lagringsstier som skal bort.
-    const paths = new Set<string>(await listAllFiles(admin, uid));
+    // ── 1. READ-ONLY innsamling ─────────────────────────────────────────────
+    const paths = new Set<string>();
+    const ownPrefix = `${uid}/`;
 
-    const { data: ownSessionImgs } = await admin
-      .from("session_images")
-      .select("image_url, sessions!inner(created_by)")
-      .eq("sessions.created_by", uid);
-    for (const r of ownSessionImgs ?? []) {
-      if (r.image_url && !r.image_url.startsWith("http")) paths.add(r.image_url);
+    // Alt under brukerens egen mappe.
+    for (const p of await listAllFiles(admin, uid)) paths.add(p);
+
+    // Alle bilder (også venners) på brukerens egne økter — radene kaskaderer,
+    // filene under venners mapper gjør ikke det.
+    const [ownSessionImgs, ownItems, strayRows] = await Promise.all([
+      admin
+        .from("session_images")
+        .select("image_url, sessions!inner(created_by)")
+        .eq("sessions.created_by", uid),
+      admin.from("items").select("cover_url").eq("owner_id", uid).not("cover_url", "is", null),
+      // Brukerens egne bilderader på ANDRES økter: sti-form ELLER eldre URL-form.
+      admin
+        .from("session_images")
+        .select("id, image_url")
+        .or(`image_url.like.${ownPrefix}%,image_url.like.%/${BUCKET}/${ownPrefix}%`),
+    ]);
+    if (ownSessionImgs.error) throw ownSessionImgs.error;
+    if (ownItems.error) throw ownItems.error;
+    if (strayRows.error) throw strayRows.error;
+
+    for (const r of ownSessionImgs.data ?? []) {
+      const p = toStoragePath(r.image_url);
+      if (p) paths.add(p);
     }
-
-    const { data: ownItems } = await admin
-      .from("items")
-      .select("cover_url")
-      .eq("owner_id", uid)
-      .not("cover_url", "is", null);
-    for (const r of ownItems ?? []) {
-      if (r.cover_url && !r.cover_url.startsWith("http")) paths.add(r.cover_url);
+    for (const r of ownItems.data ?? []) {
+      const p = toStoragePath(r.cover_url);
+      if (p) paths.add(p);
     }
+    const strayIds = (strayRows.data ?? [])
+      .filter((r) => toStoragePath(r.image_url)?.startsWith(ownPrefix))
+      .map((r) => r.id);
 
-    // 2. loans har NO ACTION-FK til profiles — rydd eksplisitt.
-    const { error: loansDelErr } = await admin.from("loans").delete().eq("owner_id", uid);
-    if (loansDelErr) throw loansDelErr;
-    const { error: loansUnlinkErr } = await admin
-      .from("loans")
-      .update({ borrower_user_id: null })
-      .eq("borrower_user_id", uid);
-    if (loansUnlinkErr) throw loansUnlinkErr;
-
-    // 3. Egne bilder lagt til på ANDRES økter: radene kaskaderer ikke, filene slettes
-    //    i steg 5 — fjern radene så de ikke peker på slettede filer.
-    const { error: strayImgErr } = await admin
-      .from("session_images")
-      .delete()
-      .like("image_url", `${uid}/%`);
-    if (strayImgErr) throw strayImgErr;
-
-    // 4. Slett auth-brukeren; profiles (og videre) kaskaderer.
+    // ── 2. Det atomiske punktet — før dette er ingen data rørt ─────────────
     const { error: delErr } = await admin.auth.admin.deleteUser(uid);
     if (delErr) throw delErr;
 
-    // 5. Fjern filene (best effort — radene er allerede borte).
+    // ── 3. Best effort-opprydding (kontoen er alt borte) ────────────────────
+    if (strayIds.length > 0) {
+      const { error: strayErr } = await admin.from("session_images").delete().in("id", strayIds);
+      if (strayErr) console.error("[delete_account] stray row cleanup failed", strayErr.message);
+    }
     const all = [...paths];
     for (let i = 0; i < all.length; i += 100) {
       const { error: rmErr } = await admin.storage.from(BUCKET).remove(all.slice(i, i + 100));

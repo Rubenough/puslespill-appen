@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useColorScheme } from "nativewind";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
@@ -72,6 +73,9 @@ export default function LoansHubScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<NavProp>();
   const { user } = useAuth();
+  // #78716C feiler kontrast på mørk flate — velg token per skjema (CLAUDE.md).
+  const { colorScheme } = useColorScheme();
+  const iconColor = colorScheme === "dark" ? "#A8A29E" : "#78716C";
 
   const [incoming, setIncoming] = useState<EnrichedRequest[]>([]);
   const [outgoing, setOutgoing] = useState<EnrichedRequest[]>([]);
@@ -230,19 +234,30 @@ export default function LoansHubScreen() {
 
   async function runRequestAction(id: string, rpc: "decline_request" | "cancel_request") {
     setBusyId(id);
-    const { error } = await supabase.rpc(rpc, { p_request_id: id });
-    afterAction(error);
+    try {
+      const { error } = await supabase.rpc(rpc, { p_request_id: id });
+      afterAction(error);
+    } catch {
+      // Kastet unntak (nettverk) må også nullstille flagget — ellers står kortet fast.
+      setBusyId(null);
+      Alert.alert(t("common.somethingWrong"), t("loansHub.loadError"));
+    }
   }
 
   // Godkjenn oppretter lånet; send med valgt frist (eller null) → loans.due_at.
   async function approveRequest(id: string) {
     setBusyId(id);
-    const { error } = await supabase.rpc("approve_request", {
-      p_request_id: id,
-      // Generert type er `p_due_at?: string` (ikke null) → utelat i stedet for å sende null.
-      p_due_at: dueAtFromKey(dueKeyById[id] ?? "none") ?? undefined,
-    });
-    afterAction(error);
+    try {
+      const { error } = await supabase.rpc("approve_request", {
+        p_request_id: id,
+        // Generert type er `p_due_at?: string` (ikke null) → utelat i stedet for å sende null.
+        p_due_at: dueAtFromKey(dueKeyById[id] ?? "none") ?? undefined,
+      });
+      afterAction(error);
+    } catch {
+      setBusyId(null);
+      Alert.alert(t("common.somethingWrong"), t("loansHub.loadError"));
+    }
   }
 
   // Eier registrerer at tingen er levert tilbake.
@@ -288,17 +303,23 @@ export default function LoansHubScreen() {
   async function handleSendReturnRequest() {
     if (!requestReturnLoan) return;
     setRequestingReturn(true);
-    const { error } = await supabase
-      .from("loans")
-      .update({
-        owner_return_requested_at: new Date().toISOString(),
-        owner_return_note: returnNote.trim() || null,
-      })
-      .eq("id", requestReturnLoan.id);
-    setRequestingReturn(false);
-    if (error) {
-      Alert.alert(t("common.somethingWrong"), error.message);
+    try {
+      const { error } = await supabase
+        .from("loans")
+        .update({
+          owner_return_requested_at: new Date().toISOString(),
+          owner_return_note: returnNote.trim() || null,
+        })
+        .eq("id", requestReturnLoan.id);
+      if (error) {
+        Alert.alert(t("common.somethingWrong"), error.message);
+        return;
+      }
+    } catch {
+      Alert.alert(t("common.somethingWrong"), t("loansHub.loadError"));
       return;
+    } finally {
+      setRequestingReturn(false);
     }
     setRequestReturnLoan(null);
     fetchData();
@@ -367,7 +388,7 @@ export default function LoansHubScreen() {
           accessibilityLabel={t("common.back")}
           className="mr-3"
         >
-          <Ionicons name="chevron-back" size={24} color="#78716C" accessible={false} />
+          <Ionicons name="chevron-back" size={24} color={iconColor} accessible={false} />
         </TouchableOpacity>
         <Text className="text-content dark:text-content-dark text-lg font-semibold flex-1">
           {t("loansHub.title")}
@@ -632,7 +653,7 @@ export default function LoansHubScreen() {
             <Ionicons
               name="chevron-forward"
               size={18}
-              color="#78716C"
+              color={iconColor}
               accessible={false}
             />
           </TouchableOpacity>

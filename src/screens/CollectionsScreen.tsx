@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useColorScheme } from "nativewind";
 import { useTranslation } from "react-i18next";
 import { type ItemType, ITEM_ICONS } from "../utils/collections";
 import { itemTypeLabel } from "../utils/collectionLabels";
@@ -20,7 +21,7 @@ const COLLECTION_TYPES: ItemType[] = ["puslespill", "brettspill"];
 type CollectionSummary = { type: ItemType; count: number; loaned: number };
 
 // Kompakt oppsummering av lånesløyfen — detaljene bor i lånehuben (LoansHubScreen).
-type LoanSummary = { lent: number; borrowing: number; requests: number };
+type LoanSummary = { lent: number; borrowing: number; requests: number; returns: number };
 
 export default function CollectionsScreen() {
   const insets = useSafeAreaInsets();
@@ -29,6 +30,9 @@ export default function CollectionsScreen() {
   // Lånehuben og AddItem ligger i rot-stacken; navigasjonen bobler opp dit.
   const rootNavigation = useNavigation<RootNavProp>();
   const { user } = useAuth();
+  // #78716C feiler kontrast på mørk flate — velg token per skjema (CLAUDE.md).
+  const { colorScheme } = useColorScheme();
+  const chevronColor = colorScheme === "dark" ? "#A8A29E" : "#78716C";
 
   const [collections, setCollections] = useState<CollectionSummary[]>(
     COLLECTION_TYPES.map((type) => ({ type, count: 0, loaned: 0 })),
@@ -37,6 +41,7 @@ export default function CollectionsScreen() {
     lent: 0,
     borrowing: 0,
     requests: 0,
+    returns: 0,
   });
   const [refreshing, setRefreshing] = useState(false);
   // Unngå at tom-samling-CTA-en blinker før første henting er ferdig.
@@ -47,7 +52,7 @@ export default function CollectionsScreen() {
     async (isRefresh = false) => {
       if (isRefresh) setRefreshing(true);
 
-      const [itemsResult, lentResult, borrowingResult, requestsResult] =
+      const [itemsResult, lentResult, borrowingResult, requestsResult, returnsResult] =
         await Promise.all([
           supabase.from("items").select("type, status").eq("owner_id", user!.id),
           supabase
@@ -65,13 +70,22 @@ export default function CollectionsScreen() {
             .from("borrow_requests")
             .select("id", { count: "exact", head: true })
             .eq("status", "pending"),
+          // Returer som venter på min bekreftelse ("Retur meldt") — uten dette
+          // ville en meldt retur vært usynlig utenfor lånehuben.
+          supabase
+            .from("loans")
+            .select("id", { count: "exact", head: true })
+            .eq("owner_id", user!.id)
+            .is("returned_at", null)
+            .not("return_requested_at", "is", null),
         ]);
 
       const failed =
         itemsResult.error ??
         lentResult.error ??
         borrowingResult.error ??
-        requestsResult.error;
+        requestsResult.error ??
+        returnsResult.error;
       if (failed) {
         setFetchError(failed.message);
         setRefreshing(false);
@@ -96,6 +110,7 @@ export default function CollectionsScreen() {
         lent: lentResult.count ?? 0,
         borrowing: borrowingResult.count ?? 0,
         requests: requestsResult.count ?? 0,
+        returns: returnsResult.count ?? 0,
       });
 
       setRefreshing(false);
@@ -119,6 +134,9 @@ export default function CollectionsScreen() {
         : null,
       loanSummary.requests > 0
         ? t("loansHub.summaryRequests", { count: loanSummary.requests })
+        : null,
+      loanSummary.returns > 0
+        ? t("loansHub.summaryReturns", { count: loanSummary.returns })
         : null,
     ]
       .filter(Boolean)
@@ -198,7 +216,7 @@ export default function CollectionsScreen() {
             <Ionicons
               name="chevron-forward"
               size={18}
-              color="#78716C"
+              color={chevronColor}
               accessible={false}
             />
           </TouchableOpacity>
@@ -249,7 +267,12 @@ export default function CollectionsScreen() {
             {loanSummaryText}
           </Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color="#78716C" accessible={false} />
+        <Ionicons
+          name="chevron-forward"
+          size={18}
+          color={chevronColor}
+          accessible={false}
+        />
       </TouchableOpacity>
     </ScrollView>
   );

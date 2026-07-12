@@ -219,7 +219,7 @@
     "qrShow": "Show QR code",
     "qrHide": "Hide QR code",
     "qrA11y": "QR code for your invite link, code {{code}}",
-    "qrHint": "Have a friend scan the code with their phone camera."
+    "qrHint": "Have a friend scan the code with their phone camera (iPhone). If the app doesn't open — e.g. on Android — they can enter the code manually."
   },
   "library": {
     "title": "Library",
@@ -471,6 +471,10 @@
     "summaryBorrowing": "borrowing {{count}}",
     "summaryRequests_one": "{{count}} request",
     "summaryRequests_other": "{{count}} requests",
+    "summaryReturns_one": "{{count}} return reported",
+    "summaryReturns_other": "{{count}} returns reported",
+    "badgeA11y_one": "{{count}} item waiting in Loans",
+    "badgeA11y_other": "{{count}} items waiting in Loans",
     "summaryEmpty": "No active loans"
   }
 }

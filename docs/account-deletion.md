@@ -5,13 +5,15 @@ data-deletion policy (web-accessible deletion URL in the Data safety form).
 
 ## What's implemented (dev branch, 2026-07-10)
 
-- **Edge Function `delete_account`** (deployed, `verify_jwt=true`, service role) —
+- **Edge Function `delete_account`** (deployed v2, `verify_jwt=true`, service role) —
   source tracked in [`supabase/functions/delete_account/index.ts`](../supabase/functions/delete_account/index.ts).
-  Order of operations: collect orphanable storage paths (own folder, others' photos on own
-  sessions, own item covers) → clean `loans` (NO ACTION FKs: delete owned, null out
-  `borrower_user_id` where borrower) → delete own `session_images` rows on others' sessions →
-  `auth.admin.deleteUser` (profiles cascades from auth.users; everything else cascades from
-  profiles/items) → purge collected storage files (best effort).
+  v2 (2026-07-12, after code review): **nothing destructive runs before `deleteUser`** —
+  step 1 is read-only collection (storage paths + stray-row ids, with legacy full-URL
+  values normalized like the app's `toStoragePath`), step 2 is `auth.admin.deleteUser`
+  (the atomic point — a failure leaves ALL data untouched), step 3 is best-effort
+  cleanup of stray rows + storage files. Enabled by a migration changing
+  `loans.borrower_user_id` FK to `ON DELETE SET NULL` (owner loans already cascade
+  via items in the same statement).
 - **Settings UI**: "Slett konto" row (danger style) → double-confirm Alerts → invoke →
   local sign-out. i18n keys `settings.deleteAccount*` in both locales.
 - **Web deletion page**: [`docs/store/account-deletion.html`](./store/account-deletion.html)

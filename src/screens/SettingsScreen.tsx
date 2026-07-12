@@ -63,6 +63,14 @@ export default function SettingsScreen() {
       // Auth-brukeren finnes ikke lenger — rydd den lokale økten (server-kallet kan feile).
       await supabase.auth.signOut({ scope: "local" }).catch(() => {});
     } catch {
+      // Kallet kan ha feilet ETTER at kontoen ble slettet server-side (timeout på
+      // svaret). Da er brukeren strandet i en død økt: sjekk om kontoen fortsatt
+      // finnes, og logg ut lokalt hvis ikke — i stedet for en evig «prøv igjen».
+      const { error: userErr } = await supabase.auth.getUser();
+      if (userErr) {
+        await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+        return;
+      }
       Alert.alert(t("common.somethingWrong"), t("settings.deleteAccountError"));
     } finally {
       setDeletingAccount(false);

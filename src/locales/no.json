@@ -219,7 +219,7 @@
     "qrShow": "Vis QR-kode",
     "qrHide": "Skjul QR-kode",
     "qrA11y": "QR-kode for invitasjonslenken din, kode {{code}}",
-    "qrHint": "La en venn skanne koden med telefonkameraet."
+    "qrHint": "La en venn skanne koden med telefonkameraet (iPhone). Åpnes ikke appen — f.eks. på Android — kan vennen skrive inn koden manuelt."
   },
   "library": {
     "title": "Bibliotek",
@@ -471,6 +471,10 @@
     "summaryBorrowing": "{{count}} låner nå",
     "summaryRequests_one": "{{count}} forespørsel",
     "summaryRequests_other": "{{count}} forespørsler",
+    "summaryReturns_one": "{{count}} retur meldt",
+    "summaryReturns_other": "{{count}} returer meldt",
+    "badgeA11y_one": "{{count}} venter i Lån",
+    "badgeA11y_other": "{{count}} venter i Lån",
     "summaryEmpty": "Ingen aktive lån"
   }
 }

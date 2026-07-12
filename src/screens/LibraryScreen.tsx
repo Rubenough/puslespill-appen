@@ -8,7 +8,6 @@ import {
   RefreshControl,
   TextInput,
   Image,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,7 +23,7 @@ import { fetchFriends, type Friend } from "../utils/friends";
 import { getSignedUrls } from "../utils/sessionImages";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import UserAvatar from "../components/UserAvatar";
-import BottomSheet from "../components/BottomSheet";
+import BorrowRequestSheet from "../components/BorrowRequestSheet";
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -63,8 +62,6 @@ export default function LibraryScreen() {
 
   // Låneforespørsel-modal (speiler FriendCollectionScreen sin flyt).
   const [selectedItem, setSelectedItem] = useState<LibraryItem | null>(null);
-  const [message, setMessage] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   const fetchLibrary = useCallback(
     async (isActive: () => boolean = () => true, isRefresh = false) => {
@@ -89,6 +86,9 @@ export default function LibraryScreen() {
             .eq("status", "pending"),
         ]);
         if (itemsRes.error) throw itemsRes.error;
+        // Uten denne rendres alt som «Tilgjengelig» når forespørsels-spørringen
+        // feiler — og et nytt forsøk smeller i borrow_requests_pending_uidx.
+        if (requestsRes.error) throw requestsRes.error;
 
         const rows = itemsRes.data ?? [];
         // Signer omslag ved henting og legg de signerte URL-ene i state (som feeden).
@@ -131,52 +131,6 @@ export default function LibraryScreen() {
     return items.filter((item) => item.title.toLowerCase().includes(q));
   }, [items, query]);
 
-  async function handleRequest() {
-    if (!selectedItem) return;
-    setSubmitting(true);
-    try {
-      const { error } = await supabase.rpc("request_to_borrow", {
-        p_item_id: selectedItem.id,
-        p_message: message.trim() || undefined,
-      });
-      if (error) {
-        Alert.alert(t("borrow.failed"), error.message);
-        return;
-      }
-      // Vi kjenner ikke forespørsels-id-en før neste henting; refetch for korrekt state.
-      setSelectedItem(null);
-      setMessage("");
-      await fetchLibrary();
-      Alert.alert(t("borrow.sent"), t("borrow.sentBody"));
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  async function handleCancelRequest() {
-    if (!selectedItem) return;
-    const requestId = pendingByItem.get(selectedItem.id);
-    if (!requestId) return;
-    setSubmitting(true);
-    try {
-      const { error } = await supabase.rpc("cancel_request", {
-        p_request_id: requestId,
-      });
-      if (error) {
-        Alert.alert(t("common.somethingWrong"), error.message);
-        return;
-      }
-      setPendingByItem((prev) => {
-        const next = new Map(prev);
-        next.delete(selectedItem.id);
-        return next;
-      });
-      setSelectedItem(null);
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   function openOwner(item: LibraryItem) {
     const owner = friendsById.get(item.owner_id);
     navigation.navigate("FriendCollection", {
@@ -187,7 +141,6 @@ export default function LibraryScreen() {
   }
 
   const selectedLoaned = selectedItem?.status === "Utlånt";
-  const selectedPending = selectedItem ? pendingByItem.has(selectedItem.id) : false;
 
   return (
     <View className="flex-1 bg-surface-secondary dark:bg-surface-dark-secondary">
@@ -311,10 +264,7 @@ export default function LibraryScreen() {
                     }`}
                   >
                     <TouchableOpacity
-                      onPress={() => {
-                        setMessage("");
-                        setSelectedItem(item);
-                      }}
+                      onPress={() => setSelectedItem(item)}
                       accessibilityRole="button"
                       accessibilityLabel={[
                         item.title,
@@ -398,99 +348,36 @@ export default function LibraryScreen() {
         </ScrollView>
       )}
 
-      {/* Låneforespørsel-modal (samme flyt som FriendCollectionScreen) */}
-      <BottomSheet
-        visible={selectedItem !== null}
-        onClose={() => setSelectedItem(null)}
-        closeLabel={t("common.cancel")}
-      >
-        <Text className="text-content dark:text-content-dark text-lg font-semibold mb-1 px-1">
-          {selectedItem?.title}
-        </Text>
-        <Text className="text-content-secondary dark:text-content-secondary-dark text-sm mb-4 px-1">
-          {selectedItem
+      {/* Låneforespørsel-arket er delt med FriendCollectionScreen. */}
+      <BorrowRequestSheet
+        item={selectedItem ? { id: selectedItem.id, title: selectedItem.title } : null}
+        subtitle={
+          selectedItem
             ? [
                 itemTypeLabel(selectedItem.type),
                 friendsById.get(selectedItem.owner_id)?.name ?? t("common.unknownUser"),
               ].join(" · ")
-            : ""}
-        </Text>
-
-        {selectedLoaned ? (
-          <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center mb-2">
-            <Text className="text-content-secondary dark:text-content-secondary-dark font-medium">
-              {t("borrow.unavailable")}
-            </Text>
-          </View>
-        ) : selectedPending ? (
-          <>
-            <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl py-4 items-center mb-3">
-              <Text className="text-content-secondary dark:text-content-secondary-dark font-medium">
-                {t("borrow.requested")}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={handleCancelRequest}
-              disabled={submitting}
-              accessibilityRole="button"
-              accessibilityLabel={t("borrow.cancelRequest")}
-              accessibilityState={{ disabled: submitting }}
-              className="border border-border dark:border-border-dark rounded-2xl py-4 items-center mb-2"
-            >
-              {submitting ? (
-                <ActivityIndicator size="small" color="#1D9E75" />
-              ) : (
-                <Text className="text-content dark:text-content-dark font-semibold text-base">
-                  {t("borrow.cancelRequest")}
-                </Text>
-              )}
-            </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            <View className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-2xl border border-border dark:border-border-dark px-4 py-3 mb-4">
-              <TextInput
-                className="text-content dark:text-content-dark text-base"
-                placeholder={t("borrow.messagePlaceholder")}
-                placeholderTextColor="#A8A29E"
-                value={message}
-                onChangeText={setMessage}
-                multiline
-                numberOfLines={2}
-                textAlignVertical="top"
-                accessibilityLabel={t("borrow.messagePlaceholder")}
-              />
-            </View>
-            <TouchableOpacity
-              onPress={handleRequest}
-              disabled={submitting}
-              accessibilityRole="button"
-              accessibilityLabel={t("borrow.ask")}
-              accessibilityState={{ disabled: submitting }}
-              className="bg-accent dark:bg-accent-dark rounded-2xl py-4 items-center mb-2"
-            >
-              {submitting ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <Text className="text-white font-semibold text-base">
-                  {t("borrow.send")}
-                </Text>
-              )}
-            </TouchableOpacity>
-          </>
-        )}
-
-        <TouchableOpacity
-          onPress={() => setSelectedItem(null)}
-          accessibilityRole="button"
-          accessibilityLabel={t("common.cancel")}
-          className="py-3 items-center"
-        >
-          <Text className="text-content-secondary dark:text-content-secondary-dark text-sm">
-            {t("common.cancel")}
-          </Text>
-        </TouchableOpacity>
-      </BottomSheet>
+            : ""
+        }
+        isLoaned={selectedLoaned}
+        pendingRequestId={
+          selectedItem ? (pendingByItem.get(selectedItem.id) ?? null) : null
+        }
+        onClose={() => setSelectedItem(null)}
+        onRequestSent={async () => {
+          // Vi kjenner ikke forespørsels-id-en før neste henting; refetch for korrekt state.
+          setSelectedItem(null);
+          await fetchLibrary();
+        }}
+        onRequestCancelled={(itemId) => {
+          setPendingByItem((prev) => {
+            const next = new Map(prev);
+            next.delete(itemId);
+            return next;
+          });
+          setSelectedItem(null);
+        }}
+      />
     </View>
   );
 }

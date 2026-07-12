@@ -44,6 +44,9 @@ if (sentryDsn) {
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ["puslespill://"],
   config: {
+    // Uten initialRouteName bygger en kaldstart-dyplenke en stack med KUN
+    // Friends — død tilbakeknapp og ingen tab-bar. Tabs må alltid ligge under.
+    initialRouteName: "Tabs",
     screens: {
       Friends: "join",
     },
