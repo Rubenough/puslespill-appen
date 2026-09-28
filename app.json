@@ -7,11 +7,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "no.rubenvareide.puslespill",
@@ -57,7 +52,17 @@
           "organization": "placeholder-org",
           "project": "placeholder-project"
         }
-      ]
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {

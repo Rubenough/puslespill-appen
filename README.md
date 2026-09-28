@@ -2,7 +2,7 @@
 
 Sosial mobilapp for vennegjenger som pusler sammen. Del samlinger, hold styr på utlån, og følg hverandres puslespilløkter.
 
-> **Status:** Kjernen er ferdig: venner (invitasjonskode, lenke og QR), samlinger, Bibliotek med låneforespørsler, en samlet Lån-hub med forfallsdatoer og retur, økt-feed med bilder og reaksjoner, onboarding og sletting av konto. Appen er ennå ikke publisert — neste steg er Expo SDK-oppgradering, verifisering på ekte enhet og en lukket beta for vennegjengen (se [STATUS.md](./STATUS.md)).
+> **Status:** Kjernen er ferdig: venner (invitasjonskode, lenke og QR), samlinger, Bibliotek med låneforespørsler, en samlet Lån-hub med forfallsdatoer og retur, økt-feed med bilder og reaksjoner, onboarding og sletting av konto. Appen er ennå ikke publisert — neste steg er verifisering på ekte enhet og en lukket beta for vennegjengen (se [STATUS.md](./STATUS.md)).
 
 <p align="center">
   <img src="docs/screenshots/01-feed.png" width="240" alt="Feed med aktive økter og social aktivitet" />
@@ -15,11 +15,11 @@ Sosial mobilapp for vennegjenger som pusler sammen. Del samlinger, hold styr på
 
 Et personlig prosjekt bygget rundt en reell use case: vennegjengen min låner puslespill av hverandre og mister oversikt. Appen løser tre ting: delte samlinger synlig for hele gjengen, utlånslogg så ingen glemmer hvem som har hva, og en økt-feed som gjør pusling til en sosial aktivitet snarere enn en isolert hobby.
 
-Prosjektet brukes også som utforsking av React Native-stacken mot Expo SDK 55 med development builds, NativeWind for styling, og Supabase som backend inkludert auth, database og bildeopplasting.
+Prosjektet brukes også som utforsking av React Native-stacken mot Expo SDK 57 med development builds, NativeWind for styling, og Supabase som backend inkludert auth, database og bildeopplasting.
 
 ## Stack
 
-React Native med Expo (SDK 55), TypeScript i strict mode, NativeWind for Tailwind-styling, React Navigation med bottom tabs pluss modal, og Supabase som backend for auth, Postgres og storage. Expo Vector Icons for ikonografi. Development builds via EAS i stedet for Expo Go.
+React Native med Expo (SDK 57), TypeScript i strict mode, NativeWind for Tailwind-styling, React Navigation med bottom tabs pluss modal, og Supabase som backend for auth, Postgres og storage. Expo Vector Icons for ikonografi. Development builds via EAS i stedet for Expo Go.
 
 ## Arkitektur
 
@@ -39,7 +39,7 @@ Full prosjektdokumentasjon, konsept, wireframes og fremdrift ligger i [puslespil
 
 ## Lokal utvikling
 
-Prosjektet kjører på Expo SDK 55 og bruker development builds i stedet for Expo Go. Førstegangsoppsett:
+Prosjektet kjører på Expo SDK 57 og bruker development builds i stedet for Expo Go. Førstegangsoppsett:
 
 ```bash
 npm install
@@ -52,7 +52,7 @@ Deretter starter du dev-serveren. Velg modus etter **hvilken klient** som kjøre
 npx expo start --dev-client            # LAN: mobilen må være på SAMME Wi-Fi som maskinen
 npx expo start --dev-client --tunnel   # hvilket som helst nett / mobildata (via Expos tunnel)
 
-# Expo Go (raske UI-sjekker; fungerer fordi alle native-avhengigheter er i SDK 55 sitt Go-sett)
+# Expo Go (kun raske UI-sjekker, best-effort; butikk-appen kjører bare nyeste SDK — se CLAUDE.md)
 npx expo start --go                    # åpne Expo Go-appen
 npx expo start --go --ios              # + start iOS-simulator
 

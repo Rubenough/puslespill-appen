@@ -8,8 +8,8 @@ A React Native / Expo mobile app for managing puzzle and board game collections,
 
 ## Tech Stack
 
-- **React Native 0.83** + **Expo SDK 55** (exact pins in `package.json`)
-- **TypeScript** (strict mode)
+- **React Native 0.86** + **Expo SDK 57** + **React 19.2** (exact pins in `package.json`)
+- **TypeScript 6** (strict mode)
 - **NativeWind 4** + **Tailwind CSS 3** for styling
 - **React Navigation 7** (bottom tabs + stack + modal)
 - **Supabase 2** — auth, database, real-time
@@ -26,7 +26,7 @@ A React Native / Expo mobile app for managing puzzle and board game collections,
 Pick the mode by **which client** runs the JS and **where the tester is**:
 
 ```bash
-# --- Expo Go (quick UI checks; only works because all native deps are in the SDK-55 Go set) ---
+# --- Expo Go (quick UI checks only; store Expo Go runs just the latest SDK — see note below) ---
 npx expo start --go                 # start Metro for Expo Go (open the Expo Go app)
 npx expo start --go --ios           # + auto-boot iOS simulator (see simulator gotcha below)
 
@@ -42,8 +42,11 @@ npx expo start --dev-client --tunnel# any network / mobile data (routes via Expo
 **`--go` vs `--dev-client`** — `--go` runs the code inside the **Expo Go** app; `--dev-client`
 runs it inside **our own `puslespill` dev-build APK** (its own icon, installed from EAS). Use
 `--dev-client` for anything real — OAuth redirects use the custom `puslespill://` scheme and only
-behave correctly in the dev build. `--go` is fine for pure-UI/logic checks since every current
-native dep happens to be in the SDK-55 Expo Go set.
+behave correctly in the dev build. The store Expo Go app only runs the **latest** SDK (57 today;
+it moves on when SDK 58 goes stable) and the iOS one requires being logged in to Expo in both the
+CLI and the app. Sentry's native layer is not part of Expo Go (harmless — it is inert without a
+DSN), and the SDK-57 app has not been verified in Expo Go, so treat `--go` as best-effort for
+pure-UI checks; `--dev-client` is the supported path.
 
 **`--tunnel`** — needed when the tester is on a **different network** than this Mac (e.g. a friend
 on their own Wi-Fi/mobile data). Requires `@expo/ngrok` (already a devDep). The tunnel URL is
@@ -105,7 +108,7 @@ npm run rebuild:check          # scripts/check-rebuild.sh — does this change n
 ```
 
 CI (`.github/workflows/ci.yml`) runs typecheck + lint + format:check + tests on every push/PR to `main`.
-Keep `eslint-config-expo` at `^57` — the SDK-aligned `~55.0.1` references a `react-hooks` rule its resolved plugin lacks and crashes lint.
+`eslint-config-expo` follows the SDK like every other Expo package (`npx expo install --fix` manages it). The old `^57` hold (SDK 55's `~55.0.1` crashed lint) was dropped at the SDK 56 bump, where the aligned version lints cleanly.
 Tests live in `__tests__/` folders next to the code; start with pure utils. Do not
 add a new test _framework_ — extend the existing jest setup.
 
