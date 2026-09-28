@@ -15,7 +15,7 @@ Conventions and architecture live in [`CLAUDE.md`](./CLAUDE.md).
 - CI (typecheck + lint + format:check + tests, Node 22) runs on every push/PR to `main`.
 - Supabase backend was restored by the owner on 2026-09-28; the live schema matches the code
   (Postgres enums, NOT NULL timestamps, `loans.borrower_user_id` FK `ON DELETE SET NULL`).
-- Stack: Expo SDK 55 / RN 0.83 / React 19 / TypeScript strict / NativeWind 4 / React
+- Stack: Expo SDK 57 / RN 0.86 / React 19.2 / TypeScript 6 strict / NativeWind 4 / React
   Navigation 7 / Supabase 2. 88 jest tests, full `no`/`en` i18n key parity.
 
 ## What's shipped (on `main`)
@@ -50,11 +50,16 @@ Conventions and architecture live in [`CLAUDE.md`](./CLAUDE.md).
 - **QR invite uses the custom `puslespill://` scheme** — Android's stock camera won't open it.
   Switch to https app links / universal links before launch.
 - **`as any` on the SecureStore adapter** in `src/lib/supabase.ts` (TD-14, cosmetic).
-- **Sentry config plugin has placeholder org/project** in `app.json` — may break EAS builds
-  (source-map upload). Handle in Phase 1.
+- **Sentry config plugin has placeholder org/project** in `app.json`. EAS builds are safe:
+  `SENTRY_DISABLE_AUTO_UPLOAD=true` in every `eas.json` profile skips the upload (remove it when
+  activating — [`docs/sentry-setup.md`](./docs/sentry-setup.md)).
 - **Not device-verified since July** — everything merged from `dev` passed typecheck/lint/tests,
-  but has not had a full pass on a fresh dev build.
-- npm-audit findings are Expo dev-tooling transitive deps — resolve at the SDK bump, don't `--force`.
+  but has not had a full pass on a fresh dev build (and SDK 57 has only been verified offline).
+- **iOS 27 scene lifecycle** — apps built with Xcode 27 must use the UIKit scene life cycle.
+  EAS's default image for SDK 57 is Xcode 26.6, so builds are fine today; before building with
+  Xcode 27 (or on SDK 58) enable `ios.enableSceneSupport` via `expo-build-properties`.
+- npm-audit findings (25, incl. 1 critical `shell-quote`) are all transitive via Expo / RN /
+  React Navigation tooling and remain after SDK 57 — don't `--force`; wait for upstream.
 
 ---
 
@@ -69,11 +74,13 @@ Conventions and architecture live in [`CLAUDE.md`](./CLAUDE.md).
 
 ### Phase 1 — SDK upgrade + one device pass
 
-- [ ] Expo SDK 55 → 57, stepwise via 56 (`npx expo install --fix`, check each SDK's changelog;
-      keep `eslint-config-expo` at `^57`).
-- [ ] Handle the Sentry placeholder config so EAS builds don't fail (real org/project + auth
-      token as EAS secret, or disable upload / remove the plugin until Phase 3).
-- [ ] **One device-verification pass** by the owner on a fresh dev build:
+- [x] Expo SDK 55 → 57, stepwise via 56 (2026-09-28). Verified offline only: typecheck, lint,
+      tests, expo-doctor, `expo export` (iOS + Android) and `expo prebuild`. `eslint-config-expo`
+      now follows the SDK (hold dropped).
+- [x] Handle the Sentry placeholder config so EAS builds don't fail — upload disabled via
+      `SENTRY_DISABLE_AUTO_UPLOAD` in `eas.json` until Phase 3.
+- [ ] **One device-verification pass** by the owner on a **fresh** dev build (SDK 57 is a
+      native change — old dev builds won't load it):
       sign in → invite (QR + link) → add item → Bibliotek → request → approve with due date →
       mark returned → confirm → delete account.
 
