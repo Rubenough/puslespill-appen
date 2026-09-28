@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "puslespill-appen",
+    "name": "Hylvo",
     "slug": "puslespill-appen",
     "scheme": "puslespill",
     "version": "1.0.0",
@@ -49,7 +49,15 @@
         }
       ],
       "expo-localization",
-      "expo-font"
+      "expo-font",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "organization": "placeholder-org",
+          "project": "placeholder-project"
+        }
+      ]
     ],
     "extra": {
       "eas": {

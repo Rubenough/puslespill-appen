@@ -13,7 +13,13 @@
     "returnAction": "Return",
     "loanedToA11y": "{{item}}, on loan to {{name}}, {{when}}",
     "returnHint": "Tap to register a return",
-    "borrowerWhen": "{{name}} · {{when}}"
+    "borrowerWhen": "{{name}} · {{when}}",
+    "dueToday": "due today",
+    "dueTomorrow": "due tomorrow",
+    "dueInDays_one": "due in {{count}} day",
+    "dueInDays_other": "due in {{count}} days",
+    "overdueByDays_one": "{{count}} day overdue",
+    "overdueByDays_other": "{{count}} days overdue"
   },
   "collections": {
     "title": "My collections",
@@ -22,7 +28,6 @@
     "sectionBorrowingNow": "BORROWING NOW",
     "loanHistory": "Loan history",
     "loanHistoryHint": "Tap to see returned loans",
-    "borrowedFromWhen": "from {{name}} · {{when}}",
     "borrowedA11y": "{{item}}, borrowed from {{name}}, {{when}}",
     "markReturned": "Mark as returned",
     "markReturnedHint": "Tap to report that you've returned it",
@@ -30,8 +35,6 @@
     "markReturnedBody": "{{owner}} confirms once they've received it back.",
     "returnReported": "Return reported",
     "returnReportedA11y": "{{item}}, borrowed from {{name}}, return reported",
-    "dueBy": "due {{date}}",
-    "overdue": "overdue",
     "undoReturn": "Undo return report",
     "undoReturnTitle": "Undo return report?",
     "undoReturnBody": "“{{item}}” will no longer be marked as returned.",
@@ -48,14 +51,26 @@
     "available": "Available",
     "loadError": "Could not load collections.",
     "detailLoadError": "Could not load the collection.",
-    "nothingLoaned": "Nothing on loan right now",
     "emptyType": "No {{type}} in the collection yet.\nUse + to add one.",
     "friendEmpty": "{{name}} has no items in their collection yet.",
     "collectionCount": "COLLECTION · {{count}} ITEMS",
+    "emptyAll": "Nothing in your collection yet.",
+    "emptyAllCta": "Add item",
+    "emptyAllCtaHint": "Opens the add item form",
     "openHint": "Tap to see the collection",
-    "type": { "puslespill": "Puzzle", "brettspill": "Board game" },
-    "typePlural": { "puslespill": "puzzles", "brettspill": "board games" },
-    "difficulty": { "Lett": "Easy", "Middels": "Medium", "Vanskelig": "Hard" },
+    "type": {
+      "puslespill": "Puzzle",
+      "brettspill": "Board game"
+    },
+    "typePlural": {
+      "puslespill": "puzzles",
+      "brettspill": "board games"
+    },
+    "difficulty": {
+      "Lett": "Easy",
+      "Middels": "Medium",
+      "Vanskelig": "Hard"
+    },
     "pieces_one": "{{count}} piece",
     "pieces_other": "{{count}} pieces",
     "players_one": "{{count}} player",
@@ -79,11 +94,36 @@
     "pastSessionsEmpty": "No completed sessions yet",
     "sessionCompletedWhen": "Completed {{when}}",
     "sessionRowA11y": "{{title}}, completed {{when}}",
-    "sessionRowHint": "Tap to view the session"
+    "sessionRowHint": "Tap to view the session",
+    "editTitle": "Edit profile",
+    "editHint": "Change display name and profile picture",
+    "editClose": "Close profile editing",
+    "editNameLabel": "DISPLAY NAME",
+    "editNamePlaceholder": "e.g. Kari",
+    "editNameA11y": "Display name",
+    "editPickAvatar": "Choose photo",
+    "editPickAvatarHint": "Opens your photo library",
+    "editRemoveAvatar": "Remove photo",
+    "editSave": "Save",
+    "editMissingNameTitle": "Missing name",
+    "editMissingNameBody": "Enter a display name.",
+    "editSaveError": "Could not save the profile."
+  },
+  "onboarding": {
+    "title": "Get started",
+    "dismissA11y": "Hide the get started checklist",
+    "stepItems": "Add your first items",
+    "stepItemsHint": "Opens the add item form",
+    "stepFriends": "Invite your crew",
+    "stepFriendsHint": "Opens Friends with your invite code",
+    "stepDoneA11y": "{{label}}, completed",
+    "doneTitle": "All set!",
+    "doneBody": "Activity from you and your friends will show up here in the feed.",
+    "doneCta": "Got it"
   },
   "loanHistory": {
     "title": "Loan history",
-    "backA11y": "Back to collections",
+    "backA11y": "Back to loans",
     "empty": "No returned loans yet",
     "loadError": "Could not load loan history."
   },
@@ -102,7 +142,15 @@
     "language": "LANGUAGE",
     "signOutConfirmTitle": "Sign out?",
     "signOutConfirmMessage": "Are you sure you want to sign out?",
-    "version": "Fordriv v{{version}}"
+    "version": "Hylvo v{{version}}",
+    "deleteAccount": "Delete account",
+    "deleteAccountHint": "Permanently deletes your account and all data",
+    "deleteAccountConfirmTitle": "Delete your account?",
+    "deleteAccountConfirmMessage": "This permanently deletes your account, your items, loans, sessions and all photos. This cannot be undone.",
+    "deleteAccountConfirmSecondTitle": "Are you absolutely sure?",
+    "deleteAccountConfirmSecondMessage": "Everything will be deleted for good. Do you want to continue?",
+    "deleteAccountConfirmAction": "Delete everything",
+    "deleteAccountError": "Could not delete the account. Try again or contact us."
   },
   "borrow": {
     "ask": "Ask to borrow",
@@ -117,16 +165,11 @@
     "failed": "Could not send request"
   },
   "requests": {
-    "title": "Requests",
-    "incoming": "INCOMING",
-    "outgoing": "OUTGOING",
-    "empty": "No requests",
     "approve": "Approve",
     "decline": "Decline",
     "cancel": "Cancel",
     "wantsToBorrow": "wants to borrow",
     "youAskedFor": "You asked to borrow",
-    "loadError": "Could not load requests.",
     "badgeA11y": "{{count}} new requests"
   },
   "friends": {
@@ -172,13 +215,32 @@
     "rotated": "New code ready",
     "rotateFailed": "Couldn't generate a new code",
     "inviteLandingBanner": "Your code is ready — tap \"Add\" to become friends.",
-    "codeLoadError": "Couldn't load your code."
+    "codeLoadError": "Couldn't load your code.",
+    "qrShow": "Show QR code",
+    "qrHide": "Hide QR code",
+    "qrA11y": "QR code for your invite link, code {{code}}",
+    "qrHint": "Have a friend scan the code with their phone camera (iPhone). If the app doesn't open — e.g. on Android — they can enter the code manually."
+  },
+  "library": {
+    "title": "Library",
+    "searchPlaceholder": "Search by title …",
+    "searchA11y": "Search the library",
+    "clearSearchA11y": "Clear search",
+    "friendsHint": "Opens friends and invites",
+    "empty": "Nothing to show yet. Add friends to see what they own.",
+    "noResults": "No matches for “{{query}}”",
+    "loadError": "Could not load the library.",
+    "ownerA11y": "See {{name}}'s collection"
   },
   "feed": {
     "activeSessions": "ACTIVE SESSIONS",
     "feed": "FEED",
     "noActiveSessions": "No active sessions",
     "noActivity": "No activity in the last 14 days",
+    "emptyCtaInvite": "Invite a friend",
+    "emptyCtaInviteHint": "Opens Friends with your invite code",
+    "emptyCtaAdd": "Add item",
+    "emptyCtaAddHint": "Opens the add item form",
     "loadError": "Could not load content.",
     "added": "added to the collection · {{when}}",
     "startedWith": "started a session with {{users}} · {{when}}",
@@ -204,6 +266,11 @@
   "collectionDetail": {
     "backA11y": "Back to collections",
     "rowHint": "Tap for actions",
+    "searchPlaceholder": "Search by title …",
+    "searchA11y": "Search by title",
+    "clearSearchA11y": "Clear search",
+    "filterChipHint": "Tap to filter the list",
+    "noMatches": "No matches",
     "closeActions": "Close actions",
     "closeLoanModal": "Close loan modal",
     "startSession": "Start session",
@@ -243,6 +310,7 @@
     "progressImageA11y": "Show photo from {{date}} fullscreen",
     "progressImageA11yNote": "Show photo from {{date}}, {{note}} fullscreen",
     "participantsHeader": "PARTICIPANTS",
+    "reactionsHeader": "REACTIONS",
     "registeredParticipantA11y": "{{name}} (registered participant)",
     "addPhoto": "Add photo",
     "addPhotoA11y": "Add a progress photo",
@@ -378,7 +446,7 @@
   "nav": {
     "tabFeed": "Feed",
     "tabCollections": "Collections",
-    "tabFriends": "Friends",
+    "tabLibrary": "Library",
     "tabProfile": "Profile",
     "tabNewSession": "New session",
     "closeMenu": "Close menu",
@@ -387,6 +455,26 @@
     "addSubtitle": "Puzzle, board game ...",
     "sessionTitle": "Start a new session",
     "sessionSubtitle": "Log an activity",
+    "inviteTitle": "Invite a friend",
+    "inviteSubtitle": "Share your invite code",
     "selectType": "Choose type"
+  },
+  "loansHub": {
+    "title": "Loans",
+    "sectionIncoming": "REQUESTS IN",
+    "sectionOutgoing": "REQUESTS OUT",
+    "sectionHistory": "HISTORY",
+    "empty": "No active loans or requests",
+    "loadError": "Could not load loans.",
+    "openHint": "Tap to see requests and active loans",
+    "fromOwner": "from {{name}}",
+    "summaryBorrowing": "borrowing {{count}}",
+    "summaryRequests_one": "{{count}} request",
+    "summaryRequests_other": "{{count}} requests",
+    "summaryReturns_one": "{{count}} return reported",
+    "summaryReturns_other": "{{count}} returns reported",
+    "badgeA11y_one": "{{count}} item waiting in Loans",
+    "badgeA11y_other": "{{count}} items waiting in Loans",
+    "summaryEmpty": "No active loans"
   }
 }

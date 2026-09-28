@@ -21,12 +21,24 @@ import { useAuth } from "../context/AuthContext";
 import { type ItemType } from "../utils/collections";
 import { getDayNumber, getRelativeDayLabel } from "../utils/date";
 import { getSignedUrls } from "../utils/sessionImages";
+import { resolveProfileAvatars } from "../utils/avatar";
+import OnboardingChecklist from "../components/OnboardingChecklist";
+import { useOnboardingChecklist } from "../hooks/useOnboardingChecklist";
 import {
   fetchReactionsBySession,
   toggleReaction,
   applyToggle,
   type Reaction,
 } from "../utils/reactions";
+import {
+  buildFeedItems,
+  type FeedItem,
+  type SessionRow,
+  type ItemRow,
+  type LoanRow,
+  type BorrowRow,
+  type ProfileRow,
+} from "../utils/feed";
 
 // ─── Typer ───────────────────────────────────────────────────────────────────
 
@@ -52,98 +64,7 @@ type ActiveSessionRow = {
   item: { id: string; title: string; type: string } | null;
 };
 
-// Felles type for alle feed-hendelser
-type FeedItem =
-  | {
-      id: string;
-      type: "started";
-      timestamp: string;
-      userName: string;
-      avatarUrl: string | null;
-      itemType: ItemType;
-      itemTitle: string;
-      withUsers: string[];
-      sessionId: string;
-      imageUrl: string | null;
-    }
-  | {
-      id: string;
-      type: "completed";
-      timestamp: string;
-      userName: string;
-      avatarUrl: string | null;
-      itemType: ItemType;
-      itemTitle: string;
-      sessionId: string;
-      imageUrl: string | null;
-    }
-  | {
-      id: string;
-      type: "added";
-      timestamp: string;
-      userName: string;
-      avatarUrl: string | null;
-      itemType: ItemType;
-      itemTitle: string;
-      ownerId: string;
-      isOwn: boolean;
-      imageUrl: string | null;
-    }
-  | {
-      id: string;
-      type: "loaned";
-      timestamp: string;
-      userName: string;
-      avatarUrl: string | null;
-      itemType: ItemType;
-      itemTitle: string;
-      loanedTo?: string;
-    }
-  | {
-      id: string;
-      type: "borrowed";
-      timestamp: string;
-      userName: string;
-      avatarUrl: string | null;
-      itemType: ItemType;
-      itemTitle: string;
-      fromName: string;
-    };
-
 // ─── Datahenting ──────────────────────────────────────────────────────────────
-
-// Radformer for de sammenslåtte Supabase-spørringene (item-join kommer som objekt).
-type ItemJoin = { title: string; type: string } | null;
-type SessionRow = {
-  id: string;
-  started_at: string;
-  completed_at: string | null;
-  guest_names: string[] | null;
-  created_by: string;
-  image_url: string | null;
-  items: ItemJoin;
-};
-type ItemRow = {
-  id: string;
-  title: string;
-  type: string;
-  created_at: string;
-  owner_id: string;
-  cover_url: string | null;
-};
-type LoanRow = {
-  id: string;
-  borrower_name: string | null;
-  loaned_at: string;
-  items: ItemJoin;
-};
-type BorrowRow = {
-  id: string;
-  owner_id: string;
-  responded_at: string | null;
-  items: ItemJoin;
-};
-type ProfileRow = { id: string; full_name: string | null; avatar_url: string | null };
 
 // Henter siste progresjonsbilde (lagringssti) per økt-ID.
 async function latestImagePathsBySession(
@@ -228,10 +149,10 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
     sessionsRes.error ?? itemsRes.error ?? loansRes.error ?? borrowedRes.error;
   if (queryError) throw queryError;
 
-  const sessionRows = (sessionsRes.data ?? []) as unknown as SessionRow[];
-  const itemRows = (itemsRes.data ?? []) as unknown as ItemRow[];
-  const loanRows = (loansRes.data ?? []) as unknown as LoanRow[];
-  const borrowRows = (borrowedRes.data ?? []) as unknown as BorrowRow[];
+  const sessionRows: SessionRow[] = sessionsRes.data ?? [];
+  const itemRows: ItemRow[] = itemsRes.data ?? [];
+  const loanRows: LoanRow[] = loansRes.data ?? [];
+  const borrowRows: BorrowRow[] = borrowedRes.data ?? [];
 
   // Samle alle unike bruker-IDer fra sessions, items og lån-fra-eiere; hent profiler i ett kall
   const userIds = new Set<string>([userId]);
@@ -244,9 +165,11 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
     .select("id, full_name, avatar_url")
     .in("id", [...userIds]);
 
-  const profilesById = new Map(
-    ((profilesData ?? []) as ProfileRow[]).map((p) => [p.id, p]),
+  // Opplastede avatarer er lagringsstier og må signeres; Google-URL-er passerer urørt.
+  const profilesWithAvatars = await resolveProfileAvatars(
+    (profilesData ?? []) as ProfileRow[],
   );
+  const profilesById = new Map(profilesWithAvatars.map((p) => [p.id, p]));
 
   // Signér siste progresjonsbilde (eller øktens omslag) for økt-hendelsene i ett kall.
   const latestImg = await latestImagePathsBySession(sessionRows.map((s) => s.id));
@@ -262,94 +185,17 @@ async function fetchFeedItems(userId: string): Promise<FeedItem[]> {
     ...coverPaths,
   ]);
 
-  const feedItems: FeedItem[] = [];
-
-  // Sessions → "started" eller "completed"
-  for (const s of sessionRows) {
-    const profile = profilesById.get(s.created_by);
-    const path = imagePathBySession.get(s.id);
-    const base = {
-      userName: profile?.full_name ?? i18n.t("common.unknownUser"),
-      avatarUrl: profile?.avatar_url ?? null,
-      itemType: s.items?.type as ItemType,
-      itemTitle: s.items?.title ?? "",
-      sessionId: s.id,
-      imageUrl: path ? (signedByPath.get(path) ?? null) : null,
-    };
-
-    if (s.completed_at) {
-      feedItems.push({
-        id: `completed-${s.id}`,
-        type: "completed",
-        timestamp: s.completed_at,
-        ...base,
-      });
-    } else {
-      feedItems.push({
-        id: `started-${s.id}`,
-        type: "started",
-        timestamp: s.started_at,
-        ...base,
-        withUsers: s.guest_names ?? [],
-      });
-    }
-  }
-
-  // Items → "added"
-  for (const item of itemRows) {
-    const profile = profilesById.get(item.owner_id);
-    feedItems.push({
-      id: `added-${item.id}`,
-      type: "added",
-      timestamp: item.created_at,
-      userName: profile?.full_name ?? i18n.t("common.unknownUser"),
-      avatarUrl: profile?.avatar_url ?? null,
-      itemType: item.type as ItemType,
-      itemTitle: item.title,
-      ownerId: item.owner_id,
-      isOwn: item.owner_id === userId,
-      imageUrl: item.cover_url ? (signedByPath.get(item.cover_url) ?? null) : null,
-    });
-  }
-
-  // Lån → "loaned"
-  for (const loan of loanRows) {
-    const profile = profilesById.get(userId); // egne lån — profilen er brukeren selv
-    feedItems.push({
-      id: `loaned-${loan.id}`,
-      type: "loaned",
-      timestamp: loan.loaned_at,
-      userName: profile?.full_name ?? i18n.t("common.unknownUser"),
-      avatarUrl: profile?.avatar_url ?? null,
-      itemType: loan.items?.type as ItemType,
-      itemTitle: loan.items?.title ?? "",
-      loanedTo: loan.borrower_name ?? undefined,
-    });
-  }
-
-  // Godkjente forespørsler → "borrowed" (egen låneaktivitet)
-  const self = profilesById.get(userId);
-  for (const req of borrowRows) {
-    if (!req.responded_at) continue;
-    const owner = profilesById.get(req.owner_id);
-    feedItems.push({
-      id: `borrowed-${req.id}`,
-      type: "borrowed",
-      timestamp: req.responded_at,
-      userName: self?.full_name ?? i18n.t("common.unknownUser"),
-      avatarUrl: self?.avatar_url ?? null,
-      itemType: req.items?.type as ItemType,
-      itemTitle: req.items?.title ?? "",
-      fromName: owner?.full_name ?? i18n.t("common.unknownUser"),
-    });
-  }
-
-  // Sorter nyeste hendelse øverst
-  feedItems.sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-  );
-
-  return feedItems;
+  // Selve sammenslåingen er en ren funksjon (utils/feed.ts) — enhetstestet der.
+  return buildFeedItems({
+    userId,
+    sessionRows,
+    itemRows,
+    loanRows,
+    borrowRows,
+    profilesById,
+    imagePathBySession,
+    signedByPath,
+  });
 }
 
 // ─── Komponent ────────────────────────────────────────────────────────────────
@@ -371,6 +217,11 @@ export default function FeedScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
 
+  // Kom i gang-sjekkliste (førstegangsbruk) — vises som kort øverst til den
+  // er fullført eller lukket. refresh er stabil (useCallback på user).
+  const checklist = useOnboardingChecklist();
+  const { refresh: refreshChecklist } = checklist;
+
   const fetchSessions = useCallback(async () => {
     if (!user) return;
     setLoadingSessions(true);
@@ -386,7 +237,7 @@ export default function FeedScreen() {
       .order("started_at", { ascending: false });
 
     setSessionsError(!!error);
-    const rows = (data as unknown as ActiveSessionRow[]) ?? [];
+    const rows: ActiveSessionRow[] = data ?? [];
     const withImages = await attachSessionImages(rows);
 
     // Hent eierprofiler for venners økter i ett kall (id → navn/avatar).
@@ -395,9 +246,11 @@ export default function FeedScreen() {
       .from("profiles")
       .select("id, full_name, avatar_url")
       .in("id", ownerIds);
-    const ownerById = new Map(
-      ((ownerProfiles ?? []) as ProfileRow[]).map((p) => [p.id, p]),
+    // Signer ev. opplastede avatar-stier for visning (Google-URL-er passerer urørt).
+    const ownersResolved = await resolveProfileAvatars(
+      (ownerProfiles ?? []) as ProfileRow[],
     );
+    const ownerById = new Map(ownersResolved.map((p) => [p.id, p]));
 
     // Bytt lagringsstier mot signerte URL-er for visning i øktkortene.
     const signed = await getSignedUrls(withImages.map((s) => s.image_url));
@@ -476,7 +329,8 @@ export default function FeedScreen() {
     useCallback(() => {
       fetchSessions();
       fetchFeed();
-    }, [fetchSessions, fetchFeed]),
+      refreshChecklist();
+    }, [fetchSessions, fetchFeed, refreshChecklist]),
   );
 
   const onRefresh = useCallback(async () => {
@@ -524,6 +378,18 @@ export default function FeedScreen() {
           />
         }
       >
+        {/* Kom i gang-sjekkliste — lett kort, ikke blokkerende modal */}
+        {checklist.visible && (
+          <OnboardingChecklist
+            hasItem={checklist.hasItem}
+            hasFriend={checklist.hasFriend}
+            complete={checklist.complete}
+            onAddItem={() => navigation.navigate("AddItem", { type: "puslespill" })}
+            onInviteFriend={() => navigation.navigate("Friends")}
+            onDismiss={checklist.dismiss}
+          />
+        )}
+
         {/* Aktive økter */}
         <Text
           accessibilityRole="header"
@@ -583,9 +449,37 @@ export default function FeedScreen() {
         ) : feedError ? (
           <SectionError onRetry={fetchFeed} />
         ) : feedItems.length === 0 ? (
-          <Text className="text-content-secondary dark:text-content-secondary-dark text-sm px-4 pb-4">
-            {t("feed.noActivity")}
-          </Text>
+          // Tom feed skal ikke være en blindvei — pek videre til det som gir
+          // feeden innhold: venner og egne gjenstander.
+          <View className="mx-4 mb-4 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark p-5 items-center">
+            <Text className="text-content-secondary dark:text-content-secondary-dark text-sm text-center mb-4">
+              {t("feed.noActivity")}
+            </Text>
+            <View className="flex-row gap-2">
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Friends")}
+                accessibilityRole="button"
+                accessibilityLabel={t("feed.emptyCtaInvite")}
+                accessibilityHint={t("feed.emptyCtaInviteHint")}
+                className="bg-accent dark:bg-accent-dark rounded-xl px-4 py-2.5"
+              >
+                <Text className="text-white font-semibold text-sm">
+                  {t("feed.emptyCtaInvite")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("AddItem", { type: "puslespill" })}
+                accessibilityRole="button"
+                accessibilityLabel={t("feed.emptyCtaAdd")}
+                accessibilityHint={t("feed.emptyCtaAddHint")}
+                className="border border-accent dark:border-accent-dark rounded-xl px-4 py-2.5"
+              >
+                <Text className="text-accent dark:text-accent-dark font-semibold text-sm">
+                  {t("feed.emptyCtaAdd")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         ) : (
           <View className="pt-2 pb-4">
             {feedItems.map((item) => (

@@ -32,6 +32,13 @@ import PuzzleProgressIcon, { progressToFilled } from "../components/PuzzleProgre
 import ProgressSheet from "../components/ProgressSheet";
 import AddPhotoSheet from "../components/AddPhotoSheet";
 import BottomSheet from "../components/BottomSheet";
+import ReactionBar from "../components/ReactionBar";
+import {
+  fetchReactionsBySession,
+  toggleReaction,
+  applyToggle,
+  type Reaction,
+} from "../utils/reactions";
 import {
   uploadSessionImage,
   removeSessionImages,
@@ -39,6 +46,7 @@ import {
   getSignedUrls,
 } from "../utils/sessionImages";
 import { getDayNumber, formatShortDate } from "../utils/date";
+import { resolveProfileAvatars } from "../utils/avatar";
 
 type SessionDetailRouteProp = RouteProp<RootStackParamList, "SessionDetail">;
 type SessionDetailNavProp = NativeStackNavigationProp<
@@ -99,8 +107,11 @@ export default function SessionDetailScreen() {
   const [participantProfiles, setParticipantProfiles] = useState<
     { id: string; name: string | null; avatarUrl: string | null }[]
   >([]);
+  // Hurtig-reaksjoner for denne økten (samme linje som på feed-kortene).
+  const [reactions, setReactions] = useState<Reaction[]>([]);
 
   const fetchData = useCallback(async () => {
+    const userId = user?.id;
     const [sessionRes, imagesRes, participantsRes] = await Promise.all([
       supabase
         .from("sessions")
@@ -120,18 +131,19 @@ export default function SessionDetailScreen() {
         .eq("session_id", sessionId),
     ]);
 
-    const sessionData = sessionRes.data as unknown as SessionDetail | null;
+    const sessionData: SessionDetail | null = sessionRes.data;
     const imageRows = (imagesRes.data as SessionImage[] | null) ?? [];
 
     // Registrerte deltakere til visning (utenom eieren OG deg selv — din egen «pille»
     // skal ikke lenke til en venne-samling av deg selv). pIds beholdes for isParticipant.
     const pIds = (participantsRes.data ?? []).map((r) => r.profile_id);
     const displayIds = pIds.filter(
-      (id) => id !== sessionData?.created_by && id !== user?.id,
+      (id) => id !== sessionData?.created_by && id !== userId,
     );
 
-    // Deltaker-profiler og bilde-signering er uavhengige — kjør i parallell.
-    const [profs, signed] = await Promise.all([
+    // Deltaker-profiler, bilde-signering og reaksjoner er uavhengige — kjør i parallell.
+    // Reaksjoner er ikke-kritiske: feiler hentingen viser vi bare en tom linje.
+    const [profs, signed, reactionsBySession] = await Promise.all([
       displayIds.length > 0
         ? supabase
             .from("profiles")
@@ -145,14 +157,22 @@ export default function SessionDetailScreen() {
         sessionData?.image_url ?? null,
         ...imageRows.map((img) => img.image_url),
       ]),
+      userId
+        ? fetchReactionsBySession([sessionId], userId).catch(
+            () => new Map<string, Reaction[]>(),
+          )
+        : Promise.resolve(new Map<string, Reaction[]>()),
     ]);
 
+    // Opplastede avatarer er lagringsstier og må signeres for visning.
+    const profsResolved = await resolveProfileAvatars(profs ?? []);
     const profiles = displayIds.map((id) => {
-      const p = (profs ?? []).find((x) => x.id === id);
+      const p = profsResolved.find((x) => x.id === id);
       return { id, name: p?.full_name ?? null, avatarUrl: p?.avatar_url ?? null };
     });
     setParticipantIds(pIds);
     setParticipantProfiles(profiles);
+    setReactions(reactionsBySession.get(sessionId) ?? []);
 
     if (sessionData) {
       setSession({
@@ -269,6 +289,23 @@ export default function SessionDetailScreen() {
     }
   }
 
+  // Optimistisk av/på-reaksjon: oppdater lokalt straks, rull tilbake ved feil
+  // (samme mønster som FeedScreen.handleReact).
+  async function handleReact(emoji: string) {
+    if (!user) return;
+    const mine = reactions.find((r) => r.emoji === emoji)?.mine ?? false;
+    const snapshot = reactions; // for tilbakerulling ved feil
+
+    setReactions((prev) => applyToggle(prev, emoji, mine));
+
+    try {
+      await toggleReaction(sessionId, emoji, user.id, mine);
+    } catch {
+      setReactions(snapshot); // rull tilbake til forrige tilstand
+      Alert.alert(t("common.somethingWrong"), t("feed.reactionError"));
+    }
+  }
+
   function handleUpdate() {
     if (session?.item.type === "puslespill") {
       setProgressSheetVisible(true);
@@ -306,7 +343,7 @@ export default function SessionDetailScreen() {
           // Merk: uten transaksjon er dette ikke atomært. Vi sletter DB-radene før
           // filene, og fjerner filer fra storage KUN etter at selve økt-raden er
           // bekreftet slettet — slik at en feilet sletting aldri etterlater en
-          // levende økt uten bildene sine. Se PROJECT-PLAN.md for en `delete_session`
+          // levende økt uten bildene sine. Se docs/archive/PROJECT-PLAN.md for en `delete_session`
           // RPC / ON DELETE CASCADE som løser atomisiteten skikkelig.
           const storagePaths: string[] = [
             ...images.map((img) => storagePathFromUrl(img.image_url)),
@@ -563,6 +600,17 @@ export default function SessionDetailScreen() {
               </Text>
             </View>
           )}
+        </View>
+
+        {/* Reaksjoner — samme hurtiglinje som på feed-kortene (👍 ❤️ 🎉 🧩) */}
+        <View className="mx-4 mt-3 bg-surface dark:bg-surface-dark rounded-2xl border border-border dark:border-border-dark px-4 py-3 flex-row items-center">
+          <Text
+            accessibilityRole="header"
+            className="text-content-secondary dark:text-content-secondary-dark text-xs font-semibold tracking-widest mr-3"
+          >
+            {t("session.reactionsHeader")}
+          </Text>
+          <ReactionBar reactions={reactions} onReact={handleReact} />
         </View>
 
         {/* Progresjonstidslinje */}

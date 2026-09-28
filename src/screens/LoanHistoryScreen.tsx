@@ -15,9 +15,9 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { type ItemType, ITEM_ICONS } from "../utils/collections";
 import { getRelativeDayOrWeekLabel } from "../utils/date";
-import { CollectionsStackParamList } from "../navigation/CollectionsStack";
+import { RootStackParamList } from "../navigation/RootNavigator";
 
-type NavProp = NativeStackNavigationProp<CollectionsStackParamList, "LoanHistory">;
+type NavProp = NativeStackNavigationProp<RootStackParamList, "LoanHistory">;
 
 type ReturnedLoan = {
   id: string;
@@ -50,7 +50,12 @@ export default function LoanHistoryScreen() {
       .limit(50);
 
     setError(!!queryError);
-    setLoans((data as unknown as ReturnedLoan[]) ?? []);
+    // .not("returned_at", "is", null) garanterer non-null; TS ser ikke filteret, så vi smalner her.
+    setLoans(
+      (data ?? []).filter(
+        (l): l is typeof l & { returned_at: string } => l.returned_at !== null,
+      ),
+    );
     setLoading(false);
   }, [user]);
 

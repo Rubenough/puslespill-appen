@@ -13,7 +13,13 @@
     "returnAction": "Lever tilbake",
     "loanedToA11y": "{{item}}, utlånt til {{name}}, {{when}}",
     "returnHint": "Trykk for å registrere retur",
-    "borrowerWhen": "{{name}} · {{when}}"
+    "borrowerWhen": "{{name}} · {{when}}",
+    "dueToday": "forfaller i dag",
+    "dueTomorrow": "forfaller i morgen",
+    "dueInDays_one": "forfaller om {{count}} dag",
+    "dueInDays_other": "forfaller om {{count}} dager",
+    "overdueByDays_one": "{{count}} dag over fristen",
+    "overdueByDays_other": "{{count}} dager over fristen"
   },
   "collections": {
     "title": "Mine samlinger",
@@ -22,7 +28,6 @@
     "sectionBorrowingNow": "DU LÅNER NÅ",
     "loanHistory": "Lånehistorikk",
     "loanHistoryHint": "Trykk for å se leverte lån",
-    "borrowedFromWhen": "fra {{name}} · {{when}}",
     "borrowedA11y": "{{item}}, lånt fra {{name}}, {{when}}",
     "markReturned": "Marker som levert",
     "markReturnedHint": "Trykk for å melde at du har levert tilbake",
@@ -30,8 +35,6 @@
     "markReturnedBody": "{{owner}} bekrefter når hen har mottatt den tilbake.",
     "returnReported": "Retur meldt",
     "returnReportedA11y": "{{item}}, lånt fra {{name}}, retur meldt",
-    "dueBy": "skal leveres {{date}}",
-    "overdue": "på overtid",
     "undoReturn": "Angre retur-melding",
     "undoReturnTitle": "Angre retur-melding?",
     "undoReturnBody": "«{{item}}» blir ikke lenger markert som levert.",
@@ -48,14 +51,26 @@
     "available": "Tilgjengelig",
     "loadError": "Kunne ikke laste samlinger.",
     "detailLoadError": "Kunne ikke laste samlingen.",
-    "nothingLoaned": "Ingen ting utlånt for øyeblikket",
     "emptyType": "Ingen {{type}} i samlingen ennå.\nBruk + for å legge til.",
     "friendEmpty": "{{name}} har ingen gjenstander i samlingen ennå.",
     "collectionCount": "SAMLING · {{count}} STK",
+    "emptyAll": "Ingenting i samlingen ennå.",
+    "emptyAllCta": "Legg til gjenstand",
+    "emptyAllCtaHint": "Åpner skjemaet for å legge til en gjenstand",
     "openHint": "Trykk for å se samlingen",
-    "type": { "puslespill": "Puslespill", "brettspill": "Brettspill" },
-    "typePlural": { "puslespill": "puslespill", "brettspill": "brettspill" },
-    "difficulty": { "Lett": "Lett", "Middels": "Middels", "Vanskelig": "Vanskelig" },
+    "type": {
+      "puslespill": "Puslespill",
+      "brettspill": "Brettspill"
+    },
+    "typePlural": {
+      "puslespill": "puslespill",
+      "brettspill": "brettspill"
+    },
+    "difficulty": {
+      "Lett": "Lett",
+      "Middels": "Middels",
+      "Vanskelig": "Vanskelig"
+    },
     "pieces_one": "{{count}} brikke",
     "pieces_other": "{{count}} brikker",
     "players_one": "{{count}} spiller",
@@ -79,11 +94,36 @@
     "pastSessionsEmpty": "Ingen fullførte økter ennå",
     "sessionCompletedWhen": "Fullført {{when}}",
     "sessionRowA11y": "{{title}}, fullført {{when}}",
-    "sessionRowHint": "Trykk for å se økten"
+    "sessionRowHint": "Trykk for å se økten",
+    "editTitle": "Rediger profil",
+    "editHint": "Endre visningsnavn og profilbilde",
+    "editClose": "Lukk profilredigering",
+    "editNameLabel": "VISNINGSNAVN",
+    "editNamePlaceholder": "f.eks. Kari",
+    "editNameA11y": "Visningsnavn",
+    "editPickAvatar": "Velg bilde",
+    "editPickAvatarHint": "Åpner bildebiblioteket",
+    "editRemoveAvatar": "Fjern bilde",
+    "editSave": "Lagre",
+    "editMissingNameTitle": "Mangler navn",
+    "editMissingNameBody": "Fyll inn et visningsnavn.",
+    "editSaveError": "Kunne ikke lagre profilen."
+  },
+  "onboarding": {
+    "title": "Kom i gang",
+    "dismissA11y": "Skjul kom i gang-listen",
+    "stepItems": "Legg til de første tingene dine",
+    "stepItemsHint": "Åpner skjemaet for å legge til en gjenstand",
+    "stepFriends": "Inviter gjengen",
+    "stepFriendsHint": "Åpner Venner med invitasjonskoden din",
+    "stepDoneA11y": "{{label}}, fullført",
+    "doneTitle": "Alt klart!",
+    "doneBody": "Aktivitet fra deg og vennene dine dukker opp her i feeden.",
+    "doneCta": "Den er grei"
   },
   "loanHistory": {
     "title": "Lånehistorikk",
-    "backA11y": "Tilbake til samlinger",
+    "backA11y": "Tilbake til lån",
     "empty": "Ingen leverte lån ennå",
     "loadError": "Kunne ikke laste lånehistorikk."
   },
@@ -102,7 +142,15 @@
     "language": "SPRÅK",
     "signOutConfirmTitle": "Logg ut?",
     "signOutConfirmMessage": "Er du sikker på at du vil logge ut?",
-    "version": "Fordriv v{{version}}"
+    "version": "Hylvo v{{version}}",
+    "deleteAccount": "Slett konto",
+    "deleteAccountHint": "Sletter kontoen din og alle data permanent",
+    "deleteAccountConfirmTitle": "Slette kontoen?",
+    "deleteAccountConfirmMessage": "Dette sletter kontoen din, tingene dine, lån, økter og alle bilder permanent. Dette kan ikke angres.",
+    "deleteAccountConfirmSecondTitle": "Er du helt sikker?",
+    "deleteAccountConfirmSecondMessage": "Alt innhold slettes for godt. Vil du fortsette?",
+    "deleteAccountConfirmAction": "Slett alt",
+    "deleteAccountError": "Kunne ikke slette kontoen. Prøv igjen eller kontakt oss."
   },
   "borrow": {
     "ask": "Be om å låne",
@@ -117,16 +165,11 @@
     "failed": "Kunne ikke sende forespørsel"
   },
   "requests": {
-    "title": "Forespørsler",
-    "incoming": "INNKOMMENDE",
-    "outgoing": "UTGÅENDE",
-    "empty": "Ingen forespørsler",
     "approve": "Godkjenn",
     "decline": "Avslå",
     "cancel": "Avbryt",
     "wantsToBorrow": "vil låne",
     "youAskedFor": "Du spurte om å låne",
-    "loadError": "Kunne ikke laste forespørsler.",
     "badgeA11y": "{{count}} nye forespørsler"
   },
   "friends": {
@@ -172,13 +215,32 @@
     "rotated": "Ny kode klar",
     "rotateFailed": "Kunne ikke lage ny kode",
     "inviteLandingBanner": "Koden er klar – trykk «Legg til» for å bli venner.",
-    "codeLoadError": "Kunne ikke laste koden din."
+    "codeLoadError": "Kunne ikke laste koden din.",
+    "qrShow": "Vis QR-kode",
+    "qrHide": "Skjul QR-kode",
+    "qrA11y": "QR-kode for invitasjonslenken din, kode {{code}}",
+    "qrHint": "La en venn skanne koden med telefonkameraet (iPhone). Åpnes ikke appen — f.eks. på Android — kan vennen skrive inn koden manuelt."
+  },
+  "library": {
+    "title": "Bibliotek",
+    "searchPlaceholder": "Søk etter tittel …",
+    "searchA11y": "Søk i biblioteket",
+    "clearSearchA11y": "Tøm søket",
+    "friendsHint": "Åpner venner og invitasjoner",
+    "empty": "Ingenting å vise ennå. Legg til venner for å se hva de eier.",
+    "noResults": "Ingen treff på «{{query}}»",
+    "loadError": "Kunne ikke laste biblioteket.",
+    "ownerA11y": "Se samlingen til {{name}}"
   },
   "feed": {
     "activeSessions": "AKTIVE ØKTER",
     "feed": "FEED",
     "noActiveSessions": "Ingen aktive økter",
     "noActivity": "Ingen aktivitet de siste 14 dagene",
+    "emptyCtaInvite": "Inviter en venn",
+    "emptyCtaInviteHint": "Åpner Venner med invitasjonskoden din",
+    "emptyCtaAdd": "Legg til gjenstand",
+    "emptyCtaAddHint": "Åpner skjemaet for å legge til en gjenstand",
     "loadError": "Kunne ikke laste innhold.",
     "added": "la til i samlingen · {{when}}",
     "startedWith": "startet en økt med {{users}} · {{when}}",
@@ -204,6 +266,11 @@
   "collectionDetail": {
     "backA11y": "Tilbake til samlinger",
     "rowHint": "Trykk for handlinger",
+    "searchPlaceholder": "Søk i tittel …",
+    "searchA11y": "Søk i tittel",
+    "clearSearchA11y": "Tøm søk",
+    "filterChipHint": "Trykk for å filtrere listen",
+    "noMatches": "Ingen treff",
     "closeActions": "Lukk handlinger",
     "closeLoanModal": "Lukk utlånsmodal",
     "startSession": "Start økt",
@@ -243,6 +310,7 @@
     "progressImageA11y": "Vis bilde fra {{date}} i fullskjerm",
     "progressImageA11yNote": "Vis bilde fra {{date}}, {{note}} i fullskjerm",
     "participantsHeader": "DELTAKERE",
+    "reactionsHeader": "REAKSJONER",
     "registeredParticipantA11y": "{{name}} (registrert deltaker)",
     "addPhoto": "Legg til bilde",
     "addPhotoA11y": "Legg til fremgangsbilde",
@@ -378,7 +446,7 @@
   "nav": {
     "tabFeed": "Feed",
     "tabCollections": "Samlinger",
-    "tabFriends": "Venner",
+    "tabLibrary": "Bibliotek",
     "tabProfile": "Profil",
     "tabNewSession": "Ny økt",
     "closeMenu": "Lukk meny",
@@ -387,6 +455,26 @@
     "addSubtitle": "Puslespill, brettspill ...",
     "sessionTitle": "Start ny økt",
     "sessionSubtitle": "Logg en aktivitet",
+    "inviteTitle": "Inviter en venn",
+    "inviteSubtitle": "Del invitasjonskoden din",
     "selectType": "Velg type"
+  },
+  "loansHub": {
+    "title": "Lån",
+    "sectionIncoming": "FORESPØRSLER INN",
+    "sectionOutgoing": "FORESPØRSLER UT",
+    "sectionHistory": "HISTORIKK",
+    "empty": "Ingen aktive lån eller forespørsler",
+    "loadError": "Kunne ikke laste lån.",
+    "openHint": "Trykk for å se forespørsler og aktive lån",
+    "fromOwner": "fra {{name}}",
+    "summaryBorrowing": "{{count}} låner nå",
+    "summaryRequests_one": "{{count}} forespørsel",
+    "summaryRequests_other": "{{count}} forespørsler",
+    "summaryReturns_one": "{{count}} retur meldt",
+    "summaryReturns_other": "{{count}} returer meldt",
+    "badgeA11y_one": "{{count}} venter i Lån",
+    "badgeA11y_other": "{{count}} venter i Lån",
+    "summaryEmpty": "Ingen aktive lån"
   }
 }

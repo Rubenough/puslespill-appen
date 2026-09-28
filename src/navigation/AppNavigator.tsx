@@ -10,23 +10,24 @@ import { useTranslation } from "react-i18next";
 import { RootStackParamList } from "./RootNavigator";
 import FeedScreen from "../screens/FeedScreen";
 import CollectionsStack, { type CollectionsStackParamList } from "./CollectionsStack";
-import FriendsScreen from "../screens/FriendsScreen";
+import LibraryScreen from "../screens/LibraryScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import BottomSheet from "../components/BottomSheet";
 import { ITEM_ICONS, type ItemType } from "../utils/collections";
 
 type IoniconsName = ComponentProps<typeof Ionicons>["name"];
 
-// Fanenavigatoren. "Venner" tar en valgfri kode fra dyplenke-invitasjonen.
+// Fanenavigatoren. Venneadministrasjon ligger nå på rot-ruten "Friends"
+// (pushes fra Bibliotek-skjermen); dyplenke-invitasjoner ruter dit.
 export type TabParamList = {
   Feed: undefined;
   Samlinger: NavigatorScreenParams<CollectionsStackParamList>;
   NyOkt: undefined;
-  Venner: { code?: string } | undefined;
+  Bibliotek: undefined;
   Profil: undefined;
 };
 
-type ModalAction = "add" | "session";
+type ModalAction = "add" | "session" | "invite";
 // Hvilket steg av +-arket som vises: rot-valg eller type-valg for "legg til".
 type ModalStep = "root" | "addType";
 
@@ -57,6 +58,12 @@ const MODAL_ITEMS: {
     subtitleKey: "nav.sessionSubtitle",
     action: "session",
   },
+  {
+    icon: "person-add-outline",
+    titleKey: "nav.inviteTitle",
+    subtitleKey: "nav.inviteSubtitle",
+    action: "invite",
+  },
 ];
 
 // Dummy-skjerm for +-tab — vises aldri
@@ -82,10 +89,14 @@ export default function AppNavigator() {
   }
 
   // "Legg til" bytter til type-valg i selve arket — vi unngår en Alert like etter
-  // at arket lukkes, som iOS kan droppe stille. "Start økt" navigerer direkte.
+  // at arket lukkes, som iOS kan droppe stille. "Start økt" og "Inviter en venn"
+  // navigerer direkte (invitasjonsflyten bor på Venner-skjermen, rot-ruten "Friends").
   function handleModalAction(action: ModalAction) {
     if (action === "add") {
       setModalStep("addType");
+    } else if (action === "invite") {
+      setModalVisible(false);
+      navigation.navigate("Friends");
     } else {
       setModalVisible(false);
       navigation.navigate("NewSession", {});
@@ -125,7 +136,7 @@ export default function AppNavigator() {
           options={{
             tabBarLabel: t("nav.tabFeed"),
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="grid-outline" size={size} color={color} />
+              <Ionicons name="home-outline" size={size} color={color} />
             ),
           }}
         />
@@ -135,7 +146,7 @@ export default function AppNavigator() {
           options={{
             tabBarLabel: t("nav.tabCollections"),
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="menu-outline" size={size} color={color} />
+              <Ionicons name="library-outline" size={size} color={color} />
             ),
           }}
         />
@@ -173,12 +184,12 @@ export default function AppNavigator() {
           }}
         />
         <Tab.Screen
-          name="Venner"
-          component={FriendsScreen}
+          name="Bibliotek"
+          component={LibraryScreen}
           options={{
-            tabBarLabel: t("nav.tabFriends"),
+            tabBarLabel: t("nav.tabLibrary"),
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="people-outline" size={size} color={color} />
+              <Ionicons name="book-outline" size={size} color={color} />
             ),
           }}
         />

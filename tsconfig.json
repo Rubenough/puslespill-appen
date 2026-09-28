@@ -2,5 +2,7 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true
-  }
+  },
+  // Deno-kode (Edge Functions) har egen runtime; .claude rommer lokale agent-worktrees
+  "exclude": ["supabase/functions", ".claude"]
 }

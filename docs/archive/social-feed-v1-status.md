@@ -74,18 +74,12 @@ Full spec + SQL: `docs/social-feed-v1-phase2-db.md` §F.
 
 ---
 
-## 🧹 Open follow-ups (non-blocking, pick up anytime)
+## 🧹 Open follow-ups — ✅ all closed on `dev` (2026-07-11)
 
-- **E orphan-on-delete:** `CollectionDetailScreen.handleDelete` deletes the item
-  row but not its cover file. Add
-  `if (item.cover_url) await removeSessionImages([item.cover_url]).catch(() => {})`
-  after a confirmed delete (cover is a storage path; the helper accepts paths).
-- **E FriendCollectionScreen covers:** friend's collection rows don't render
-  covers (out of E's original scope). Sign `cover_url` there like
-  CollectionDetail does.
-- **Reactions on SessionDetail:** reactions live only on the feed today; could
-  reuse `utils/reactions.ts` on `SessionDetailScreen`.
-- **Device testing:** E + D not yet run on-device.
+- ~~**E orphan-on-delete**~~ ✅ cover file removed on confirmed delete (`CollectionDetailScreen.handleDelete`).
+- ~~**E FriendCollectionScreen covers**~~ ✅ signed covers render (feat/bibliotek).
+- ~~**Reactions on SessionDetail**~~ ✅ shared `ReactionBar` on SessionDetail (feat/polish-tests-sentry).
+- **Device testing:** still pending — verify `dev` on the Mac simulator (E + D + everything merged 2026-07-11).
 
 ---
 

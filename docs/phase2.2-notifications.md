@@ -1,8 +1,8 @@
 # Phase 2.2 — Push notifications — design + plan
 
 **Status:** 📝 Plan — not yet implemented. The nudge channel that finishes the lending loop
-(Phase 2, [`phase2-borrow-loop.md`](./phase2-borrow-loop.md)); tracked as "Pick up next #1" in
-[`PROJECT-PLAN.md`](./PROJECT-PLAN.md).
+(Phase 2, [`phase2-borrow-loop.md`](./phase2-borrow-loop.md)); originally tracked as "Pick up next #1" in
+[`archive/PROJECT-PLAN.md`](./archive/PROJECT-PLAN.md); current plan in [`STATUS.md`](../STATUS.md) (Phase 3).
 
 Status legend: `[ ]` todo · `[~]` in progress · `[x]` done
 

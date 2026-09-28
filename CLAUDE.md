@@ -4,7 +4,7 @@
 
 A React Native / Expo mobile app for managing puzzle and board game collections, loans, and a social feed. Backend: Supabase (PostgreSQL + Auth).
 
-**Planning docs:** roadmap to 1.0 in `docs/PROJECT-PLAN.md`; historical debt register + review log in `tech-debt.md`.
+**Planning docs:** current state, known-open issues and the forward plan live in [`STATUS.md`](./STATUS.md) (start here). Design docs for live behavior stay in `docs/`; superseded plans/reviews/handoffs are in `docs/archive/`. Historical debt register + review log in `tech-debt.md`.
 
 ## Tech Stack
 
@@ -121,24 +121,31 @@ src/
 │   ├── ActiveSessionCard.tsx   # Card for active puzzle sessions
 │   ├── FeedCard.tsx            # Card for activity feed items
 │   ├── PuzzleProgressIcon.tsx  # Custom SVG: 4 puzzle pieces filled 0–4 (progress indicator)
-│   └── ProgressSheet.tsx       # Combined update flow: image picker + progress (5 steps) + note
+│   ├── ProgressSheet.tsx       # Combined update flow: image picker + progress (5 steps) + note
+│   ├── ReactionBar.tsx         # Quick-react bar (👍 ❤️ 🎉 🧩) — shared by FeedCard + SessionDetail
+│   ├── ItemFilterBar.tsx       # Search input + status filter chips (CollectionDetail)
+│   ├── OnboardingChecklist.tsx # First-run checklist card on Feed (with hooks/useOnboardingChecklist)
+│   ├── ProfileEditSheet.tsx    # Edit display name + avatar (BottomSheet from ProfileScreen)
+│   └── loans/                  # LoansHub building blocks: LoanRow (due-date framing), RequestCard (quoted message + cover), DueDateChips
 ├── screens/
 │   ├── AuthScreen.tsx              # Google OAuth login
-│   ├── FeedScreen.tsx              # Active sessions + activity feed (both real Supabase)
-│   ├── CollectionsScreen.tsx       # Collection types + UTLÅNT NÅ (lent out) + DU LÅNER NÅ (borrowing), full return lifecycle
-│   ├── CollectionDetailScreen.tsx  # Items in a collection, loan/return actions (real Supabase)
+│   ├── FeedScreen.tsx              # Active sessions + activity feed; onboarding checklist + empty-state CTAs
+│   ├── CollectionsScreen.tsx       # Collection types + compact "Lån" summary card (counts) → LoansHub
+│   ├── CollectionDetailScreen.tsx  # Items in a collection, search/filter, loan/return actions (real Supabase)
 │   ├── AddItemScreen.tsx           # Add puzzle/board game form (real Supabase insert)
-│   ├── ProfileScreen.tsx           # User profile + loan history (real Supabase); gear top-right → Settings
-│   ├── SettingsScreen.tsx          # Appearance + Language + Sign out (confirm Alert) + version footer (pushed from Profile gear)
-│   ├── FriendsScreen.tsx           # Invite code + redeem + real friends list
-│   ├── FriendCollectionScreen.tsx  # Read-only view of a friend's collection
-│   ├── RequestsScreen.tsx          # Borrow requests (from Header bell): incoming approve/decline + outgoing cancel
+│   ├── ProfileScreen.tsx           # User profile (editable via ProfileEditSheet) + past sessions; gear top-right → Settings
+│   ├── SettingsScreen.tsx          # Appearance + Language + Sign out + Slett konto (delete_account Edge Function) + version footer
+│   ├── LibraryScreen.tsx           # "Bibliotek" tab: searchable all-friends item list w/ inline borrow requests; header icon → Friends
+│   ├── FriendsScreen.tsx           # Invite code (+ QR) + redeem + friends list (pushed root route "Friends")
+│   ├── FriendCollectionScreen.tsx  # Read-only view of a friend's collection (covers signed)
+│   ├── LoansHubScreen.tsx          # "Lån" hub (from Header bell + Collections card): requests in/out, borrowing, lent out, history entry
+│   ├── LoanHistoryScreen.tsx       # Returned loans (pushed from LoansHub)
 │   ├── NewSessionScreen.tsx        # Start session: item → participants → box photo (puzzle) / image → notes
-│   ├── SessionDetailScreen.tsx     # View session: hero (latest progress or cover), metadata with cover thumbnail + progress icon, "Oppdater" flow, blur fullscreen modal
+│   ├── SessionDetailScreen.tsx     # View session: hero, metadata, reactions, "Oppdater" flow, blur fullscreen modal
 │   └── EditSessionScreen.tsx       # Edit session participants + notes (modal)
 ├── navigation/
-│   ├── RootNavigator.tsx       # Stack: Tabs + AddItem + EditItem + NewSession + SessionDetail + EditSession + FriendCollection + Requests + Settings
-│   ├── AppNavigator.tsx        # Bottom tab navigator (5 tabs)
+│   ├── RootNavigator.tsx       # Stack: Tabs + AddItem + EditItem + NewSession + SessionDetail + EditSession + FriendCollection + Friends + LoansHub + LoanHistory + Settings
+│   ├── AppNavigator.tsx        # Bottom tab navigator (5 tabs: Feed, Samlinger, NyOkt, Bibliotek, Profil)
 │   └── CollectionsStack.tsx    # Stack: CollectionsList → CollectionDetail
 ├── context/
 │   ├── AuthContext.tsx         # Session, user, isLoggedIn — useAuth()
@@ -155,10 +162,14 @@ src/
     ├── initials.ts             # Avatar initial generation + deterministic colors
     ├── collections.ts          # ItemType, ITEM_ICONS, ITEM_LABELS, Difficulty
     ├── date.ts                 # Shared date helpers (getDayNumber, relative labels)
-    ├── friends.ts              # fetchFriends(userId) — accepted friends (used by FriendsScreen + loan picker)
+    ├── friends.ts              # fetchFriends(userId) — accepted friends, avatars resolved (FriendsScreen + Library + loan picker)
+    ├── avatar.ts               # resolveAvatarUrl(s): https-URLer passerer, lagringsstier batch-signeres
+    ├── feed.ts                 # buildFeedItems — ren, testet sammenslåing av feed-hendelser
+    ├── loans.ts                # DUE_OPTIONS, dueAtFromKey, isOverdue, daysUntilDue, dueDateLabel (testet)
     ├── auth.ts                 # parseOAuthRedirect (pure, tested)
     └── sessionImages.ts        # Shared storage helpers (upload/remove/path-parse for session-images bucket)
-App.tsx                         # Entry point — imports i18n, wraps AuthProvider, routes on session
+supabase/functions/             # Edge Functions (Deno, deployes via dashboard/MCP): delete_account
+App.tsx                         # Entry point — i18n, guarded Sentry.init (EXPO_PUBLIC_SENTRY_DSN), AuthProvider, deep-link routing
 ```
 
 ## Naming & Language Conventions
@@ -248,7 +259,7 @@ RootNavigator (Stack)
 │   │   ├── CollectionsList → CollectionsScreen
 │   │   └── CollectionDetail → CollectionDetailScreen
 │   ├── NyOkt → placeholder (center + button opens modal)
-│   ├── Venner → FriendsScreen
+│   ├── Bibliotek → LibraryScreen (all friends' items, searchable; header icon → Friends)
 │   └── Profil → ProfileScreen
 ├── AddItem (Modal) → AddItemScreen
 ├── EditItem (Modal) → EditItemScreen
@@ -256,7 +267,9 @@ RootNavigator (Stack)
 ├── SessionDetail (Push) → SessionDetailScreen
 ├── EditSession (Modal) → EditSessionScreen
 ├── FriendCollection (Push) → FriendCollectionScreen
-├── Requests (Push) → RequestsScreen
+├── Friends (Push) → FriendsScreen (invite/QR/redeem/unfriend; deep-link puslespill://join lander her)
+├── LoansHub (Push) → LoansHubScreen
+├── LoanHistory (Push) → LoanHistoryScreen
 └── Settings (Push) → SettingsScreen
 ```
 
@@ -264,7 +277,7 @@ RootNavigator (Stack)
 - Settings is reached via a gear (`settings-outline`) top-right on `ProfileScreen`; theme, language,
   and sign-out (with a confirm `Alert`) live there, not on Profile
 - React Navigation is used (not Expo Router) — `Stack.Protected` does not apply
-- The center (+) tab button opens an action modal with two options: add item, start session
+- The center (+) tab button opens an action modal with three options: add item, start session, invite a friend (→ Friends)
 - "Registrer utlån" is NOT in the + modal — loan registration lives on item level in CollectionDetailScreen
 - "Legg til i samlingen" → type selection alert → navigates to `AddItemScreen` with type param
 
@@ -272,7 +285,7 @@ RootNavigator (Stack)
 
 The client is typed: `createClient<Database>` in `supabase.ts`, where `Database` comes from `src/lib/database.types.ts` (generated). **Regenerate after any schema change** with `supabase login && npm run gen:types` (project ref `mzcppyhxikbkawmyrkrh`). The generated file is git-tracked but excluded from lint/format.
 
-Caveat: `type`/`difficulty`/`status` are `text` columns and some timestamps are nullable-with-default, so they come back as `string` / `string | null`. Where the app narrows to a union (`ItemType`, `Difficulty`, `ItemStatus`) or a non-null timestamp, a boundary cast at the query is still needed until DB `CHECK`/`NOT NULL` constraints are added (see `docs/PROJECT-PLAN.md` Track 0).
+`items.type/status/difficulty` and `borrow_requests.status` are **real Postgres enums** (2026-07-10 DB batch), and `items.created_at`/`sessions.started_at` are NOT NULL — the generated types are literal unions/non-null, so **no boundary casts are needed** (don't add `as unknown as` at query sites). Where a SQL filter guarantees non-null (`.not("x","is",null)`), narrow with a type-predicate filter instead of a cast.
 
 Supabase tables in use:
 
@@ -303,14 +316,14 @@ Loans are **private by default** (`is_public = false`). Borrower identity must n
 | Screen                 | Data source                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | FeedScreen             | Real — active sessions (`sessions` + `session_images`) + feed (`sessions`/`items`/`loans` last 14 days, profiles joined), per-section error+retry                                                                                                                                                                                                                                                                                                                                               |
-| CollectionsScreen      | Real — `items` + `loans`. **UTLÅNT NÅ** (owner: tap → Be om retur/Registrer retur; "Retur meldt"/"Retur etterspurt" badges) + **DU LÅNER NÅ** (borrower: mark returned / undo; sees owner's return request; due dates, overdue red)                                                                                                                                                                                                                                                             |
+| CollectionsScreen      | Real — `items` + count queries (`loans` active lent/borrowing + `borrow_requests` pending). Collection type rows + a compact **"Lån"** summary card ("2 utlånt · 1 låner nå · 1 forespørsel") that opens LoansHub                                                                                                                                                                                                                                                                               |
 | CollectionDetailScreen | Real — `items` + `loans`, pull-to-refresh + focus-refresh, loan/return actions; lend modal has a **friend picker** (filters accepted friends via `utils/friends.ts` → sets `borrower_user_id`; free-text stays as `borrower_name` fallback for non-app people) + visibility + **due-date** (quick-pick chips → `loans.due_at`); lent item's action sheet also offers **Be om retur** (owner nudge → `owner_return_requested_at` + `owner_return_note`, matched by `item_id` on the active loan) |
 | AddItemScreen          | Real — inserts to `items`                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ProfileScreen          | Real — profile from Supabase, loan history from `loans` (error+retry); gear top-right → Settings                                                                                                                                                                                                                                                                                                                                                                                                |
 | SettingsScreen         | Stateless UI — Appearance (`useTheme`) + Language (`setLanguage`), Sign out (`supabase.auth.signOut` behind a confirm `Alert`), version footer (`expo-application`)                                                                                                                                                                                                                                                                                                                             |
 | FriendsScreen          | Real — invite code (`get_my_invite_code`), redeem (`accept_invite`), accepted friends from `friendships`                                                                                                                                                                                                                                                                                                                                                                                        |
 | FriendCollectionScreen | Real — a friend's `items`; tap → Be om å låne (`request_to_borrow`) / Avbryt forespørsel (`cancel_request`) when pending; shows Forespurt/Utlånt state                                                                                                                                                                                                                                                                                                                                          |
-| RequestsScreen         | Real — borrow requests from the Header bell: incoming (approve/decline) + outgoing (cancel) via RPCs                                                                                                                                                                                                                                                                                                                                                                                            |
+| LoansHubScreen         | Real — the whole lending loop (from Header bell + Collections card): **FORESPØRSLER INN** (approve w/ due-date chips + decline; requester message + signed cover thumbnail), **FORESPØRSLER UT** (cancel), **DU LÅNER NÅ** (mark returned / undo; owner's return note), **UTLÅNT NÅ** (tap → Be om retur/Registrer retur; badges), **HISTORIKK** row → LoanHistory. Due-date framing via `utils/loans.ts` `dueDateLabel` ("forfaller om 3 dager" / red "2 dager over fristen")                  |
 | NewSessionScreen       | Real — inserts to `sessions` + `session_participants`, uploads to `session-images` bucket                                                                                                                                                                                                                                                                                                                                                                                                       |
 | SessionDetailScreen    | Real — reads `sessions` (incl. `image_url` cover) + `session_images` + `items` metadata, progress icon in metadata card, "Oppdater" flow (image + progress + note via ProgressSheet), ··· menu (edit/delete), blur fullscreen modal                                                                                                                                                                                                                                                             |
 | EditSessionScreen      | Real — updates `sessions.guest_names` + `sessions.notes`                                                                                                                                                                                                                                                                                                                                                                                                                                        |

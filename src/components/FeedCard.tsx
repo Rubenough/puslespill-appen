@@ -1,12 +1,15 @@
-import React from "react";
+import React, { type ComponentProps } from "react";
 import { View, Text, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import UserAvatar from "./UserAvatar";
+import ReactionBar from "./ReactionBar";
 import { type ItemType, ITEM_ICONS } from "../utils/collections";
 import { itemTypeLabel } from "../utils/collectionLabels";
-import { REACTION_EMOJIS, type Reaction } from "../utils/reactions";
+import { type Reaction } from "../utils/reactions";
+
+type IoniconsName = ComponentProps<typeof Ionicons>["name"];
 
 type BaseCard = {
   userName: string;
@@ -64,11 +67,28 @@ function getBadgeLabel(type: Props["type"], t: TFunction): string | null {
   return null;
 }
 
+// Distinkt farget ikon per hendelsestype, slik at feeden kan skumleses.
+// Fargeparene er hentet fra avatarpaletten (utils/initials.ts / design-system.html)
+// — mørk forgrunn på lys pastell, alle par er WCAG AA-godkjente (samme kombinasjoner
+// som avatar-initialene). Chippen ligger på sin egen pastellbakgrunn og er derfor
+// uavhengig av lys/mørk modus.
+const EVENT_STYLES: Record<
+  Props["type"],
+  { icon: IoniconsName; bg: string; fg: string }
+> = {
+  started: { icon: "play", bg: "#BFDBFE", fg: "#1E40AF" }, // blå — økt i gang
+  completed: { icon: "checkmark-done", bg: "#A7F3D0", fg: "#065F46" }, // grønn — fullført
+  added: { icon: "add", bg: "#CECBF6", fg: "#3C3489" }, // lilla — lagt til
+  loaned: { icon: "arrow-redo", bg: "#FDE68A", fg: "#92400E" }, // gul — lånte ut
+  borrowed: { icon: "arrow-undo", bg: "#FBCFE8", fg: "#9D174D" }, // rosa — lånte
+};
+
 export default function FeedCard(props: Props) {
   const { t } = useTranslation();
   const { userName, avatarUrl, itemType, itemTitle, imageUrl, onPress, onReact } = props;
   const actionText = getActionText(props, t);
   const badge = getBadgeLabel(props.type, t);
+  const eventStyle = EVENT_STYLES[props.type];
   const a11yLabel = t("feed.cardA11y", {
     user: userName,
     action: actionText,
@@ -103,6 +123,19 @@ export default function FeedCard(props: Props) {
             </Text>
           </View>
         )}
+        {/* Hendelsesikon — dekorativt; handlingen leses allerede opp via actionText */}
+        <View
+          accessible={false}
+          className="w-7 h-7 rounded-full items-center justify-center ml-2"
+          style={{ backgroundColor: eventStyle.bg }}
+        >
+          <Ionicons
+            name={eventStyle.icon}
+            size={15}
+            color={eventStyle.fg}
+            accessible={false}
+          />
+        </View>
       </View>
 
       {/* Bilde — siste progresjonsbilde når det finnes */}
@@ -155,58 +188,11 @@ export default function FeedCard(props: Props) {
           {body}
         </View>
       )}
-      {onReact && <ReactionBar reactions={props.reactions} onReact={onReact} t={t} />}
-    </View>
-  );
-}
-
-function ReactionBar({
-  reactions,
-  onReact,
-  t,
-}: {
-  reactions?: Reaction[];
-  onReact: (emoji: string) => void;
-  t: TFunction;
-}) {
-  return (
-    <View className="flex-row items-center gap-2 px-4 pb-3">
-      {REACTION_EMOJIS.map((emoji) => {
-        const r = reactions?.find((x) => x.emoji === emoji);
-        const count = r?.count ?? 0;
-        const mine = r?.mine ?? false;
-        return (
-          <TouchableOpacity
-            key={emoji}
-            onPress={() => onReact(emoji)}
-            accessibilityRole="button"
-            accessibilityLabel={
-              mine
-                ? t("feed.reactionRemove", { emoji })
-                : t("feed.reactionAdd", { emoji })
-            }
-            accessibilityState={{ selected: mine }}
-            className={`flex-row items-center rounded-full px-2.5 py-1 border ${
-              mine
-                ? "bg-accent/10 dark:bg-accent-dark/10 border-accent dark:border-accent-dark"
-                : "bg-surface-secondary dark:bg-surface-dark-secondary border-border dark:border-border-dark"
-            }`}
-          >
-            <Text className="text-sm">{emoji}</Text>
-            {count > 0 && (
-              <Text
-                className={`text-xs font-semibold ml-1 ${
-                  mine
-                    ? "text-accent dark:text-accent-dark"
-                    : "text-content-secondary dark:text-content-secondary-dark"
-                }`}
-              >
-                {count}
-              </Text>
-            )}
-          </TouchableOpacity>
-        );
-      })}
+      {onReact && (
+        <View className="px-4 pb-3">
+          <ReactionBar reactions={props.reactions} onReact={onReact} />
+        </View>
+      )}
     </View>
   );
 }

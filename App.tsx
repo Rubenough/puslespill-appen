@@ -2,6 +2,7 @@ import "./global.css";
 import "./src/lib/i18n";
 import React, { useEffect } from "react";
 import { Linking } from "react-native";
+import * as Sentry from "@sentry/react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   NavigationContainer,
@@ -24,18 +25,30 @@ import {
 
 SplashScreen.preventAutoHideAsync();
 
-// Dyplenke: puslespill://join?code=XYZ åpner Venner-fanen med koden forhåndsutfylt.
-// Bruker det eksisterende app.json-skjemaet «puslespill» (samme som OAuth), så
-// ingen native-endring/ombygging trengs — dette er ren JS-ruting.
+// Sentry-krasjrapportering — aktiveres KUN når EXPO_PUBLIC_SENTRY_DSN er satt
+// (se docs/sentry-setup.md). Uten DSN er hele oppsettet en no-op, så utvikling
+// og CI fungerer uendret uten Sentry-konto.
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    // Ingen persondata utover det vi eksplisitt sender (GDPR-holdningen ellers i appen).
+    sendDefaultPii: false,
+  });
+}
+
+// Dyplenke: puslespill://join?code=XYZ åpner Venner-skjermen (rot-ruten "Friends",
+// pushet over Bibliotek-fanen) med koden forhåndsutfylt. Bruker det eksisterende
+// app.json-skjemaet «puslespill» (samme som OAuth), så ingen native-endring/
+// ombygging trengs — dette er ren JS-ruting.
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ["puslespill://"],
   config: {
+    // Uten initialRouteName bygger en kaldstart-dyplenke en stack med KUN
+    // Friends — død tilbakeknapp og ingen tab-bar. Tabs må alltid ligge under.
+    initialRouteName: "Tabs",
     screens: {
-      Tabs: {
-        screens: {
-          Venner: "join",
-        },
-      },
+      Friends: "join",
     },
   },
 };
@@ -73,11 +86,12 @@ function AppContent() {
   }, [loading, themeReady]);
 
   // Når navigatoren er klar (mountes først etter innlogging): rut en eventuell
-  // ventende invitasjonskode til Venner. FriendsScreen forhåndsutfyller og tømmer den.
+  // ventende invitasjonskode til Venner-skjermen. FriendsScreen forhåndsutfyller
+  // og tømmer den.
   function handleNavReady() {
     getPendingInviteCode()
       .then((code) => {
-        if (code) navigationRef.navigate("Tabs", { screen: "Venner", params: { code } });
+        if (code) navigationRef.navigate("Friends", { code });
       })
       .catch(() => {});
   }
@@ -97,7 +111,7 @@ function AppContent() {
   );
 }
 
-export default function App() {
+function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ErrorBoundary>
@@ -110,3 +124,6 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
+
+// Sentry.wrap gir touch-/navigasjonskontekst på events; kun meningsfull med DSN.
+export default sentryDsn ? Sentry.wrap(App) : App;

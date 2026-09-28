@@ -5,6 +5,12 @@ jest.mock("../../lib/supabase", () => ({
   supabase: { from: jest.fn() },
 }));
 
+// Avatar-oppløsning testes for seg (avatar.test.ts) — her passerer verdier urørt.
+jest.mock("../avatar", () => ({
+  resolveAvatarUrls: async (values: (string | null)[]) =>
+    new Map(values.filter((v): v is string => !!v).map((v) => [v, v])),
+}));
+
 const mockedFrom = supabase.from as jest.Mock;
 
 type FriendshipRow = {

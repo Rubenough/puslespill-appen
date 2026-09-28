@@ -3,14 +3,14 @@
 **Created:** 2026-07-07 · **Owner:** @rubenough
 **Status:** ✅ COMPLETED (2026-07-08) — Social Feed v1 (Phases 1 + 2 D/E/F) shipped,
 device-verified, and merged to `main`. This was the kickoff prompt; kept as a
-historical record. Current state lives in `docs/social-feed-v1-status.md`.
+historical record. Current state lives in `docs/archive/social-feed-v1-status.md`.
 
 ## Why
 
 From the 2026-07-06 product review: the app _tracks_ sharing well but doesn't
 _feel_ social. The highest-leverage, mostly no-DB batch is a photo-first,
 tappable feed plus friends' active sessions and a working deep-link invite.
-See `docs/PROJECT-PLAN.md` (Phase 3.3 feed depth) for the surrounding roadmap.
+See `docs/archive/PROJECT-PLAN.md` (Phase 3.3 feed depth) for the surrounding roadmap.
 
 ## Branch state to know before starting
 

@@ -10,6 +10,7 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   useNavigation,
@@ -18,18 +19,18 @@ import {
   type RouteProp,
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useColorScheme } from "nativewind";
 import { useTranslation } from "react-i18next";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { RootStackParamList } from "../navigation/RootNavigator";
-import { type TabParamList } from "../navigation/AppNavigator";
 import UserAvatar from "../components/UserAvatar";
 import { fetchFriends, type Friend } from "../utils/friends";
 import { clearPendingInviteCode } from "../utils/pendingInvite";
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
-// Dyplenke-koden (puslespill://join?code=…) leveres som ruteparameter på Venner-fanen.
+// Dyplenke-koden (puslespill://join?code=…) leveres som ruteparameter på Venner-skjermen.
 const inviteLinkFor = (code: string) => `puslespill://join?code=${code}`;
 
 // Stabile feiltokens fra accept_invite (F4 tier 2) → i18n-nøkkel. Faller tilbake
@@ -45,9 +46,13 @@ const TOKEN_TO_KEY: Record<string, string> = {
 export default function FriendsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavProp>();
-  const route = useRoute<RouteProp<TabParamList, "Venner">>();
+  const route = useRoute<RouteProp<RootStackParamList, "Friends">>();
   const { t } = useTranslation();
   const { user } = useAuth();
+  // App-styrt fargeskjema (ikke OS) — brukes til den imperative chevron-fargen.
+  const { colorScheme } = useColorScheme();
+  // content-secondary (#78716C) feiler kontrast på mørk flate; bruk lysere token der.
+  const chevronColor = colorScheme === "dark" ? "#A8A29E" : "#78716C";
 
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   // Speiler inviteCode slik at fetchCode kan beholde en allerede vist kode ved en
@@ -61,6 +66,9 @@ export default function FriendsScreen() {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
+
+  // QR-visning av invitasjonslenken (skannes med telefonkameraet → dyplenke).
+  const [showQr, setShowQr] = useState(false);
 
   const [redeemInput, setRedeemInput] = useState("");
   const [redeeming, setRedeeming] = useState(false);
@@ -233,12 +241,28 @@ export default function FriendsScreen() {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      <Text
-        className="text-content dark:text-content-dark text-2xl font-medium px-4 pb-6"
+      {/* Skjermen pushes fra Bibliotek — egen tilbakeknapp i topraden. */}
+      <View
+        className="flex-row items-center px-4 pb-6"
         style={{ paddingTop: insets.top + 16 }}
       >
-        {t("friends.title")}
-      </Text>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel={t("common.back")}
+          className="mr-3"
+        >
+          <Ionicons
+            name="chevron-back"
+            size={24}
+            color={chevronColor}
+            accessible={false}
+          />
+        </TouchableOpacity>
+        <Text className="text-content dark:text-content-dark text-2xl font-medium flex-1">
+          {t("friends.title")}
+        </Text>
+      </View>
 
       {/* Min invitasjon */}
       <Text
@@ -294,6 +318,51 @@ export default function FriendsScreen() {
             <Text className="text-white font-semibold text-sm">{t("friends.share")}</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Vis/skjul QR — sidestilt med roter-koden-handlingen under kode-raden. */}
+        <TouchableOpacity
+          onPress={() => setShowQr((v) => !v)}
+          disabled={!inviteCode || rotating}
+          accessibilityRole="button"
+          accessibilityLabel={showQr ? t("friends.qrHide") : t("friends.qrShow")}
+          accessibilityState={{ disabled: !inviteCode || rotating, expanded: showQr }}
+          className="flex-row items-center gap-1.5 mt-3 self-start"
+        >
+          <Ionicons
+            name="qr-code-outline"
+            size={16}
+            color={inviteCode && !rotating ? "#1D9E75" : "#A8A29E"}
+            accessible={false}
+          />
+          <Text
+            className={`text-sm font-semibold ${
+              inviteCode && !rotating
+                ? "text-accent dark:text-accent-dark"
+                : "text-content-secondary dark:text-content-secondary-dark"
+            }`}
+          >
+            {showQr ? t("friends.qrHide") : t("friends.qrShow")}
+          </Text>
+        </TouchableOpacity>
+
+        {/* QR av invitasjonslenken — skann med telefonkameraet, dyplenken tar
+            mottakeren rett til Venner med koden forhåndsutfylt. */}
+        {showQr && inviteCode && !rotating && (
+          <View
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={t("friends.qrA11y", { code: inviteCode })}
+            className="items-center mt-4"
+          >
+            {/* Hvit plate med stillekant så QR-en er skannbar også i mørkt tema. */}
+            <View className="bg-white rounded-2xl p-4">
+              <QRCode value={inviteLinkFor(inviteCode)} size={168} />
+            </View>
+            <Text className="text-content-secondary dark:text-content-secondary-dark text-xs mt-2 text-center">
+              {t("friends.qrHint")}
+            </Text>
+          </View>
+        )}
 
         {/* F2: roter koden — stille, underordnet handling under kode-raden. */}
         <TouchableOpacity

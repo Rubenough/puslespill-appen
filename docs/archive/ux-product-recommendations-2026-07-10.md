@@ -5,12 +5,18 @@ This doc covers product/UX: name, IA, flows, screens, copy, and functionality.
 Grounded in the current code at `7f5d970` and `docs/screenshots/` (note: those screenshots
 predate item covers and reactions — judged against current code where they differ).
 
+> **Implementation status (2026-07-11): DONE on `dev`** — all pure-JS items in §7 (Bibliotek,
+> Lån hub, QR invite, profile editing, filter chips, SessionDetail reactions, tab icons, feed
+> identity, due-date framing, onboarding) are merged. §1 name decision: **Hylvo** (in-app
+> display name applied; slug/bundle IDs + domain/ASC reservation deferred to pre-production).
+> Barcode scan stays post-v1.
+
 ---
 
 ## 1. App name
 
 "Fordriv" is the weakest of the current assets: abstract (nothing about friends, lending,
-or games), hard for non-Norwegians to pronounce, and it describes the *old* concept
+or games), hard for non-Norwegians to pronounce, and it describes the _old_ concept
 (passing time) rather than the product (a shared library).
 
 **Pick against these criteria:** says "shared/borrowing" or "shelf/collection"; works as a
@@ -37,9 +43,9 @@ roadmap): one flat, searchable list of every item all friends own (title, cover,
 avatar, available/lent status) with "Be om å låne" inline. At friend-group scale this is
 one query (RLS already scopes to friends) + one screen — **~2–3 days**.
 
-Make it the *content* of the Venner tab: rename the tab **Bibliotek**, move invite/manage-
+Make it the _content_ of the Venner tab: rename the tab **Bibliotek**, move invite/manage-
 friends behind a header icon on that screen. The tab goes from plumbing to the product's
-front door. This is the single change that most improves how the app *feels*.
+front door. This is the single change that most improves how the app _feels_.
 
 ---
 
@@ -49,7 +55,7 @@ front door. This is the single change that most improves how the app *feels*.
   split across two sections on Collections; history is a push off Collections. When
   notifications land, a tapped notification needs somewhere that shows the whole state.
   **Add a "Lån" hub screen** (incoming/outgoing requests + borrowing + lending + history),
-  reachable from the bell *and* Collections. Consolidates three scattered surfaces and
+  reachable from the bell _and_ Collections. Consolidates three scattered surfaces and
   slims `CollectionsScreen` (670 lines, three jobs).
 - **Tab icons:** "Samlinger" uses `menu-outline` (reads as a hamburger menu — metaphor
   mismatch); Feed uses `grid-outline`. Use `library-outline`/`albums-outline` for
@@ -62,11 +68,11 @@ front door. This is the single change that most improves how the app *feels*.
 ## 4. User flows
 
 - **First-run onboarding** (already a launch blocker in the review plan — this is the
-  *design*): not generic intro slides. A 3-step guided setup:
+  _design_): not generic intro slides. A 3-step guided setup:
   1. "Legg til de første tingene dine" → straight into AddItem
   2. "Inviter gjengen" → share sheet + QR
   3. Done → Feed with a "waiting for friends" state
-  A checklist beats a carousel: the app is worthless until both items *and* friends exist.
+     A checklist beats a carousel: the app is worthless until both items _and_ friends exist.
 - **QR code invites** (~0.5 day, `react-native-qrcode-svg`): users are physically in the
   same room — render the invite code as a QR on FriendsScreen, scan from the redeem flow.
   Beats reading `X7K2…` across the table; great demo/screenshot moment.
@@ -87,13 +93,13 @@ front door. This is the single change that most improves how the app *feels*.
 The visual system is a real strength — consistent tokens, disciplined dark mode,
 WCAG-checked contrast. Keep it. Per-screen improvements:
 
-| Screen | Recommendation |
-| --- | --- |
-| **Feed** | "AKTIVE ØKTER" owns the top while lending events — the concept spine — are undifferentiated rows. Give event types distinct visual identity (colored icon per type: lånte ut / lånte / la til / fullførte). Consider a compact "DINE LÅN" status strip (borrowing/lending + due dates). Push cover adoption — prompt for a photo during AddItem; one image transforms feed + library density. |
-| **Collections** | Past ~20 items, `CollectionDetailScreen` needs search + filter chips (Tilgjengelig / Utlånt). Cheap; postpones fancier organization. |
-| **UTLÅNT NÅ rows** | "Ole · 27 dager siden" ages silently. With due dates, show "forfaller om 3 dager" / red "2 dager over fristen" instead of elapsed time — deadline framing nudges returns. |
-| **Requests** | Show the requester's message prominently (the human part of the transaction) + item cover, not just title. |
-| **SessionDetail** | Reactions exist on the feed but not here (noted in `social-feed-v1-status.md` follow-ups) — finish it; the detail screen is where the conversation about a photo happens. |
+| Screen             | Recommendation                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Feed**           | "AKTIVE ØKTER" owns the top while lending events — the concept spine — are undifferentiated rows. Give event types distinct visual identity (colored icon per type: lånte ut / lånte / la til / fullførte). Consider a compact "DINE LÅN" status strip (borrowing/lending + due dates). Push cover adoption — prompt for a photo during AddItem; one image transforms feed + library density. |
+| **Collections**    | Past ~20 items, `CollectionDetailScreen` needs search + filter chips (Tilgjengelig / Utlånt). Cheap; postpones fancier organization.                                                                                                                                                                                                                                                          |
+| **UTLÅNT NÅ rows** | "Ole · 27 dager siden" ages silently. With due dates, show "forfaller om 3 dager" / red "2 dager over fristen" instead of elapsed time — deadline framing nudges returns.                                                                                                                                                                                                                     |
+| **Requests**       | Show the requester's message prominently (the human part of the transaction) + item cover, not just title.                                                                                                                                                                                                                                                                                    |
+| **SessionDetail**  | Reactions exist on the feed but not here (noted in `social-feed-v1-status.md` follow-ups) — finish it; the detail screen is where the conversation about a photo happens.                                                                                                                                                                                                                     |
 
 ---
 
