@@ -26,11 +26,11 @@ A second full review was run after Fase 5 (real feed). The following were **fixe
 
 **Corrections to the register below (were stale):**
 
-- **TD-11** — `WishlistScreen` did _not_ have a roadmap comment; it was an unwired stub and has now been **deleted**. The completion plan tracks a real wishlist feature in `docs/PROJECT-PLAN.md`.
+- **TD-11** — `WishlistScreen` did _not_ have a roadmap comment; it was an unwired stub and has now been **deleted**. The completion plan tracked a real wishlist feature in `docs/archive/PROJECT-PLAN.md` (now parked in `STATUS.md`).
 - **TD-15** — the global `+` modal has **2** items (both wired: add item → alert→AddItem; start session → NewSession), not 3 with a broken "Registrer utlån". No longer applicable.
 - References to `MOCK_FEED` / `MOCK_SESSIONS` are obsolete — `FeedScreen` is fully real.
 
-**Still open** (carried forward, see `docs/PROJECT-PLAN.md` for the plan): atomic loan/return/delete via RPC or `ON DELETE CASCADE` (TD-03 partially mitigated by the `trg_sync_item_status` trigger + verified deletes), zero test coverage (TD-05), `services/` layer (TD-12), typed SecureStore adapter (TD-14), `as any` casts in `FeedScreen`, and the public `session-images` bucket (new — see plan §Security).
+**Still open** (carried forward, see `docs/archive/PROJECT-PLAN.md` for the plan of the time; current plan in `STATUS.md`): atomic loan/return/delete via RPC or `ON DELETE CASCADE` (TD-03 partially mitigated by the `trg_sync_item_status` trigger + verified deletes), zero test coverage (TD-05), `services/` layer (TD-12), typed SecureStore adapter (TD-14), `as any` casts in `FeedScreen`, and the public `session-images` bucket (new — see plan §Security).
 
 ---
 

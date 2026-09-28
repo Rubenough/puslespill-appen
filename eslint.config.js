@@ -22,7 +22,7 @@ module.exports = [
   {
     rules: {
       // Fetch-på-mount setter loading-state synkront i en effekt. Idiomatisk her;
-      // fjernes skikkelig når data-henting flyttes til React Query (PROJECT-PLAN Phase 4).
+      // fjernes skikkelig når data-henting flyttes til React Query (se STATUS.md — parkert).
       // Advarsel (ikke error) slik at CI ikke feiler på et bevisst mønster.
       "react-hooks/set-state-in-effect": "warn",
     },

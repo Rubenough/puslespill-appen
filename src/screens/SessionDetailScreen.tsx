@@ -343,7 +343,7 @@ export default function SessionDetailScreen() {
           // Merk: uten transaksjon er dette ikke atomært. Vi sletter DB-radene før
           // filene, og fjerner filer fra storage KUN etter at selve økt-raden er
           // bekreftet slettet — slik at en feilet sletting aldri etterlater en
-          // levende økt uten bildene sine. Se PROJECT-PLAN.md for en `delete_session`
+          // levende økt uten bildene sine. Se docs/archive/PROJECT-PLAN.md for en `delete_session`
           // RPC / ON DELETE CASCADE som løser atomisiteten skikkelig.
           const storagePaths: string[] = [
             ...images.map((img) => storagePathFromUrl(img.image_url)),

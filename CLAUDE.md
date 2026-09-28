@@ -4,7 +4,7 @@
 
 A React Native / Expo mobile app for managing puzzle and board game collections, loans, and a social feed. Backend: Supabase (PostgreSQL + Auth).
 
-**Planning docs:** roadmap to 1.0 in `docs/PROJECT-PLAN.md`; historical debt register + review log in `tech-debt.md`.
+**Planning docs:** current state, known-open issues and the forward plan live in [`STATUS.md`](./STATUS.md) (start here). Design docs for live behavior stay in `docs/`; superseded plans/reviews/handoffs are in `docs/archive/`. Historical debt register + review log in `tech-debt.md`.
 
 ## Tech Stack
 

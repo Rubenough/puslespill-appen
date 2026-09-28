@@ -2,7 +2,7 @@
 
 Sosial mobilapp for vennegjenger som pusler sammen. Del samlinger, hold styr på utlån, og følg hverandres puslespilløkter.
 
-> **Status:** Kjernefunksjonalitet på plass: samlinger, utlån, fremgangssporing, feed, venner (invitasjonskoder + venners samlinger) og Google-autentisering via Supabase. Alle skjermer bruker nå ekte data. Neste steg: låneforespørsler mellom venner. Jobber mot offentlig beta.
+> **Status:** Kjernen er ferdig: venner (invitasjonskode, lenke og QR), samlinger, Bibliotek med låneforespørsler, en samlet Lån-hub med forfallsdatoer og retur, økt-feed med bilder og reaksjoner, onboarding og sletting av konto. Appen er ennå ikke publisert — neste steg er Expo SDK-oppgradering, verifisering på ekte enhet og en lukket beta for vennegjengen (se [STATUS.md](./STATUS.md)).
 
 <p align="center">
   <img src="docs/screenshots/01-feed.png" width="240" alt="Feed med aktive økter og social aktivitet" />
@@ -35,7 +35,7 @@ src/
 └── lib/            Supabase-klient
 ```
 
-Full prosjektdokumentasjon, konsept, wireframes og fremdrift ligger i [puslespill-app.md](./puslespill-app.md). Veikart mot 1.0 ligger i [docs/PROJECT-PLAN.md](./docs/PROJECT-PLAN.md), og kjent teknisk gjeld i [tech-debt.md](./tech-debt.md).
+Full prosjektdokumentasjon, konsept, wireframes og fremdrift ligger i [puslespill-app.md](./puslespill-app.md). Nåstatus og veikart ligger i [STATUS.md](./STATUS.md), og historisk teknisk gjeld i [tech-debt.md](./tech-debt.md).
 
 ## Lokal utvikling
 
