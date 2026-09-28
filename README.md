@@ -23,7 +23,7 @@ React Native med Expo (SDK 57), TypeScript i strict mode, NativeWind for Tailwin
 
 ## Arkitektur
 
-Tab-basert navigasjon med fem ankerpunkter: Feed, Samlinger, en sentral `+`-knapp, Venner og Profil. `+`-knappen åpner en modal med kontekstavhengige handlinger (legg til i samling, start ny økt) heller enn å navigere til en egen fane. Valget reduserer dybden i navigasjonstreet for hyppige handlinger. Utlån registreres på gjenstandsnivå der konteksten er naturlig.
+Tab-basert navigasjon med fem ankerpunkter: Feed, Samlinger, en sentral `+`-knapp, Bibliotek (alle vennenes ting, søkbart) og Profil. `+`-knappen åpner en modal med kontekstavhengige handlinger (legg til i samling, start ny økt, inviter en venn) heller enn å navigere til en egen fane. Venner administreres fra Bibliotek, og hele utlånsløkken samles i Lån-huben (fra bjella og Samlinger). Valget reduserer dybden i navigasjonstreet for hyppige handlinger. Utlån registreres på gjenstandsnivå der konteksten er naturlig.
 
 ```
 src/
@@ -31,6 +31,7 @@ src/
 ├── screens/        Én fil per skjerm
 ├── components/     Gjenbrukbare UI-komponenter
 ├── context/        React Context (profil m.m.)
+├── hooks/          Delte hooks
 ├── utils/          Delte hjelpefunksjoner
 └── lib/            Supabase-klient
 ```

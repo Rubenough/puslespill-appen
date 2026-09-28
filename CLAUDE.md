@@ -309,7 +309,7 @@ Item types: `"puslespill"` | `"brettspill"` (defined in `utils/collections.ts` a
 
 Loans are **private by default** (`is_public = false`). Borrower identity must never leak to users who are not the owner.
 
-- RLS: only `owner_id = auth.uid()` can read/write their own loans
+- RLS: owners read/write their loans; a borrower can **read** (not write) the loans where they are `borrower_user_id` — every column, so never store owner-private text on a loan row. Borrower actions go through `mark_loan_returned` / `unmark_loan_returned`
 - `is_public = true` means the loan _activity_ (not borrower name) can be shown to mutual friends in the feed — e.g. "Ruben lånte ut et puslespill" without naming who
 - Borrower name is only ever shown to the item owner, never to other users — even if `is_public = true`
 - `borrower_user_id` is set by the loan modal's friend picker (`CollectionDetailScreen` + `utils/friends.ts`) when the borrower is an accepted friend; `borrower_name` is always stored as a display fallback (including for non-app users typed in as free text)
