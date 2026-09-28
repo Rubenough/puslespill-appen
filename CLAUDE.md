@@ -8,7 +8,7 @@ A React Native / Expo mobile app for managing puzzle and board game collections,
 
 ## Tech Stack
 
-- **React Native 0.83.2** + **Expo 55**
+- **React Native 0.83** + **Expo SDK 55** (exact pins in `package.json`)
 - **TypeScript** (strict mode)
 - **NativeWind 4** + **Tailwind CSS 3** for styling
 - **React Navigation 7** (bottom tabs + stack + modal)
@@ -80,7 +80,7 @@ not as an agent background task — those get reaped. Killing the local `eas bui
 process does NOT cancel an in-progress **cloud** build.
 
 ```bash
-# Legacy shortcuts (still valid)
+# Shortcuts
 npx expo start                # bare Metro (defaults to dev-client since expo-dev-client is installed)
 npx expo start --android
 npx expo start --web
@@ -175,7 +175,7 @@ App.tsx                         # Entry point — i18n, guarded Sentry.init (EXP
 ## Naming & Language Conventions
 
 - **Functions, constants, variables, types: English**
-- **UI text (labels, placeholders, headings): all through i18n** — `t('key')`, `no.json` source of truth + `en.json`, language toggle in `SettingsScreen`. The retrofit is **complete** (every screen migrated; full `no`/`en` key parity). **Always** add user-facing strings — visible text, `placeholder`, `accessibilityLabel`/`accessibilityHint`, `Alert` copy — as keys in **both** locale files. Never hardcode Norwegian. See [`docs/i18n-plan.md`](./docs/i18n-plan.md).
+- **UI text (labels, placeholders, headings): all through i18n** — `t('key')`, `no.json` source of truth + `en.json`, language toggle in `SettingsScreen`. **Always** add user-facing strings — visible text, `placeholder`, `accessibilityLabel`/`accessibilityHint`, `Alert` copy — as keys in **both** locale files. Never hardcode Norwegian. See [`docs/i18n-plan.md`](./docs/i18n-plan.md).
 - **Code comments: Norwegian is fine**
 
 ## Design System
@@ -241,7 +241,7 @@ Consult this file when adding new UI — all new components should follow the sa
 - `lib/i18n.ts` (i18next + react-i18next + expo-localization) is imported once in `App.tsx`. Default = device locale mapped to `no`/`en` (fallback `no`); a manual override is persisted in SecureStore and loaded on startup via `loadPersistedLanguage()`.
 - In UI: `const { t } = useTranslation();` → `t("namespace.key")`. accessibility labels/hints go through `t()` too. Add both `no.json` and `en.json` entries in the same change; `no.json` is source of truth.
 - Language toggle lives in `SettingsScreen` (`setLanguage("no"|"en")`).
-- **Migration is complete** — every screen resolves its strings through `t()`; `no.json`/`en.json` are at full key parity (keep them that way). Non-component helpers call `i18n.t(...)` directly (e.g. `utils/collectionLabels.ts`, the `fetchFeedItems` fallbacks); category/metadata text goes through `collectionLabels.ts` (`itemTypeLabel` / `piecesLabel` / `playersLabel` / `difficultyLabel`), not raw literals. Do **not** translate DB values (`"Utlånt"`, `"Tilgjengelig"`, `ItemType`, difficulty) or route names — only display text. See [`docs/i18n-plan.md`](./docs/i18n-plan.md).
+- Every screen resolves its strings through `t()`; keep `no.json`/`en.json` at full key parity. Non-component helpers call `i18n.t(...)` directly (e.g. `utils/collectionLabels.ts`, the `fetchFeedItems` fallbacks); category/metadata text goes through `collectionLabels.ts` (`itemTypeLabel` / `piecesLabel` / `playersLabel` / `difficultyLabel`), not raw literals. Do **not** translate DB values (`"Utlånt"`, `"Tilgjengelig"`, `ItemType`, difficulty) or route names — only display text. See [`docs/i18n-plan.md`](./docs/i18n-plan.md).
 
 ### Contexts
 
@@ -279,13 +279,13 @@ RootNavigator (Stack)
 - React Navigation is used (not Expo Router) — `Stack.Protected` does not apply
 - The center (+) tab button opens an action modal with three options: add item, start session, invite a friend (→ Friends)
 - "Registrer utlån" is NOT in the + modal — loan registration lives on item level in CollectionDetailScreen
-- "Legg til i samlingen" → type selection alert → navigates to `AddItemScreen` with type param
+- "Legg til i samlingen" → type picker inside the + sheet → navigates to `AddItemScreen` with type param
 
 ### Database
 
-The client is typed: `createClient<Database>` in `supabase.ts`, where `Database` comes from `src/lib/database.types.ts` (generated). **Regenerate after any schema change** with `supabase login && npm run gen:types` (project ref `mzcppyhxikbkawmyrkrh`). The generated file is git-tracked but excluded from lint/format.
+The client is typed: `createClient<Database>` in `supabase.ts`, where `Database` comes from `src/lib/database.types.ts` (generated). **Regenerate after any schema change** with `supabase login && SUPABASE_PROJECT_ID=mzcppyhxikbkawmyrkrh npm run gen:types`. The generated file is git-tracked but excluded from lint/format.
 
-`items.type/status/difficulty` and `borrow_requests.status` are **real Postgres enums** (2026-07-10 DB batch), and `items.created_at`/`sessions.started_at` are NOT NULL — the generated types are literal unions/non-null, so **no boundary casts are needed** (don't add `as unknown as` at query sites). Where a SQL filter guarantees non-null (`.not("x","is",null)`), narrow with a type-predicate filter instead of a cast.
+`items.type/status/difficulty` and `borrow_requests.status` are Postgres enums and `items.created_at`/`sessions.started_at` are NOT NULL, so the generated types are already literal unions/non-null — don't add `as unknown as` at query sites. Where a SQL filter guarantees non-null (`.not("x","is",null)`), narrow with a type-predicate filter instead of a cast.
 
 Supabase tables in use:
 
@@ -319,8 +319,8 @@ Loans are **private by default** (`is_public = false`). Borrower identity must n
 | CollectionsScreen      | Real — `items` + count queries (`loans` active lent/borrowing + `borrow_requests` pending). Collection type rows + a compact **"Lån"** summary card ("2 utlånt · 1 låner nå · 1 forespørsel") that opens LoansHub                                                                                                                                                                                                                                                                               |
 | CollectionDetailScreen | Real — `items` + `loans`, pull-to-refresh + focus-refresh, loan/return actions; lend modal has a **friend picker** (filters accepted friends via `utils/friends.ts` → sets `borrower_user_id`; free-text stays as `borrower_name` fallback for non-app people) + visibility + **due-date** (quick-pick chips → `loans.due_at`); lent item's action sheet also offers **Be om retur** (owner nudge → `owner_return_requested_at` + `owner_return_note`, matched by `item_id` on the active loan) |
 | AddItemScreen          | Real — inserts to `items`                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ProfileScreen          | Real — profile from Supabase, loan history from `loans` (error+retry); gear top-right → Settings                                                                                                                                                                                                                                                                                                                                                                                                |
-| SettingsScreen         | Stateless UI — Appearance (`useTheme`) + Language (`setLanguage`), Sign out (`supabase.auth.signOut` behind a confirm `Alert`), version footer (`expo-application`)                                                                                                                                                                                                                                                                                                                             |
+| ProfileScreen          | Real — profile from Supabase (editable via `ProfileEditSheet`) + completed sessions from `sessions` (error+retry); gear top-right → Settings                                                                                                                                                                                                                                                                                                                                                    |
+| SettingsScreen         | Appearance (`useTheme`) + Language (`setLanguage`), Sign out (confirm `Alert`), Slett konto (double confirm → `delete_account` Edge Function → local sign-out), version footer (`expo-application`)                                                                                                                                                                                                                                                                                             |
 | FriendsScreen          | Real — invite code (`get_my_invite_code`), redeem (`accept_invite`), accepted friends from `friendships`                                                                                                                                                                                                                                                                                                                                                                                        |
 | FriendCollectionScreen | Real — a friend's `items`; tap → Be om å låne (`request_to_borrow`) / Avbryt forespørsel (`cancel_request`) when pending; shows Forespurt/Utlånt state                                                                                                                                                                                                                                                                                                                                          |
 | LoansHubScreen         | Real — the whole lending loop (from Header bell + Collections card): **FORESPØRSLER INN** (approve w/ due-date chips + decline; requester message + signed cover thumbnail), **FORESPØRSLER UT** (cancel), **DU LÅNER NÅ** (mark returned / undo; owner's return note), **UTLÅNT NÅ** (tap → Be om retur/Registrer retur; badges), **HISTORIKK** row → LoanHistory. Due-date framing via `utils/loans.ts` `dueDateLabel` ("forfaller om 3 dager" / red "2 dager over fristen")                  |
@@ -334,7 +334,7 @@ In `.env`: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`
 
 ## Accessibility (WCAG AA)
 
-All new and modified UI must follow these rules. The codebase has already been audited and fixed — maintain the same patterns.
+All new and modified UI must follow these rules. Existing screens already do, so match their patterns.
 
 ### Required props by element type
 
@@ -448,6 +448,5 @@ Custom theme colors in `tailwind.config.js` are pre-validated at WCAG AA:
 
 - Do not add a test framework unless explicitly asked
 - Do not use `StyleSheet` from React Native — use NativeWind classes instead
-- Do not over-engineer; keep components simple and focused
 - Do not switch to Expo Router — the project uses React Navigation intentionally
 - Do not add SQL migration files — schema is managed directly in the Supabase dashboard
