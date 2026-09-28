@@ -12,6 +12,7 @@ no-op: ingen init, ingen nettverkstrafikk, jest/CI upåvirket.
 | `src/components/ErrorBoundary.tsx` | `componentDidCatch` → `Sentry.captureException(error, { extra: { componentStack } })`, bak samme env-guard, i tillegg til `console.error` som før.                                 |
 | `app.json`                         | Config-pluginen `@sentry/react-native/expo` med **plassholderverdier** (`placeholder-org` / `placeholder-project`) — app.json kan ikke ha kommentarer, så dokumentasjonen bor her. |
 | `metro.config.js`                  | `getSentryExpoConfig` (debug-ID-er i sourcemaps) komponert med NativeWinds `withNativeWind` — verifisert at begge deler er aktive.                                                 |
+| `eas.json`                         | `SENTRY_DISABLE_AUTO_UPLOAD=true` i `env` for alle build-profiler, slik at EAS-bygg ikke feiler på sourcemap-opplasting mens org/project er plassholdere og auth-token mangler.    |
 
 ## Aktivering — steg for steg
 
@@ -45,7 +46,10 @@ no-op: ingen init, ingen nettverkstrafikk, jest/CI upåvirket.
    eas env:create --name SENTRY_AUTH_TOKEN --value <token> --scope project
    ```
 
-   Uten tokenet bygger appen fortsatt — du mister bare symboliserte stack traces.
+   Når org/project og tokenet er på plass: **fjern `SENTRY_DISABLE_AUTO_UPLOAD`** fra
+   `env` i alle build-profilene i `eas.json` — ellers hoppes opplastingen stille over.
+   (Uten token og uten flagget feiler Sentrys byggesteg; `SENTRY_ALLOW_FAILURE=true`
+   er alternativet hvis du vil prøve opplasting uten å la den stoppe bygget.)
 
 5. **Ny native build kreves.** Config-pluginen endrer det native laget
    (`npm run rebuild:check` bekrefter). Sentry aktiveres altså først i **neste**
