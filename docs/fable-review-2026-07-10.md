@@ -18,12 +18,12 @@ UX/product follow-up (name, IA, flows, screens): [`ux-product-recommendations-20
 
 Verified against the code and git log — the following brief items are already **done**:
 
-| Brief claim | Reality |
-| --- | --- |
-| Deep-link invite not wired | ✅ Done — `linking` config in `App.tsx` (`puslespill://join?code=`), incl. logged-out deferred invites (`utils/pendingInvite.ts`, friends-hardening merge `a8b9aaa`) |
-| No pull-to-refresh on feed | ✅ Done — `RefreshControl` in `FeedScreen.tsx:519` |
-| ProfileScreen statistics are mock | ✅ Resolved — Model C removed the stats section; Profile now shows real "TIDLIGERE ØKTER" (no `mock`/`STATISTIKK` strings remain) |
-| — (not in brief) | Also shipped: session reactions, item cover images, participant progress photos, unfriend + invite-code rotation, `LoanHistoryScreen` |
+| Brief claim                       | Reality                                                                                                                                                              |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Deep-link invite not wired        | ✅ Done — `linking` config in `App.tsx` (`puslespill://join?code=`), incl. logged-out deferred invites (`utils/pendingInvite.ts`, friends-hardening merge `a8b9aaa`) |
+| No pull-to-refresh on feed        | ✅ Done — `RefreshControl` in `FeedScreen.tsx:519`                                                                                                                   |
+| ProfileScreen statistics are mock | ✅ Resolved — Model C removed the stats section; Profile now shows real "TIDLIGERE ØKTER" (no `mock`/`STATISTIKK` strings remain)                                    |
+| — (not in brief)                  | Also shipped: session reactions, item cover images, participant progress photos, unfriend + invite-code rotation, `LoanHistoryScreen`                                |
 
 Stale in the other direction: `CollectionDetailScreen` is now **736** lines (not 547), and `SessionDetailScreen` at **933** lines is the real god component.
 
@@ -40,8 +40,8 @@ Stale in the other direction: `CollectionDetailScreen` is now **736** lines (not
 1. **`ErrorBoundary` only `console.error`s** (`ErrorBoundary.tsx:18`). Production crashes are invisible. Sentry is a half-day with the config plugin; wire `componentDidCatch` to it. Do before real users, not after.
 2. **Missing DB constraints force boundary casts.** Nine `as unknown as` casts across five screens (FeedScreen ×5, SessionDetail, Profile, Requests, LoanHistory) exist because `items.type/difficulty/status` are plain `text` and timestamps are nullable-with-default. One dashboard session (CHECK + NOT NULL, regen types) deletes them all. Batch with `delete_session`.
 3. **`delete_session` cascade + cover-file orphan.** This is not just tidiness: orphaned storage files containing photos of people undermine the GDPR Art. 17 erasure story you built the private bucket for. The one-line cover cleanup in `CollectionDetailScreen.handleDelete` (noted in `social-feed-v1-status.md`) is the same category. Do both before launch.
-4. **God components** — `SessionDetailScreen` (933) and `CollectionDetailScreen` (736). Real risk is regressions during the Phase 3 React Query migration, since there are no screen tests to catch them. Don't refactor before submission; split them *as part of* the React Query migration (Phase 3), when each extraction gets a query hook anyway.
-5. **Data-fetch pattern** (`useFocusEffect` + manual loading/error state, re-signing URLs on each focus) — fine at friend-group scale. React Query stays Phase 3; adopting it now would delay the store gates for zero user-visible gain. When you do adopt it, **skip TD-12's separate `services/` layer** — the `src/queries/` hooks *are* the service layer; building both is double work.
+4. **God components** — `SessionDetailScreen` (933) and `CollectionDetailScreen` (736). Real risk is regressions during the Phase 3 React Query migration, since there are no screen tests to catch them. Don't refactor before submission; split them _as part of_ the React Query migration (Phase 3), when each extraction gets a query hook anyway.
+5. **Data-fetch pattern** (`useFocusEffect` + manual loading/error state, re-signing URLs on each focus) — fine at friend-group scale. React Query stays Phase 3; adopting it now would delay the store gates for zero user-visible gain. When you do adopt it, **skip TD-12's separate `services/` layer** — the `src/queries/` hooks _are_ the service layer; building both is double work.
 6. TD-14 (`as any` storage adapter) and TD-16 (`difficulty: string`) — cosmetic, batch with any nearby change, never blockers.
 
 ### Test coverage
@@ -57,12 +57,12 @@ Screen/integration tests: defer to Phase 3 — they get dramatically cheaper onc
 
 ## 2. Feature completeness
 
-**Verdict: the concept spine is complete and this is a shippable v1.0.** Friends (invite/rotate/unfriend/deep-link) → browse friend collections → full borrow lifecycle (request → approve w/ due date → return signals both directions → confirm) → shared feed with photos and reactions. That *is* the product described in the concept.
+**Verdict: the concept spine is complete and this is a shippable v1.0.** Friends (invite/rotate/unfriend/deep-link) → browse friend collections → full borrow lifecycle (request → approve w/ due date → return signals both directions → confirm) → shared feed with photos and reactions. That _is_ the product described in the concept.
 
 What actually blocks a real launch (vs. store approval):
 
 1. **Onboarding / first-run empty state — yes, blocker.** A new user lands on an empty feed and has no way to discover that the invite code is the entire entry point to the app. 1–2 days: a 2–3 card intro after first sign-in + empty-state CTAs on Feed/Collections pointing at Friends. Also required for coherent store screenshots.
-2. **Push notifications — v1.0 requirement, but not a *beta* requirement.** The lending loop is asynchronous by design; without pushes, a borrow request sits invisible until the owner happens to open the app — the loop stalls and the app feels dead. Recommendation: ship the friend-group beta (TestFlight/internal track) without it, but **do not do the public store submit without it**. The design doc is done; and since Apple Sign-In forces the Apple Developer account + new native build anyway, the "iOS push deferred to Phase 4" split is obsolete — **do Android and iOS push together** in the same build.
+2. **Push notifications — v1.0 requirement, but not a _beta_ requirement.** The lending loop is asynchronous by design; without pushes, a borrow request sits invisible until the owner happens to open the app — the loop stalls and the app feels dead. Recommendation: ship the friend-group beta (TestFlight/internal track) without it, but **do not do the public store submit without it**. The design doc is done; and since Apple Sign-In forces the Apple Developer account + new native build anyway, the "iOS push deferred to Phase 4" split is obsolete — **do Android and iOS push together** in the same build.
 3. Board games second-class, wishlist, swap/give-away — **skip for v1.0.** None are part of the borrow loop's payoff; wishlist and swap add DB surface + screens for a feature your friend group hasn't asked for yet. Post-launch.
 4. Feed pagination — skip. A 14-day window with pull-to-refresh is correct for ~10 users; revisit with Phase 3.
 
@@ -103,39 +103,39 @@ What actually blocks a real launch (vs. store approval):
 
 ### Week 1–2 — Hard gates (everything else waits on these)
 
-| # | Item | Why | Effort | Depends on |
-|---|---|---|---|---|
-| 1 | **Enroll Apple Developer Program** | Enrollment latency gates everything iOS | 1 h + wait | — |
-| 2 | **Decide final name; rename `name`/`slug` in app.json; reserve in App Store Connect + Play Console** | Post-submission renames cause friction; do before the first production build | 0.5 d | #1 (ASC access) |
-| 3 | **Apple Sign-In** — plugin, Supabase provider, AuthScreen button, new dev build to verify | Guideline 4.8 hard gate | 1–2 d | #1 |
-| 4 | **Account deletion** — `delete_account` Edge Function (auth + data cascade + storage purge), Settings entry, web deletion page for Play | Guideline 5.1.1(v) + Play data-deletion policy; hard gate both stores | 1–2 d | — |
-| 5 | **DB batch (one dashboard session):** CHECK/NOT NULL constraints → regen types → delete remaining casts; `delete_session` cascade RPC; cover-file orphan cleanup; RLS policy dedupe ([`db-cleanup.md`](./db-cleanup.md)); FriendCollectionScreen covers (open follow-up in [`social-feed-v1-status.md`](./social-feed-v1-status.md) this review missed) | Data integrity + GDPR erasure; unblocks cast removal | 1 d | — |
-| 6 | **Privacy policy** — write, publish on rubenvareide.no, link in Settings | Hard gate both stores; needed for #4's web page anyway | 0.5 d | — |
-| 7 | **Verify Google OAuth consent screen is Published** | Reviewer sign-in failure = instant rejection | 0.5 h | — |
+| #   | Item                                                                                                                                                                                                                                                                                                                                                    | Why                                                                          | Effort     | Depends on      |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------- | --------------- |
+| 1   | **Enroll Apple Developer Program**                                                                                                                                                                                                                                                                                                                      | Enrollment latency gates everything iOS                                      | 1 h + wait | —               |
+| 2   | **Decide final name; rename `name`/`slug` in app.json; reserve in App Store Connect + Play Console**                                                                                                                                                                                                                                                    | Post-submission renames cause friction; do before the first production build | 0.5 d      | #1 (ASC access) |
+| 3   | **Apple Sign-In** — plugin, Supabase provider, AuthScreen button, new dev build to verify                                                                                                                                                                                                                                                               | Guideline 4.8 hard gate                                                      | 1–2 d      | #1              |
+| 4   | **Account deletion** — `delete_account` Edge Function (auth + data cascade + storage purge), Settings entry, web deletion page for Play                                                                                                                                                                                                                 | Guideline 5.1.1(v) + Play data-deletion policy; hard gate both stores        | 1–2 d      | —               |
+| 5   | **DB batch (one dashboard session):** CHECK/NOT NULL constraints → regen types → delete remaining casts; `delete_session` cascade RPC; cover-file orphan cleanup; RLS policy dedupe ([`db-cleanup.md`](./db-cleanup.md)); FriendCollectionScreen covers (open follow-up in [`social-feed-v1-status.md`](./social-feed-v1-status.md) this review missed) | Data integrity + GDPR erasure; unblocks cast removal                         | 1 d        | —               |
+| 6   | **Privacy policy** — write, publish on rubenvareide.no, link in Settings                                                                                                                                                                                                                                                                                | Hard gate both stores; needed for #4's web page anyway                       | 0.5 d      | —               |
+| 7   | **Verify Google OAuth consent screen is Published**                                                                                                                                                                                                                                                                                                     | Reviewer sign-in failure = instant rejection                                 | 0.5 h      | —               |
 
 ### Week 3–4 — Launch-critical features
 
-| # | Item | Why | Effort | Depends on |
-|---|---|---|---|---|
-| 8 | **Push notifications, Android + iOS together** — `device_push_tokens`, `notifications` queue, DB webhook → Edge Function → Expo Push, enqueue from existing RPCs, `pg_cron` overdue nudges | The async lending loop is dead without a nudge channel; design doc exists; Apple account (#1) removes the reason to defer iOS | 3–5 d | #1, #3 (build) |
-| 9 | **Onboarding** — 2–3 card first-run intro + empty-state CTAs (Feed/Collections → Friends) | New users can't discover the invite-code entry point; needed for screenshots | 1–2 d | — |
-| 10 | **Sentry** — config plugin + wire `ErrorBoundary.componentDidCatch` | Only visibility into production crashes | 0.5 d | — |
-| 11 | **Tests:** `utils/loans.ts` overdue/due-date logic; extract + test FeedScreen event mapping | Core-product pure logic, cheap to lock down now | 1 d | — |
-| 12 | **Start Play closed test** — recruit ≥12 testers, internal → closed track, start the 14-day clock | If the Play account is post-Nov-2023, this clock gates Android production; start ASAP | 0.5 d setup + calendar time | #2, first prod build |
+| #   | Item                                                                                                                                                                                       | Why                                                                                                                           | Effort                      | Depends on           |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------- | -------------------- |
+| 8   | **Push notifications, Android + iOS together** — `device_push_tokens`, `notifications` queue, DB webhook → Edge Function → Expo Push, enqueue from existing RPCs, `pg_cron` overdue nudges | The async lending loop is dead without a nudge channel; design doc exists; Apple account (#1) removes the reason to defer iOS | 3–5 d                       | #1, #3 (build)       |
+| 9   | **Onboarding** — 2–3 card first-run intro + empty-state CTAs (Feed/Collections → Friends)                                                                                                  | New users can't discover the invite-code entry point; needed for screenshots                                                  | 1–2 d                       | —                    |
+| 10  | **Sentry** — config plugin + wire `ErrorBoundary.componentDidCatch`                                                                                                                        | Only visibility into production crashes                                                                                       | 0.5 d                       | —                    |
+| 11  | **Tests:** `utils/loans.ts` overdue/due-date logic; extract + test FeedScreen event mapping                                                                                                | Core-product pure logic, cheap to lock down now                                                                               | 1 d                         | —                    |
+| 12  | **Start Play closed test** — recruit ≥12 testers, internal → closed track, start the 14-day clock                                                                                          | If the Play account is post-Nov-2023, this clock gates Android production; start ASAP                                         | 0.5 d setup + calendar time | #2, first prod build |
 
 ### Week 5–6 — Store preparation
 
-| # | Item | Effort | Notes |
-|---|---|---|---|
-| 13 | Production builds (`eas build --profile production`, iOS + AAB) + `eas submit` config | 0.5 d + build queue | After #3/#8 land (native changes) |
-| 14 | TestFlight beta with the friend group | calendar time | They *are* the target users — treat their feedback as launch criteria |
-| 15 | Screenshots (6.9", 6.5", 5.5"; phone + 7" tablet for Play) + metadata nb-NO (+ en) | 1–1.5 d | After onboarding (#9) so first-run shots make sense |
-| 16 | Forms: age rating (4+), IARC, iOS privacy label, Play Data safety (incl. deletion URL from #4), DSA non-trader declaration | 0.5 d | Mechanical |
-| 17 | Submit iOS; promote Play closed → production when the 14-day window (#12) completes | — | Expect one review round-trip; budget a week |
+| #   | Item                                                                                                                       | Effort              | Notes                                                                 |
+| --- | -------------------------------------------------------------------------------------------------------------------------- | ------------------- | --------------------------------------------------------------------- |
+| 13  | Production builds (`eas build --profile production`, iOS + AAB) + `eas submit` config                                      | 0.5 d + build queue | After #3/#8 land (native changes)                                     |
+| 14  | TestFlight beta with the friend group                                                                                      | calendar time       | They _are_ the target users — treat their feedback as launch criteria |
+| 15  | Screenshots (6.9", 6.5", 5.5"; phone + 7" tablet for Play) + metadata nb-NO (+ en)                                         | 1–1.5 d             | After onboarding (#9) so first-run shots make sense                   |
+| 16  | Forms: age rating (4+), IARC, iOS privacy label, Play Data safety (incl. deletion URL from #4), DSA non-trader declaration | 0.5 d               | Mechanical                                                            |
+| 17  | Submit iOS; promote Play closed → production when the 14-day window (#12) completes                                        | —                   | Expect one review round-trip; budget a week                           |
 
 ### Week 7+ — Post-launch (explicitly not v1.0)
 
-- **Phase 3 as one unit:** React Query in `src/queries/` (which *is* the service layer — skip a separate TD-12 layer) + split SessionDetail/CollectionDetail god components during the migration + screen tests as they become cheap.
+- **Phase 3 as one unit:** React Query in `src/queries/` (which _is_ the service layer — skip a separate TD-12 layer) + split SessionDetail/CollectionDetail god components during the migration + screen tests as they become cheap.
 - `expo-image` + `expo-image-manipulator` compression (upload cost matters more as photo volume grows).
 - Activity-model unification (board games first-class, puzzle-% demoted).
 - Wishlist (2.4), swap/give-away (2.3), feed pagination — in whatever order the friend group actually asks for.
