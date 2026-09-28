@@ -105,7 +105,7 @@ npm run rebuild:check          # scripts/check-rebuild.sh — does this change n
 ```
 
 CI (`.github/workflows/ci.yml`) runs typecheck + lint + format:check + tests on every push/PR to `main`.
-Keep `eslint-config-expo` at `^57` — the SDK-aligned `~55.0.1` references a `react-hooks` rule its resolved plugin lacks and crashes lint.
+`eslint-config-expo` follows the SDK like every other Expo package (`npx expo install --fix` manages it). The old `^57` hold (SDK 55's `~55.0.1` crashed lint) was dropped at the SDK 56 bump, where the aligned version lints cleanly.
 Tests live in `__tests__/` folders next to the code; start with pure utils. Do not
 add a new test _framework_ — extend the existing jest setup.
 

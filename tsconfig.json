@@ -1,7 +1,11 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    // TypeScript 6: @types/* lastes ikke lenger automatisk (jest-globalene listes eksplisitt),
+    // og side-effect-importer sjekkes som standard (NativeWinds `import "./global.css"` har ingen typer)
+    "types": ["jest"],
+    "noUncheckedSideEffectImports": false
   },
   // Deno-kode (Edge Functions) har egen runtime; .claude rommer lokale agent-worktrees
   "exclude": ["supabase/functions", ".claude"]
